@@ -1,0 +1,62 @@
+<mujoco model="pusher_plane_2d">
+    <compiler angle="radian" inertiafromgeom="true"/>
+    <default>
+        <joint armature="1" damping="1" limited="true"/>
+        <geom contype="0" friction="1. 0.1 0.1" rgba="0.7 0.7 0 1" solimp=".5 .5 .001" solref=".02 1"/>
+    </default>
+
+   <option timestep='0.01' iterations="50" tolerance="1e-7" solver="Newton" jacobian="dense" cone="elliptic"/>
+
+    <!-- <option integrator="RK4" timestep="0.005" gravity="0 0 -9.81" /> -->
+
+   <size nstack="1000000"/>
+
+   <asset>
+      <texture type="skybox" builtin="gradient" width="128" height="128" rgb1=".4 .6 .8" 
+         rgb2="0 0 0"/>  
+      <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278" 
+         rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>  
+      <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" 
+         width="512" height="512"/>  
+
+      <material name='MatPlane' reflectance='0.3' texture="texplane" texrepeat="1 1" texuniform="true"/>
+      <material name='geom' texture="texgeom" texuniform="true"/>
+   </asset>
+
+   <worldbody>
+        <!-- Ground -->
+      <geom name='floor' pos='0 0 0' size='5 5 .125' type='plane' material="MatPlane" condim='3'/>
+        <!-- Ground Center -->
+  <!--       <body name="center" pos="0. 0. 0.">
+            <geom conaffinity="0" contype="0" name="center" pos="0 0 0" rgba="0. 0. 1.0 1" size=".009" type="sphere"/>
+        </body> -->
+        <!-- Pusher -->
+
+        <body name="pusher" pos="0 0.0 1.5">
+            <geom rgba="1 0 0 1" type="box" size="0.05 1.5 1.5" mass="100.0" contype="1" conaffinity="1" condim="3" friction="10.0 10.0 0.01"/>
+            <joint name="push_slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="1.0"/> 
+            <joint name="push_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="1.0"/> 
+            <joint name="push_hinge" type="hinge" pos="0 0 0" axis="0 0 1" range="-1000. 1000.0" damping="1.0"/>
+        </body>
+        <!-- Object -->
+       <body name='box' pos='0.5 0 0.44'>
+            <joint name="slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="1.0"/> 
+            <joint name="slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="1.0"/> 
+          <geom name='box' type='box' size='0.45 0.45 0.45' mass='35.0' condim='3'/>
+       </body>
+      <geom name='target' type='capsule' fromto='2.5 -2.5 0 2.5 -2.5 1.5'  size='0.03' contype='0' conaffinity='0'/>
+
+        <camera euler="0 0 0" fovy="50" name="top_cam" pos="0 0 1.0"></camera>
+
+    </worldbody>
+
+<contact>       
+  <pair geom1='box' geom2='floor' friction='0.01 0.01' condim='3'/>
+</contact>     
+
+    <actuator>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5000.0" joint="push_slidex"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5000.0" joint="push_slidey"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="50.0" joint="push_hinge"/>
+    </actuator>
+</mujoco>

@@ -1,0 +1,60 @@
+<!-- Copied from https://github.com/personalrobotics/nonprehensile-controllers/tree/master/envs -->
+<mujoco model="pusher_plane_2d">
+    <compiler angle="radian" inertiafromgeom="true"/>
+    <default>
+        <joint armature="1" damping="1" limited="true"/>
+        <geom contype="0" friction="1. 0.1 0.1" rgba="0.7 0.7 0 1" solimp=".5 .5 .001" solref=".02 10"/>
+    </default>
+    <option integrator="RK4" timestep="0.01" gravity="0 0 -9.81" />
+    <worldbody>
+        <!-- Ground -->
+        <geom conaffinity="1" contype="1" name="ground" pos="4 0 -0.05" rgba="0.9 0.9 0.9 1" size="10 2 0.02" type="plane" condim="3"
+          friction='0 0 0'/>
+        <!-- Starting line -->
+        <geom conaffinity="0" contype="0" name="startline" pos="0 0 -0.0049" rgba="1 0 0 1" size="0.01 2 0.01" type="plane"/>
+
+        <!-- Pusher -->
+        <!--
+        <body name="pusher" pos="-0.05 0 0.04">
+            <geom rgba="1 0.5 0 1" type="box" size="0.01 0.05 0.050" density='1.0' contype="1" conaffinity="1" condim="3" friction="1 1 1"/>
+            <joint name="push_slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="0."/>
+            <joint name="push_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="0."/>
+            <joint name="push_hinge" type="hinge" pos="0 0 0" axis="0 0 1" range="-1000. 1000.0" damping="0."/>
+        </body>-->
+        <!-- Object -->
+        <body name="object" pos="0. 0.0 0.0" >
+          <!--<geom rgba="0 1 1 1" type="cylinder" size="0.025 0.01 0.01" contype="1" friction="1.0 1.0 1.0" conaffinity="1" density='10.0'/>-->
+
+            <geom rgba="0 1 1 1" type="cylinder" size="0.1 0.05 0.02" density='25.0' contype="1" conaffinity="1" condim="3" friction="0 0 0"/>
+            <joint name="object_slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="0.1"/>
+            <joint name="object_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="0.1"/>
+            <joint name="object_hinge"  type="hinge" pos="0 0 0" axis="0 0 1" range="-1000 1000"   damping="0.5"/>
+            <joint name="object_slidez" type="slide" pos="0 0 0" axis="0 0 1" range="-10.3   10.3"   damping="0.1"/>
+        </body>
+        <!-- Object Goal -->
+        <body name="goal" pos="6 0 -0.049">
+            <geom rgba="1 0   0   1"   type="cylinder" pos="0 0 0.0002"  size="0.2 0.001 0.05" contype="0" conaffinity="0"/>
+            <geom rgba="1 0.8 0.8 1"   type="cylinder" pos="0 0 0.0001" size="0.4 0.001 0.05" contype="0" conaffinity="0"/>
+            <geom rgba="1 .9   .9   1"  type="cylinder" pos="0 0 0"   size="0.6 0.001 0.05" contype="0" conaffinity="0"/>
+            <!--<joint name="goal_slidex" type="slide" pos="0 0 0"   axis="1 0 0" range="-10.3213 10.3" damping="0."/>-->
+            <joint name="goal_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="0."/>
+        </body>
+        <body name="bad_goal" pos="6 0 -0.049">
+            <geom rgba="0   0 1 1" type="cylinder" pos="0 0 0.0002"  size="0.2 0.001 0.05" contype="0" conaffinity="0"/>
+            <geom rgba=".8 .8 1 1" type="cylinder" pos="0 0 0.0001" size="0.4 0.001 0.05" contype="0" conaffinity="0"/>
+            <geom rgba=".9 .9 1 1" type="cylinder" pos="0 0 0"   size="0.6 0.001 0.05" contype="0" conaffinity="0"/>
+            <!--<joint name="bgoal_slidex" type="slide" pos="0 0 0"   axis="1 0 0" range="-10.3213 10.3" damping="0."/>-->
+            <joint name="bgoal_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="0."/>
+        </body>
+        <camera euler="0 0 0" fovy="50" name="top_cam" pos="0 0 1.0"></camera>
+
+    </worldbody>
+    <actuator>
+      <!--        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="push_slidex"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="push_slidey"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="push_hinge"/>-->
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidex"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidey"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_hinge"/>
+    </actuator>
+</mujoco>

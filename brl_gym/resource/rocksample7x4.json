@@ -1,0 +1,12 @@
+{
+    "num_rocks": 4,
+    "grid_size": 7,
+    "good_rock_probability": 0.5,
+    "rock_positions": [
+        [2, 0],
+        [0, 1],
+        [5, 5],
+        [1, 6]
+    ],
+    "start_coords": [0, 3]
+}

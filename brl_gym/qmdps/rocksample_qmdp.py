@@ -14,6 +14,7 @@ from baselines.common.math_util import discount
 
 import cProfile
 
+SOLUTION_DIR = "/home/gilwoo/Workspace/rocksample_solutions/"
 
 class RockSampleVFunction(object):
     def __init__(self, solution_file):
@@ -24,7 +25,8 @@ class RockSampleVFunction(object):
     def __call__(self, state):
         return self.solution[tuple(state)]['discounted_return']
 
-def load_solutions(rocksample, cases, states, num_envs, nominal_env, solution_dir="/home/gilwoo/rocksample_solutions/rocksample7x8/values/"):
+def load_solutions(rocksample, cases, states, num_envs, nominal_env, solution_dir=SOLUTION_DIR+"rocksample7x8/values/"):
+
     qfuncs = np.zeros((len(cases), len(states) + 1))
     # envs = dict()
     rockstates = []
@@ -51,10 +53,10 @@ class RockSampleQMDPQFunction(QFunction):
     def __init__(self, num_rocks, num_envs):
         if num_rocks == 4:
             rocksample = "rocksample7x4"
-            solution_dir = "/home/gilwoo/rocksample_solutions/rocksample7x4/values/"
+            solution_dir = os.path.join(SOLUTION_DIR, "rocksample7x4/values/")
         else:
             rocksample = "rocksample7x8"
-            solution_dir = "/home/gilwoo/rocksample_solutions/rocksample7x8/values/"
+            solution_dir = os.path.join(SOLUTION_DIR, "rocksample7x8/values/")
 
         self.nominal_env = load_env(("{}.json".format(rocksample)))
 

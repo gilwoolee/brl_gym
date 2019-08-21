@@ -198,6 +198,26 @@ class ExplicitBayesRockSampleRock8(ExplicitBayesRockSample):
     def __init__(self):
         super(ExplicitBayesRockSampleRock8, self).__init__("../resource/rocksample7x8.json")
 
+class Expert:
+    def __init__(self, num_rocks, num_envs, obs_dim):
+        self.qmdp_q = RockSampleQMDPQFunction(
+                num_rocks=num_rocks, num_envs=num_envs)
+        self.obs_dim = obs_dim
+
+    def action(self, inputs):
+        if isinstance(inputs, np.ndarray):
+            obs, bel = inputs[:, :-GOAL_POSE.shape[0]], inputs[:, -GOAL_POSE.shape[0]:]
+        else:
+            if inputs[0].shape[0] > 1:
+                obs = inputs[0].squeeze()
+                bel = inputs[1].squeeze()
+            else:
+                obs = inputs[0]
+                bel = inputs[1]
+
+        qvals = qmdp_q(obs, bel)
+        actions = np.argmax(qvals, axis=1)
+        return actions
 
 def collect_batches(niter):
     experiences = []
@@ -207,7 +227,7 @@ def collect_batches(niter):
     num_envs = 1
     qmdp_q = RockSampleQMDPQFunction(num_rocks=4, num_envs=1)
 
-    for i, case in enumerate(qmdp_q.cases):
+    for i, case in enumerate(qmdp_q.cases[:1]):
         rockstate = [int(x) for x in case]
         # env = make_vec_env('explicit-bayes-rocksample-v0', 'wrapper_envs', num_envs, seed=None,
         #     rockstates=rockstates)
@@ -222,7 +242,7 @@ def collect_batches(niter):
         dones = []
         actions = []
 
-        for _ in range(500):
+        for _ in range(1):
             env.env.set_start_rock_state(np.array(rockstate))
             o = env.reset()
             sum_rewards = 0

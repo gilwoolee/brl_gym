@@ -130,10 +130,16 @@ class MotionPlanner:
 
                 self.plans[tuple(goal)] = configs
 
+                G.remove_node(start_id)
+                G.remove_node(goal_id)
                 return convert_2D_to_3D(configs)
 
             except nx.NetworkXNoPath as e:
                 # print("failed to plan, make new graph")
+
+                G.remove_node(start_id)
+                G.remove_node(goal_id)
+
                 return False
                 # G = make_graph(planning_env,
                 # sampler=Sampler(planning_env),

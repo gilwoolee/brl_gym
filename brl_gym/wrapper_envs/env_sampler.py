@@ -94,6 +94,7 @@ class DiscreteEnvSampler:
         @param envs List of envs to sample from
         @param discrete_sampler sampler over k indices
         """
+        np.random.seed(None)
         self.envs = envs
         self.sampler = discrete_sampler
 

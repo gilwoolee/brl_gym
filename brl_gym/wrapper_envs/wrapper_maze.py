@@ -59,11 +59,8 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
                                         action,
                                         obs,
                                         **info)
-        exp1 = self.env.target
-        exp_id = exp1
-        info['expert'] = exp_id
 
-        entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
+        entropy = np.sum(-np.log(bel+1e-5)/np.log(len(bel)) * bel)
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
         if self.reward_entropy:
@@ -80,6 +77,9 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
         self.prev_entropy = entropy
         return {'obs':obs, 'zbel':bel}
+
+
+
 
 class ExplicitBayesMazeEnvNoEntropyReward(ExplicitBayesMazeEnv):
     def __init__(self):
@@ -164,7 +164,7 @@ def qmdp_expert(obs, bel):
 
 def simple_combined_expert(mp, obs, bel):
     obs = obs.squeeze()
-    s = obs[:2]
+    s = obs[:GOAL_POSE.shape[0]]
     b = bel
     actions = []
 
@@ -194,27 +194,28 @@ def simple_combined_expert(mp, obs, bel):
 class Expert:
     def __init__(self, nenv=10):
         self.mps = [MotionPlanner() for i in range(nenv)]
+        self.bel_dim = len(GOAL_POSE)
 
     def action(self, inputs):
-        obs, bel = inputs[:, :-2], inputs[:, -2:]
-        actions = []
-
-        """
-        if inputs[0].shape[0] > 1:
-            obs = inputs[0].squeeze()
-            bel = inputs[1].squeeze()
+        if isinstance(inputs, np.ndarray):
+            obs, bel = inputs[:, :-GOAL_POSE.shape[0]], inputs[:, -GOAL_POSE.shape[0]:]
         else:
-            obs = inputs[0]
-            bel = inputs[1]
-        """
+            if inputs[0].shape[0] > 1:
+                obs = inputs[0].squeeze()
+                bel = inputs[1].squeeze()
+            else:
+                obs = inputs[0]
+                bel = inputs[1]
+
+        actions = []
         for i, mp in enumerate(self.mps):
             actions += [simple_combined_expert(mp, obs[i], bel[i])]
 
         action = np.array(actions)
-        if inputs.shape[0] >1:
+        if obs.shape[0] >1:
             action = action.squeeze()
 
-        action = np.concatenate([action, np.zeros((action.shape[0], 1))], axis=1) * 0.5
+        action = np.concatenate([action, np.zeros((action.shape[0], 1))], axis=1) * 0.2
         return action
 
     def qvals(self, inputs):
@@ -263,50 +264,131 @@ def trial_combined_expert(i):
     # import IPython; IPython.embed();
     return discounted_sum, undiscounted_sum
 
+class ExplicitBayesMazeEnvWithExpert(ExplicitBayesEnv, utils.EzPickle):
+    """
+    Expert proposal is part of the observation
+    """
+    def __init__(self, reward_entropy=False, reset_params=True):
+
+        envs = []
+        for i in range(GOAL_POSE.shape[0]):
+            env = PointMassEnv()
+            env.target = i
+            envs += [env]
+
+        self.estimator = BayesMazeEstimator()
+        self.env_sampler = DiscreteEnvSampler(envs)
+        super(ExplicitBayesMazeEnvWithExpert, self).__init__(env, self.estimator)
+        self.nominal_env = env
+
+        self.observation_space = Dict(
+            {"obs": env.observation_space, "zbel": self.estimator.belief_space, "expert": env.action_space})
+        self.internal_observation_space = env.observation_space
+        self.env = env
+        self.reset_params = reset_params
+        self.reward_entropy = reward_entropy
+        self.expert = Expert(nenv=1)
+        utils.EzPickle.__init__(self)
+
+    def _update_belief(self,
+                             action,
+                             obs,
+                             **kwargs):
+        # Estimate
+        self.estimator.estimate(
+                action, obs, **kwargs)
+        belief = self.estimator.get_belief()
+        return belief, kwargs
+
+    def step(self, action):
+        prev_state = self.env.get_state().copy()
+        obs, reward, done, info = self.env.step(action)
+        info['prev_state'] = prev_state
+        info['curr_state'] = self.env.get_state()
+
+        bel, info = self._update_belief(
+                                        action,
+                                        obs,
+                                        **info)
+
+        entropy = np.sum(-np.log(bel+1e-5)/np.log(len(bel)) * bel)
+        ent_reward = -(entropy - self.prev_entropy)
+        self.prev_entropy = entropy
+        if self.reward_entropy:
+            reward += ent_reward * 10
+
+        expert_action = self.expert.action(np.concatenate([obs, bel]).reshape(1, -1)).ravel()
+
+        return {'obs':obs, 'zbel':bel, "expert":expert_action}, reward, done, info
+
+    def reset(self):
+        if self.reset_params:
+            self.env = self.env_sampler.sample()
+        obs = self.env.reset()
+        self.estimator.reset()
+        bel, _ = self._update_belief(action=None, obs=obs)
+        self.last_obs = (obs, bel)
+        entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
+        self.prev_entropy = entropy
+        expert_action = self.expert.action(np.concatenate([obs, bel]).reshape(1, -1)).ravel()
+
+        return {'obs':obs, 'zbel':bel, 'expert': expert_action}
+
 if __name__ == "__main__":
 
-    """
-    from multiprocessing import Pool
-    p = Pool(40)
-    all_rewards = [p.map(trial_combined_expert, range(100))]
-    all_rewards = np.array(all_rewards).squeeze()
-    trial_combined_expert(0)
-    np.savetxt("mixture_experts.csv", all_rewards, fmt="%.3f", header="discounted undiscounted", comments="")
-    print(np.mean(all_rewards), np.std(all_rewards) / len(all_rewards))
-    """
+    # gamma = 0.999
+    # env = ExplicitBayesMazeEnv(reset_params=True)
+    # # env.env.target = 4
+    # exp = Expert(nenv=1)
+    # all_rewards = []
 
-    gamma = 0.999
-    env = ExplicitBayesMazeEnv(reset_params=True)
-    # env.env.target = 4
-    exp = Expert(nenv=1)
-    all_rewards = []
+    # o = env.reset()
+    # print(env.env.target)
 
+    # done = False
+
+    # val_approx = []
+    # rewards = []
+    # for t in range(250):
+    #     # val_approx += [get_value_approx(o['obs'].reshape(1, -1), friction)]
+    #     action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
+    #     # action = simple_expert_actor(exp.mp, o['obs'], GOAL_POSE[env.env.target])
+    #     # print("action", action)
+    #     action = action.squeeze()
+    #     if t < 50:
+    #         action[2] = action[2] + np.random.normal()*0.1
+    #     o, r, done, _ = env.step(action)
+    #     rewards += [r]
+    #     #print(np.around(o['zbel'],2))
+
+    #     env.render()
+
+    #     # input('continue')
+    #     # print(np.around(o['zbel'],2))
+
+    # rewards = np.array(rewards)
+    # # discounted_sum = discount(rewards, gamma)[0]
+    # undiscounted_sum = np.sum(rewards)
+    # print(' discounted sum', undiscounted_sum)
+    # import IPython; IPython.embed();
+
+
+    env = ExplicitBayesMazeEnvWithExpert()
     o = env.reset()
-    print(env.env.target)
 
-    done = False
-
-    val_approx = []
     rewards = []
-    for t in range(100):
-        # val_approx += [get_value_approx(o['obs'].reshape(1, -1), friction)]
-        action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
-        # action = simple_expert_actor(exp.mp, o['obs'], GOAL_POSE[env.env.target])
-        # print("action", action)
-        action = action.squeeze()
+    for t in range(350):
+        action = o['expert']
         if t < 50:
             action[2] = action[2] + np.random.normal()*0.1
-        o, r, done, _ = env.step(action)
+        o, r, d, _ = env.step(action)
+        env.render()
+        print(o['zbel'])
         rewards += [r]
-        #print(np.around(o['zbel'],2))
+        if d:
+            break
 
-        #env.render()
-
-        # input('continue')
-        # print(np.around(o['zbel'],2))
-
-    rewards = np.array(rewards)
-    discounted_sum = discount(rewards, gamma)[0]
     undiscounted_sum = np.sum(rewards)
-    print(' discounted sum', discounted_sum)
+
+    print('undiscounted sum', undiscounted_sum)
     import IPython; IPython.embed();

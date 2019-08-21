@@ -4,9 +4,9 @@ from gym.spaces import Box
 from gym.envs.mujoco import mujoco_env
 from mujoco_py import MjViewer
 import os
-asset_dir = "/home/gilwoo/Workspace/bayesian_rl_bootstrap/brl_gym/brl_gym/envs/mujoco/"
+asset_dir = "/home/gilwoo/Workspace/brl_gym/brl_gym/envs/mujoco/"
 
-GOAL_POSE = np.array([[0.25, 0.8], [-0.25, 0.3], [0.25, 0.3], [-0.25, 0.8], [-1.2, -1.2], [1.2, -1.2]])
+GOAL_POSE = np.array([[-0.25, 0.3], [-0.25, 0.8], [-1.2, -1.2], [1.2, -1.2]])
 
 class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
@@ -24,6 +24,10 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.action_space = Box(np.concatenate([self.action_space.low, [-1]]), np.concatenate([self.action_space.high, [1]]))
 
     def step(self, a):
+        if len(a) == 3:
+            a = np.clip(a, np.array([-1.4, -1.4, -1]), np.array([1.4, 1.4, 1]))
+        else:
+            a = np.clip(a, np.array([-1.4, -1.4]), np.array([1.4, 1.4]))
         self.do_simulation(a[:2], self.frame_skip)
 
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
@@ -31,13 +35,13 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         dist = np.linalg.norm(agent_pos-target_pos)
         reward = -0.01*dist
         done = False
-        if dist < 0.2:
-            reward += 1.0 # bonus for being very close
-            # done = True
+        if dist < 0.1:
+            reward = 500.0 # bonus for being very close
+            done = True
 
         if len(a) == 3:
             if a[2] > 0:
-                reward -= 0.1
+                reward -= 5 #0.1
                 info = {'goal_dist':dist}
             else:
                 info = {}
@@ -49,7 +53,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
         target_pos = self.data.site_xpos[self.target_sid].ravel()
         goal_dist = GOAL_POSE - agent_pos[:2]
-        dist = np.linalg.norm(goal_dist[self.target]) # np.random.normal() * 0.5
+        dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * 0.5
         return np.concatenate([agent_pos[:2], self.data.qvel.ravel(), goal_dist.ravel(),
             [dist]])
 
@@ -93,7 +97,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
 if __name__ == "__main__":
     env = PointMassEnv()
-    env.target = 1
+    env.target = 4
     o = env.reset()
     # import IPython; IPython.embed()
 

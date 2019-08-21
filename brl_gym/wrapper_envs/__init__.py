@@ -1,6 +1,7 @@
 from brl_gym.wrapper_envs.wrapper_env import WrapperEnv
 from brl_gym.wrapper_envs.bayes_env import BayesEnv
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
+"""
 from brl_gym.wrapper_envs.mle_env import MLEEnv
 
 from brl_gym.wrapper_envs.wrapper_tiger import BayesTiger, MLETiger, ExplicitBayesTiger
@@ -11,7 +12,8 @@ from brl_gym.wrapper_envs.wrapper_herbtable import BayesHerbTable
 from brl_gym.wrapper_envs.wrapper_cartpole import BayesCartPoleEnv, ExplicitBayesCartPoleEnv
 from brl_gym.wrapper_envs.wrapper_continuous_cartpole import BayesContinuousCartPoleEnv, ExplicitBayesContinuousCartPoleEnv
 from brl_gym.wrapper_envs.wrapper_pusher import ExplicitPusherEnv
-from brl_gym.wrapper_envs.wrapper_maze import ExplicitBayesMazeEnv, ExplicitBayesMazeEnvNoEntropyReward
+"""
+from brl_gym.wrapper_envs.wrapper_maze import ExplicitBayesMazeEnv, ExplicitBayesMazeEnvNoEntropyReward, ExplicitBayesMazeEnvWithExpert
 
 # from gym.classic_control.cartpole import CartPoleEnv as ExplicitBayesCartPoleEnv
 

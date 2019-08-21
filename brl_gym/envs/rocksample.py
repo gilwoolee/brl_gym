@@ -10,7 +10,6 @@ from gym.spaces import Discrete
 from gym import utils
 from gym.utils import seeding
 
-from baselines.common.math_util import discount
 
 # As described in Smith and Simons (2004): https://arxiv.org/pdf/1207.4166.pdf
 
@@ -414,6 +413,7 @@ class RockSample(gym.Env, utils.EzPickle):
         return path
 
     def compute_discounted_return(self, action_path, gamma=0.95):
+        from baselines.common.math_util import discount
         path = self.simulate(action_path)
         rewards = np.array([p[1] for p in path])
         assert not (np.any(rewards < 0))

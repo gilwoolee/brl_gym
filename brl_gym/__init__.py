@@ -192,6 +192,13 @@ register(
 )
 
 
+register(
+    id='Maze-expert-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnvWithExpert',
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
 # [GL] MLE
 # ---------
 register(

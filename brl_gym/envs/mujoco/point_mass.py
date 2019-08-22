@@ -34,7 +34,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         target_pos = self.data.site_xpos[self.target_sid].ravel()
         dist = np.linalg.norm(agent_pos-target_pos)
         #reward = -0.01*dist
-        reward = -1
+        reward = 0
         done = False
         if dist < 0.1:
             reward = 500.0 # bonus for being very close

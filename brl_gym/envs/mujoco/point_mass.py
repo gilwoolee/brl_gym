@@ -6,7 +6,7 @@ from mujoco_py import MjViewer
 import os
 asset_dir = "/home/gilwoo/Workspace/brl_gym/brl_gym/envs/mujoco/"
 
-GOAL_POSE = np.array([[-0.25, 0.3], [1.2, 1.2]])
+GOAL_POSE = np.array([[-0.25, 0.3], [1.2, 0.0]])
 
 class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
@@ -35,21 +35,23 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         dist = np.linalg.norm(agent_pos-target_pos)
 
         # Distance to the other target
-        other_target = 1 if self.target == 0 else 1
+        other_target = 1 if self.target == 0 else 0
         dist_to_other = np.linalg.norm(GOAL_POSE[other_target] - agent_pos[:2])
+        print(other_target, self.target, dist_to_other, dist, self.target_sid, target_pos)
         #reward = -0.01*dist
         # reward = -2
         reward = 0
         done = False
-        if dist < 0.1:
+        if dist < 0.2:
             reward = 500.0 # bonus for being very close
             done = True
-        if dist_to_other < 0.1:
+        if dist_to_other < 0.2:
             reward = -500 # Penalty for getting close to the other target
+            done = True
 
         if len(a) == 3:
             if a[2] > 0:
-                # reward = -5 #0.1
+                reward = -1 #0.1
                 info = {'goal_dist':dist}
             else:
                 info = {}
@@ -105,7 +107,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
 if __name__ == "__main__":
     env = PointMassEnv()
-    env.target = 4
+    env.target = 0
     o = env.reset()
     # import IPython; IPython.embed()
 
@@ -120,7 +122,8 @@ if __name__ == "__main__":
     # import IPython; IPython.embed()
     lookahead = 2
 
-    while True:
+    d = False
+    while not d:
 
         #idx = min(mp.get_closest_point(waypoints, o[:2]) + lookahead, waypoints.shape[0]-1)
 
@@ -130,5 +133,6 @@ if __name__ == "__main__":
         # xy = np.array([direction[1], direction[0]])
         # print(start, target, direction)
         #o, _, _, _ = env.step(direction + np.random.normal(size=2)*0.02)
-        env.step(env.action_space.sample())
+        o, r, d, _ = env.step(env.action_space.sample())
         env.render()
+    print("final reward", r)

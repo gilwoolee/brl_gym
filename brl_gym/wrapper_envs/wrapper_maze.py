@@ -64,7 +64,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
         if self.reward_entropy:
-            reward += ent_reward * 10
+            reward += ent_reward
         info['entropy'] = entropy
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
@@ -170,11 +170,10 @@ def simple_combined_expert(mp, obs, bel):
     actions = []
 
     # for s, b in zip(start, bel):
-    if (np.any(bel > 0.9)):
+    if (np.any(bel > 0.9)):        
         idx = np.argwhere(bel.ravel()>0.9)[0,0]
         action = simple_expert_actor(mp, s, GOAL_POSE[idx])
         if not isinstance(action, np.ndarray) and action == None:
-            # print("noise")
             return np.zeros(2)
             # continue
         else:
@@ -316,7 +315,7 @@ class ExplicitBayesMazeEnvWithExpert(ExplicitBayesEnv, utils.EzPickle):
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
         if self.reward_entropy:
-            reward += ent_reward * 10
+            reward += ent_reward
 
         expert_action = self.expert.action(np.concatenate([obs, bel]).reshape(1, -1)).ravel()
 

@@ -65,6 +65,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.prev_entropy = entropy
         if self.reward_entropy:
             reward += ent_reward * 10
+        info['entropy'] = entropy
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
     def reset(self):
@@ -372,12 +373,14 @@ if __name__ == "__main__":
     # print(' discounted sum', undiscounted_sum)
     # import IPython; IPython.embed();
 
+    for _ in range(5):
+        env = ExplicitBayesMazeEnvWithExpert()
+        o = env.reset()
+        print(env.env.target)
 
-    env = ExplicitBayesMazeEnvWithExpert()
-    o = env.reset()
 
     rewards = []
-    for t in range(350):
+    for t in range(500):
         action = o['expert']
         if t < 50:
             action[2] = action[2] + np.random.normal()*0.1

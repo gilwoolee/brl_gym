@@ -6,14 +6,14 @@ from mujoco_py import MjViewer
 import os
 asset_dir = "/home/gilwoo/Workspace/brl_gym/brl_gym/envs/mujoco/"
 
-GOAL_POSE = np.array([[-0.25, 0.3], [-0.25, 0.8], [-1.2, -1.2], [1.2, 1.2]])
+GOAL_POSE = np.array([[-0.25, 0.3], [1.2, 1.2]])
 
 class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
         self.agent_bid = 0
-        self.target_sid = 0
         utils.EzPickle.__init__(self)
         self.target = 0
+        self.target_sid = 0
 
         self.fullpath = os.path.join(asset_dir, "assets", 'point_mass.xml')
         mujoco_env.MujocoEnv.__init__(self, self.fullpath, 5)
@@ -33,16 +33,23 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
         target_pos = self.data.site_xpos[self.target_sid].ravel()
         dist = np.linalg.norm(agent_pos-target_pos)
+
+        # Distance to the other target
+        other_target = 1 if self.target == 0 else 1
+        dist_to_other = np.linalg.norm(GOAL_POSE[other_target] - agent_pos[:2])
         #reward = -0.01*dist
+        # reward = -2
         reward = 0
         done = False
         if dist < 0.1:
             reward = 500.0 # bonus for being very close
             done = True
+        if dist_to_other < 0.1:
+            reward = -500 # Penalty for getting close to the other target
 
         if len(a) == 3:
             if a[2] > 0:
-                reward -= 5 #0.1
+                # reward = -5 #0.1
                 info = {'goal_dist':dist}
             else:
                 info = {}

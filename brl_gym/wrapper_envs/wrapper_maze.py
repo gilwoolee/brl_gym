@@ -64,7 +64,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
         if self.reward_entropy:
-            reward += ent_reward * 10
+            reward += ent_reward * 100
         info['entropy'] = entropy
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
@@ -315,7 +315,7 @@ class ExplicitBayesMazeEnvWithExpert(ExplicitBayesEnv, utils.EzPickle):
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
         if self.reward_entropy:
-            reward += ent_reward * 10
+            reward += ent_reward * 100
 
         expert_action = self.expert.action(np.concatenate([obs, bel]).reshape(1, -1)).ravel()
 

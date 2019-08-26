@@ -37,10 +37,8 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         # Distance to the other target
         other_target = 1 if self.target == 0 else 0
         dist_to_other = np.linalg.norm(GOAL_POSE[other_target] - agent_pos[:2])
-        print(other_target, self.target, dist_to_other, dist, self.target_sid, target_pos)
-        #reward = -0.01*dist
-        # reward = -2
-        reward = 0
+ 
+        reward = -np.linalg.norm(a) * 0.1
         done = False
         if dist < 0.2:
             reward = 500.0 # bonus for being very close
@@ -51,7 +49,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         if len(a) == 3:
             if a[2] > 0:
-                reward = -1 #0.1
+                reward += -1 #0.1
                 info = {'goal_dist':dist}
             else:
                 info = {}

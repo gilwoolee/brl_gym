@@ -48,20 +48,22 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             reward = -500 # Penalty for getting close to the other target
             done = True
 
+        obs = self._get_obs()
         if len(a) == 3:
             if a[2] > 0:
                 reward += -1 #0.1
-                info = {'goal_dist':dist}
+                info = {'goal_dist':obs[-1]}
             else:
                 info = {}
         else:
             info = {}
-        return self._get_obs(), reward, done, info
+        return obs, reward, done, info
 
     def _get_obs(self):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
         target_pos = self.data.site_xpos[self.target_sid].ravel()
         goal_dist = GOAL_POSE - agent_pos[:2]
+        # Noisy distance
         dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * 0.5
         return np.concatenate([agent_pos[:2], self.data.qvel.ravel(), goal_dist.ravel(),
             [dist]])

@@ -6,7 +6,7 @@ from mujoco_py import MjViewer
 import os
 asset_dir = "/home/gilwoo/Workspace/brl_gym/brl_gym/envs/mujoco/"
 
-GOAL_POSE = np.array([[-0.25, 0.3], [1.2, 1.2], [1.2, - 1.2], [0.25, 0.8]])
+GOAL_POSE = np.array([[-0.25, 0.3], [1.2, 1.2], [1.2, 0.6], [0.25, 0.8]])
 
 class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
@@ -44,8 +44,9 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         if dist < 0.2:
             reward = 500.0 # bonus for being very close
             done = True
-        if np.any(dist_to_others) < 0.3:
+        if np.any(dist_to_others < 0.3):
             reward = -500 # Penalty for getting close to the other target
+
             done = True
 
         obs = self._get_obs()
@@ -64,7 +65,9 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         target_pos = self.data.site_xpos[self.target_sid].ravel()
         goal_dist = GOAL_POSE - agent_pos[:2]
         # Noisy distance
-        dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * 0.5
+        noise_scale = np.linalg.norm(goal_dist[self.target]) / (1.2*np.sqrt(2))
+
+        dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * noise_scale
         return np.concatenate([agent_pos[:2], self.data.qvel.ravel(), goal_dist.ravel(),
             [dist]])
 
@@ -73,8 +76,8 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         # agent_x = self.np_random.uniform(low=-0.2, high=0.2) + 0.3
         # agent_y = self.np_random.uniform(low=-0.2, high=0.2) + 0.3
 
-        agent_x = 0.3
-        agent_y = 0.3
+        agent_x = 0.0
+        agent_y = -1.2
 
 
         target = self.target #np.random.choice(4)

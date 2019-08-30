@@ -36,8 +36,7 @@ class BayesMazeEstimator(Estimator):
         if 'goal_dist' in kwargs:
             obs_goal_dist = kwargs['goal_dist']
             dist_to_goals = np.linalg.norm(observation[4:4+GOAL_POSE.shape[0]*2].reshape(-1,2), axis=1)
-
-            p_obs_given_prior = norm.pdf(dist_to_goals - obs_goal_dist, scale=0.5) * self.belief
+            p_obs_given_prior = norm.pdf(dist_to_goals - obs_goal_dist, scale=1.0) * self.belief
             p_goal_obs  = p_obs_given_prior / np.sum(p_obs_given_prior)
             self.belief = p_goal_obs
             return self.belief

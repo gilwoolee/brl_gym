@@ -170,7 +170,7 @@ def simple_combined_expert(mp, obs, bel):
     actions = []
 
     # for s, b in zip(start, bel):
-    if (np.any(bel > 0.9)):        
+    if (np.any(bel > 0.9)):
         idx = np.argwhere(bel.ravel()>0.9)[0,0]
         action = simple_expert_actor(mp, s, GOAL_POSE[idx])
         if not isinstance(action, np.ndarray) and action == None:

@@ -199,6 +199,14 @@ register(
     reward_threshold=10,
 )
 
+
+register(
+    id='Door-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
+    max_episode_steps=100,
+    reward_threshold=100,
+)
+
 # [GL] MLE
 # ---------
 register(

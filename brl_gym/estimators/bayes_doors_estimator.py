@@ -66,11 +66,11 @@ class BayesDoorsEstimator(Estimator):
 
         if 'collision' in kwargs:
             self.belief[kwargs['collision']] = 0.0
-            print("door ", kwargs['collision'], 'collision')
+            # print("door ", kwargs['collision'], 'collision')
 
         if 'pass_through' in kwargs:
             self.belief[kwargs['pass_through']] = 1.0
-            print("door ", kwargs['pass_through'], 'pass_through')
+            # print("door ", kwargs['pass_through'], 'pass_through')
 
         self.flat_belief = flatten_to_belief(self.belief, self.cases_np)
         return self.flat_belief

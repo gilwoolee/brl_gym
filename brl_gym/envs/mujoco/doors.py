@@ -41,7 +41,7 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             a = np.clip(a, np.array([-1.0, -1.0]), np.array([1.0, 1.0]))
         # self.data.qvel[:2] = 0
 
-        self.do_simulation(a, self.frame_skip)
+        self.do_simulation(a[:2], self.frame_skip)
 
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()[:2]
         target_pos = self.data.site_xpos[self.target_sid].ravel()[:2]

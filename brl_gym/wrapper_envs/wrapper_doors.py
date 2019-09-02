@@ -170,7 +170,7 @@ class SimpleExpert:
         direction_to_door = self.door_pos[door] - states
         actions[np.logical_not(above_bar)] = direction_to_door[np.logical_not(above_bar)]
 
-        actions = (actions / np.linalg.norm(actions, axis=1))  * 0.1
+        actions = (actions / np.linalg.norm(actions, axis=1).reshape(-1, 1))  * 0.1
         # actions[actions[:, 1] < 0.05] = 0.05
         return actions
 
@@ -203,8 +203,9 @@ class Expert:
             c = np.array([case] * obs.shape[0])
             proposal = self.simple_expert.action(c, obs[:, :2])
             # print(CASES[case], "proposal", proposal, bel[:, i+1])
-            actions += proposal *  bel[:, i+1]
+            actions += proposal *  bel[:, [i+1]]
 
+        actions = np.concatenate([actions, np.zeros((actions.shape[0], 1))], axis=1)
         return actions
 
 if __name__ == "__main__":

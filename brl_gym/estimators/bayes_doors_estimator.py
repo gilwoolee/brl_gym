@@ -44,26 +44,35 @@ class BayesDoorsEstimator(Estimator):
 
 
     def estimate(self, action, observation, **kwargs):
-        if not 'doors' in kwargs:
+        if not 'doors' in kwargs and 'collision' not in kwargs and 'pass_through' not in kwargs:
             return self.belief
 
-        doors = kwargs['doors']
-        accuracy = kwargs['accuracy']
+        if 'doors' in kwargs:
+            doors = kwargs['doors']
+            accuracy = kwargs['accuracy']
 
-        prior = self.belief
-        posterior = self.belief.copy()
-        for i, d in enumerate(doors):
-            if d == True: # open
-                p_obs = prior[i] * accuracy[i] + (1 - prior[i]) * (1 - accuracy[i])
-                p_obs_open = prior[i] * accuracy[i]
-            else:
-                p_obs = prior[i] * (1 - accuracy[i]) + (1 - prior[i]) * accuracy[i]
-                p_obs_open = prior[i] * (1 - accuracy[i])
+            prior = self.belief
+            posterior = self.belief.copy()
+            for i, d in enumerate(doors):
+                if d == True: # open
+                    p_obs = prior[i] * accuracy[i] + (1 - prior[i]) * (1 - accuracy[i])
+                    p_obs_open = prior[i] * accuracy[i]
+                else:
+                    p_obs = prior[i] * (1 - accuracy[i]) + (1 - prior[i]) * accuracy[i]
+                    p_obs_open = prior[i] * (1 - accuracy[i])
 
-            posterior[i] = p_obs_open /  p_obs
-        self.belief = posterior
+                posterior[i] = p_obs_open /  p_obs
+            self.belief = posterior
+
+        if 'collision' in kwargs:
+            self.belief[kwargs['collision']] = 0.0
+            print("door ", kwargs['collision'], 'collision')
+
+        if 'pass_through' in kwargs:
+            self.belief[kwargs['pass_through']] = 1.0
+            print("door ", kwargs['pass_through'], 'pass_through')
+
         self.flat_belief = flatten_to_belief(self.belief, self.cases_np)
-
         return self.flat_belief
 
     def get_belief(self):
@@ -71,14 +80,17 @@ class BayesDoorsEstimator(Estimator):
 
 
 if __name__ == "__main__":
-    from brl_gym.envs.mujoco.doors import DoorsEnv
-    env = DoorsEnv()
+    # from brl_gym.envs.mujoco.doors import DoorsEnv
+    # env = DoorsEnv()
     estimator = BayesDoorsEstimator()
-    env.reset()
-    estimator.reset()
+    # env.reset()
+    # estimator.reset()
 
-    for _ in range(10):
-        action = np.array([0,0,1])
-        o, r, d, info = env.step(action)
-        belief = estimator.estimate(action, o, **info)
-        print(info, estimator.belief)
+    # for _ in range(10):
+    #     action = np.array([0,0,1])
+    #     o, r, d, info = env.step(action)
+    #     belief = estimator.estimate(action, o, **info)
+    #     print(info, estimator.belief)
+    print(estimator.cases_np)
+    print(estimator.cases)
+    print(flatten_to_belief(np.array([0,0,0,1.0]), estimator.cases_np))

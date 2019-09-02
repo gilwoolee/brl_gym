@@ -4,6 +4,7 @@ from gym import utils
 from gym.spaces import Box
 from gym.envs.mujoco import mujoco_env
 from mujoco_py import MjViewer
+import mujoco_py
 import os
 asset_dir = "/home/gilwoo/Workspace/brl_gym/brl_gym/envs/mujoco/"
 
@@ -29,6 +30,7 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.target_sid = self.sim.model.site_name2id('target')
         self.doors_sids = [self.sim.model.site_name2id('door{}'.format(x)) for x in range(4)]
         self.door_pos = np.array([self.data.site_xpos[x].ravel() for x in self.doors_sids])
+        self.target_pos = self.data.site_xpos[self.target_sid].ravel()[:2]
         self.action_space = Box(np.concatenate([self.action_space.low, [-1]]), np.concatenate([self.action_space.high, [1]]))
 
     def step(self, a):
@@ -37,7 +39,9 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         else:
             # This is used only during initial setup.
             a = np.clip(a, np.array([-1.0, -1.0]), np.array([1.0, 1.0]))
-        self.do_simulation(a[:2], self.frame_skip)
+        # self.data.qvel[:2] = 0
+
+        self.do_simulation(a, self.frame_skip)
 
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()[:2]
         target_pos = self.data.site_xpos[self.target_sid].ravel()[:2]
@@ -47,27 +51,73 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         if len(a) == 3 and a[2] > 0:
             doors, accuracy =  self._sense()
             info = {'doors': doors, 'accuracy': accuracy}
-            reward -= 5
+            reward -= 1
         else:
             info = {}
 
+        obs = self._get_obs()
+        if np.any(obs[-8:-4] == 1.0):
+            info['collision'] = np.argmax(obs[-8:-4] == 1)
+            reward = -10 # Collision
+        if np.any(obs[-4:] == 1.0):
+            info['pass_through'] = np.argmax(obs[-4:] == 1)
+
         done = False
-        if dist < 0.1:
+
+        if dist < 0.2:
             reward = 100.0 # bonus for being very close
             done = True
 
-        return self._get_obs(), reward, done, info
+        reward -= np.linalg.norm(a)*0.1
+
+        return obs, reward, done, info
 
     def _get_obs(self):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
         target_pos = self.data.site_xpos[self.target_sid].ravel()
-        
+
         goal_dist = target_pos[:2] - agent_pos[:2]
-        return np.concatenate([agent_pos[:2], self.data.qvel.ravel(), goal_dist.ravel()])
+
+        sim = self.sim
+        collision_with_door = np.zeros(4).astype(np.int)
+        pass_through_door = np.zeros(4).astype(np.int)
+
+        for i in range(sim.data.ncon):
+            # Note that the contact array has more than `ncon` entries,
+            # so be careful to only read the valid entries.
+            contact = sim.data.contact[i]
+            name1 = sim.model.geom_id2name(contact.geom1)
+            name2 = sim.model.geom_id2name(contact.geom2)
+            if name1 == 'agent' and 'door' in name2:
+                door_id = int(name2.split("_")[0][-1])
+                collision_with_door[door_id] = 1
+            elif name2 == 'agent' and 'door' in name1:
+                door_id = int(name1.split("_")[0][-1])
+                collision_with_door[door_id] = 1
+
+        if agent_pos[1] >= 0.2246 and agent_pos[1] <= 0.27:
+            # check for door pass-through
+            if agent_pos[0] >= -1.2 and agent_pos[0] <= -0.8:
+                pass_through_door[0] = 1
+            elif agent_pos[0] >= -0.6 and agent_pos[0] <= -0.2:
+                pass_through_door[1] = 1
+            elif agent_pos[0] >= 0.2 and agent_pos[0] <= 0.6:
+                pass_through_door[2] = 1
+            elif agent_pos[0] >= 0.8 and agent_pos[0] <= 1.2:
+                pass_through_door[3] = 1
+
+
+        return np.concatenate([
+            agent_pos[:2],
+            self.data.qvel.ravel(),
+            goal_dist.ravel(),
+            collision_with_door,
+            pass_through_door
+            ])
 
     def _sense(self):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
-        
+
         door_dist = np.linalg.norm(self.door_pos[:, :2] - agent_pos[:2], axis=1)
         accuracy = 0.5 + np.exp(-door_dist) / 2.0
 
@@ -83,8 +133,8 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
 
     def reset_model(self):
-        agent_x = 0.0
-        agent_y = 0.0
+        agent_x = np.random.uniform(-1, 1)
+        agent_y = -1.0
 
         qp = np.array([agent_x, agent_y])
         qv = self.init_qvel.copy()

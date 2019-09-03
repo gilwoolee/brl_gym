@@ -14,7 +14,7 @@ from brl_gym.wrapper_envs.wrapper_continuous_cartpole import BayesContinuousCart
 from brl_gym.wrapper_envs.wrapper_pusher import ExplicitPusherEnv
 """
 from brl_gym.wrapper_envs.wrapper_maze import ExplicitBayesMazeEnv, ExplicitBayesMazeEnvNoEntropyReward, ExplicitBayesMazeEnvWithExpert
-from brl_gym.wrapper_envs.wrapper_doors import ExplicitBayesDoorsEnv
+from brl_gym.wrapper_envs.wrapper_doors import ExplicitBayesDoorsEnv, ExplicitBayesDoorsEnvNoEntropyReward
 
 # from gym.classic_control.cartpole import CartPoleEnv as ExplicitBayesCartPoleEnv
 

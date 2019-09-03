@@ -207,6 +207,15 @@ register(
     reward_threshold=100,
 )
 
+
+register(
+    id='Door-no-entropy-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnvNoEntropy',
+    max_episode_steps=200,
+    reward_threshold=100,
+)
+
+
 # [GL] MLE
 # ---------
 register(

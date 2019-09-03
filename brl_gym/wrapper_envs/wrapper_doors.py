@@ -8,7 +8,7 @@ from gym.spaces import Box, Dict
 from gym import utils
 
 class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
-    def __init__(self, reset_params=True):
+    def __init__(self, reset_params=True, reward_entropy=True):
 
         self.num_doors = 4
         self.num_cases = 2**self.num_doors
@@ -55,6 +55,12 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
                                         action,
                                         obs,
                                         **info)
+        entropy = np.sum(-np.log(bel+1e-5)/np.log(len(bel)) * bel)
+        ent_reward = -(entropy - self.prev_entropy)
+        self.prev_entropy = entropy
+        if self.reward_entropy:
+            reward += ent_reward * 5
+        info['entropy'] = entropy
 
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
@@ -68,9 +74,14 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         obs = self.env.reset()
         self.estimator.reset()
         bel, _ = self._update_belief(action=None, obs=obs)
-
+        entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
+        self.prev_entropy = entropy
         return {'obs':obs, 'zbel':bel}
 
+
+class ExplicitBayesDoorsEnvNoEntropyReward(ExplicitBayesDoorsEnv):
+    def __init__(self):
+        super(ExplicitBayesDoorsEnvNoEntropyReward, self).__init__(True, False)
 
 # Divide regions into 4 regions, L0, L1, L2, L3 from left to right
 REGIONS = [0, 1, 2, 3]

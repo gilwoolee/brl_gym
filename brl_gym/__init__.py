@@ -203,7 +203,7 @@ register(
 register(
     id='Door-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
-    max_episode_steps=200,
+    max_episode_steps=300,
     reward_threshold=100,
 )
 
@@ -211,7 +211,7 @@ register(
 register(
     id='Door-no-entropy-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnvNoEntropyReward',
-    max_episode_steps=200,
+    max_episode_steps=300,
     reward_threshold=100,
 )
 

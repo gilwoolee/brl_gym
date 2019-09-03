@@ -33,6 +33,7 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         self.internal_observation_space = env.observation_space
         self.env = env
         self.reset_params = reset_params
+        self.reward_entropy = reward_entropy
         utils.EzPickle.__init__(self)
 
     def _update_belief(self,

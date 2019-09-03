@@ -203,7 +203,7 @@ register(
 register(
     id='Door-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
-    max_episode_steps=100,
+    max_episode_steps=200,
     reward_threshold=100,
 )
 

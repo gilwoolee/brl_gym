@@ -170,7 +170,7 @@ class SimpleExpert:
         direction_to_door = self.door_pos[door] - states
         actions[np.logical_not(above_bar)] = direction_to_door[np.logical_not(above_bar)]
 
-        actions = (actions / np.linalg.norm(actions, axis=1).reshape(-1, 1))  * 0.1
+        actions = (actions / np.linalg.norm(actions, axis=1).reshape(-1, 1))
         # actions[actions[:, 1] < 0.05] = 0.05
         return actions
 
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     while not done:
         action = expert.action((obs['obs'].reshape(1, -1), obs['zbel'].reshape(1, -1)))
         print('obs', np.around(obs['obs'][:2], 2), 'act', action, 'zbel', obs['zbel'])
-        obs, r, done, _ = env.step(action)
+        obs, r, done, _ = env.step(action.ravel())
 
         env.render()
 
@@ -240,4 +240,5 @@ if __name__ == "__main__":
         if done:
             break
 
+    print("Length", len(rewards))
     print(np.sum(rewards))

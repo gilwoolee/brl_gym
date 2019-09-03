@@ -97,13 +97,13 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         if agent_pos[1] >= 0.2246 and agent_pos[1] <= 0.27:
             # check for door pass-through
-            if agent_pos[0] >= -1.2 and agent_pos[0] <= -0.8:
+            if agent_pos[0] >= -1.15 and agent_pos[0] <= -0.75:
                 pass_through_door[0] = 1
-            elif agent_pos[0] >= -0.6 and agent_pos[0] <= -0.2:
+            elif agent_pos[0] >= -0.55 and agent_pos[0] <= -0.15:
                 pass_through_door[1] = 1
-            elif agent_pos[0] >= 0.2 and agent_pos[0] <= 0.6:
+            elif agent_pos[0] >= 0.25 and agent_pos[0] <= 0.55:
                 pass_through_door[2] = 1
-            elif agent_pos[0] >= 0.8 and agent_pos[0] <= 1.2:
+            elif agent_pos[0] >= 0.85 and agent_pos[0] <= 1.15:
                 pass_through_door[3] = 1
 
 

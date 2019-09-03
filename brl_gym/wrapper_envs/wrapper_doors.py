@@ -182,7 +182,7 @@ class SimpleExpert:
         direction_to_door = self.door_pos[door] - states
         actions[np.logical_not(above_bar)] = direction_to_door[np.logical_not(above_bar)]
 
-        actions = (actions / np.linalg.norm(actions, axis=1).reshape(-1, 1))
+        actions = (actions / np.linalg.norm(actions, axis=1).reshape(-1, 1)) * 0.1
         # actions[actions[:, 1] < 0.05] = 0.05
         return actions
 

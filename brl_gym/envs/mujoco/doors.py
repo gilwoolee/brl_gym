@@ -51,7 +51,7 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         if len(a) == 3 and a[2] > 0:
             doors, accuracy =  self._sense()
             info = {'doors': doors, 'accuracy': accuracy}
-            reward -= 1
+            reward -= 0.1
         else:
             info = {}
 
@@ -68,7 +68,7 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             reward = 100.0 # bonus for being very close
             done = True
 
-        reward -= np.linalg.norm(a[:2])*0.1
+        # reward -= np.linalg.norm(a[:2])*0.1
 
         return obs, reward, done, info
 

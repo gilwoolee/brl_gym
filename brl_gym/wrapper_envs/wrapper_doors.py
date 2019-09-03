@@ -60,7 +60,7 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
         if self.reward_entropy:
-            reward += ent_reward * 5
+            reward += ent_reward
         info['entropy'] = entropy
 
         return {'obs':obs, 'zbel':bel}, reward, done, info

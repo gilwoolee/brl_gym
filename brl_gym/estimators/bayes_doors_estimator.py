@@ -29,9 +29,11 @@ class BayesDoorsEstimator(Estimator):
 
         self.belief_low = np.zeros(self.num_cases)
         self.belief_high = np.ones(self.num_cases)
+        self.param_low = np.zeros(self.num_doors)
+        self.param_high = np.ones(self.num_doors)
 
         belief_space = Box(self.belief_low, self.belief_high, dtype=np.float32)
-
+        self.param_space = Box(self.param_low, self.param_high)
 
         super(BayesDoorsEstimator, self).__init__(
                 env.observation_space, env.action_space, belief_space)
@@ -77,6 +79,9 @@ class BayesDoorsEstimator(Estimator):
 
     def get_belief(self):
         return self.flat_belief
+
+    def get_mle(self):
+        return np.around(self.belief)
 
 
 if __name__ == "__main__":

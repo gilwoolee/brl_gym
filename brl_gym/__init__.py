@@ -215,6 +215,20 @@ register(
     reward_threshold=100,
 )
 
+register(
+    id='Door-upmle-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEDoorsEnv',
+    max_episode_steps=300,
+    reward_threshold=100,
+)
+
+register(
+    id='Door-upmle-no-entropy-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEDoorsEnvNoEntropyReward',
+    max_episode_steps=300,
+    reward_threshold=100,
+)
+
 
 # [GL] MLE
 # ---------

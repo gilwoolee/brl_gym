@@ -64,7 +64,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
         if self.reward_entropy:
-            reward += ent_reward
+            reward += ent_reward * 10
         info['entropy'] = entropy
         return {'obs':obs, 'zbel':bel}, reward, done, info
 

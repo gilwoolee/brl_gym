@@ -76,7 +76,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         # agent_x = self.np_random.uniform(low=-0.2, high=0.2) + 0.3
         # agent_y = self.np_random.uniform(low=-0.2, high=0.2) + 0.3
 
-        agent_x = 0.0
+        agent_x = self.np_random.uniform(low=-1.0, high=1.0)
         agent_y = -1.2
 
 

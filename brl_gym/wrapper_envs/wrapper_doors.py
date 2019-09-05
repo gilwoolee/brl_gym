@@ -84,6 +84,89 @@ class ExplicitBayesDoorsEnvNoEntropyReward(ExplicitBayesDoorsEnv):
     def __init__(self):
         super(ExplicitBayesDoorsEnvNoEntropyReward, self).__init__(True, False)
 
+
+# Instead of the belief, return best estimate
+class UPMLEDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
+    def __init__(self, reset_params=True, reward_entropy=True):
+
+        self.num_doors = 4
+        self.num_cases = 2**self.num_doors
+        self.cases =  ['{{:0{}b}}'.format(self.num_doors).format(x) \
+                      for x in range(self.num_cases)]
+        self.cases_np = [np.array([int(x) for x in case]) for case in self.cases]
+
+        envs = []
+        for case in self.cases_np:
+            env = DoorsEnv()
+            env.open_doors = case.astype(np.bool)
+            envs += [env]
+
+        self.estimator = BayesDoorsEstimator()
+
+        self.env_sampler = DiscreteEnvSampler(envs)
+        super(UPMLEDoorsEnv, self).__init__(env, self.estimator)
+        self.nominal_env = env
+
+        self.observation_space = Dict(
+            {"obs": env.observation_space, "zparam": self.estimator.param_space})
+        self.internal_observation_space = env.observation_space
+        self.env = env
+        self.reset_params = reset_params
+        self.reward_entropy = reward_entropy
+        utils.EzPickle.__init__(self)
+
+    def _update_belief(self,
+                             action,
+                             obs,
+                             **kwargs):
+        # Estimate
+        self.estimator.estimate(
+                action, obs, **kwargs)
+        belief = self.estimator.get_belief()
+        return belief, kwargs
+
+    def step(self, action):
+        prev_state = self.env.get_state().copy()
+        obs, reward, done, info = self.env.step(action)
+        info['prev_state'] = prev_state
+        info['curr_state'] = self.env.get_state()
+
+        bel, info = self._update_belief(
+                                        action,
+                                        obs,
+                                        **info)
+        entropy = np.sum(-np.log(bel+1e-5)/np.log(len(bel)) * bel)
+        ent_reward = -(entropy - self.prev_entropy)
+        self.prev_entropy = entropy
+        if self.reward_entropy:
+            reward += ent_reward
+        info['entropy'] = entropy
+        param = self.estimator.get_mle()
+
+        return {'obs':obs, 'zparam':param}, reward, done, info
+
+    def reset(self):
+        if self.reset_params:
+            while True:
+                self.env = self.env_sampler.sample()
+                if not np.all(self.env.open_doors == False):
+                    break
+
+        obs = self.env.reset()
+        self.estimator.reset()
+        bel, _ = self._update_belief(action=None, obs=obs)
+        entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
+        self.prev_entropy = entropy
+        param = self.estimator.get_mle()
+        return {'obs':obs, 'zparam':param}
+
+
+
+class UPMLEDoorsEnvNoEntropyReward(UPMLEDoorsEnv):
+    def __init__(self):
+        super(UPMLEDoorsEnvNoEntropyReward, self).__init__(True, False)
+
+
 # Divide regions into 4 regions, L0, L1, L2, L3 from left to right
 REGIONS = [0, 1, 2, 3]
 CLOSEST_DOORS = {0:dict(), 1:dict(), 2:dict(), 3:dict()}

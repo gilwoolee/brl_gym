@@ -52,7 +52,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         obs = self._get_obs()
         if len(a) == 3:
             if a[2] > 0:
-                reward += -1 #0.1
+                reward += -0.1
                 info = {'goal_dist':obs[-1]}
             else:
                 info = {}

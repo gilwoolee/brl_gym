@@ -52,8 +52,10 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         obs = self._get_obs()
         if len(a) == 3:
             if a[2] > 0:
+                dist, noise_scale = self._sense()
                 reward += -0.1
-                info = {'goal_dist':obs[-1]}
+                obs[-1] = dist
+                info = {'goal_dist':dist, 'noise_scale':noise_scale}
             else:
                 info = {}
         else:
@@ -64,12 +66,18 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
         target_pos = self.data.site_xpos[self.target_sid].ravel()
         goal_dist = GOAL_POSE - agent_pos[:2]
+
+        return np.concatenate([agent_pos[:2], self.data.qvel.ravel(), goal_dist.ravel(),
+            [0]])
+
+    def _sense(self):
+        agent_pos = self.data.body_xpos[self.agent_bid].ravel()
+        goal_dist = GOAL_POSE - agent_pos[:2]
         # Noisy distance
         noise_scale = np.linalg.norm(goal_dist[self.target]) / (1.2*np.sqrt(2))
-
         dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * noise_scale
-        return np.concatenate([agent_pos[:2], self.data.qvel.ravel(), goal_dist.ravel(),
-            [dist]])
+        return dist, noise_scale
+
 
     def reset_model(self):
         # randomize the agent and goal

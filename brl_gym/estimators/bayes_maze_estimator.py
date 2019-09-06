@@ -18,6 +18,10 @@ class BayesMazeEstimator(Estimator):
         super(BayesMazeEstimator, self).__init__(
                 env.observation_space, env.action_space, belief_space)
         self.reset()
+        self.param_low = np.zeros(GOAL_POSE.shape[0])
+        self.param_high = np.ones(GOAL_POSE.shape[0])
+        self.param_space = Box(self.param_low, self.param_high)
+
 
     def reset(self):
         self.belief = np.ones(GOAL_POSE.shape[0])
@@ -35,8 +39,9 @@ class BayesMazeEstimator(Estimator):
         # obs = observation[3:5]
         if 'goal_dist' in kwargs:
             obs_goal_dist = kwargs['goal_dist']
+            noise_scale = kwargs['noise_scale']
             dist_to_goals = np.linalg.norm(observation[4:4+GOAL_POSE.shape[0]*2].reshape(-1,2), axis=1)
-            p_obs_given_prior = norm.pdf(dist_to_goals - obs_goal_dist, scale=1.0) * self.belief
+            p_obs_given_prior = norm.pdf(dist_to_goals - obs_goal_dist, scale=noise_scale) * self.belief
             p_goal_obs  = p_obs_given_prior / np.sum(p_obs_given_prior)
             self.belief = p_goal_obs
             return self.belief
@@ -45,6 +50,9 @@ class BayesMazeEstimator(Estimator):
 
     def get_belief(self):
         return self.belief.copy()
+
+    def get_mle(self):
+        return np.around(self.belief)
 
 
 if __name__ == "__main__":

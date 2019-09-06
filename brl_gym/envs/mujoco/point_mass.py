@@ -74,7 +74,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
         goal_dist = GOAL_POSE - agent_pos[:2]
         # Noisy distance
-        noise_scale = np.linalg.norm(goal_dist[self.target]) / (1.2*np.sqrt(2))
+        noise_scale = np.linalg.norm(goal_dist[self.target]) / (1.8*np.sqrt(2))
         dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * noise_scale
         return dist, noise_scale
 

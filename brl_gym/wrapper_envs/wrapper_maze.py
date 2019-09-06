@@ -64,7 +64,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
         if self.reward_entropy:
-            reward += ent_reward * 10
+            reward += ent_reward * 100
         info['entropy'] = entropy
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
@@ -81,10 +81,79 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
 
 
 
-
 class ExplicitBayesMazeEnvNoEntropyReward(ExplicitBayesMazeEnv):
     def __init__(self):
         super(ExplicitBayesMazeEnvNoEntropyReward, self).__init__(False, True)
+
+
+class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
+    def __init__(self, reward_entropy=True, reset_params=True):
+
+        envs = []
+        for i in range(GOAL_POSE.shape[0]):
+            env = PointMassEnv()
+            env.target = i
+            envs += [env]
+
+        self.estimator = BayesMazeEstimator()
+        self.env_sampler = DiscreteEnvSampler(envs)
+        super(UPMLEMazeEnv, self).__init__(env, self.estimator)
+        self.nominal_env = env
+
+        self.observation_space = Dict(
+            {"obs": env.observation_space, "zparam": self.estimator.param_space})
+        self.internal_observation_space = env.observation_space
+        self.env = env
+        self.reset_params = reset_params
+        self.reward_entropy = reward_entropy
+        utils.EzPickle.__init__(self)
+
+    def _update_belief(self,
+                             action,
+                             obs,
+                             **kwargs):
+        # Estimate
+        self.estimator.estimate(
+                action, obs, **kwargs)
+        belief = self.estimator.get_belief()
+        return belief, kwargs
+
+    def step(self, action):
+        prev_state = self.env.get_state().copy()
+        obs, reward, done, info = self.env.step(action)
+        info['prev_state'] = prev_state
+        info['curr_state'] = self.env.get_state()
+
+        bel, info = self._update_belief(
+                                        action,
+                                        obs,
+                                        **info)
+
+        entropy = np.sum(-np.log(bel+1e-5)/np.log(len(bel)) * bel)
+        ent_reward = -(entropy - self.prev_entropy)
+        self.prev_entropy = entropy
+        if self.reward_entropy:
+            reward += ent_reward * 100
+        info['entropy'] = entropy
+        param = self.estimator.get_mle()
+        return {'obs':obs, 'zparam':param}, reward, done, info
+
+    def reset(self):
+        if self.reset_params:
+            self.env = self.env_sampler.sample()
+        obs = self.env.reset()
+        self.estimator.reset()
+        bel, _ = self._update_belief(action=None, obs=obs)
+        self.last_obs = (obs, bel)
+        entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
+        self.prev_entropy = entropy
+        param = self.estimator.get_mle()
+        return {'obs':obs, 'zparam':param}
+
+
+class UPMLEMazeEnvNoEntropyReward(UPMLEMazeEnv):
+    def __init__(self):
+        super(UPMLEMazeEnvNoEntropyReward, self).__init__(False, True)
 
 
 def get_closest_point(waypoints, position):
@@ -372,25 +441,35 @@ if __name__ == "__main__":
     # print(' discounted sum', undiscounted_sum)
     # import IPython; IPython.embed();
 
-    for _ in range(5):
-        env = ExplicitBayesMazeEnvWithExpert()
-        o = env.reset()
-        print(env.env.target)
+    # for _ in range(5):
+    #     env = ExplicitBayesMazeEnvWithExpert()
+    #     o = env.reset()
+    #     print(env.env.target)
 
 
-    rewards = []
-    for t in range(500):
-        action = o['expert']
-        if t < 50:
-            action[2] = action[2] + np.random.normal()*0.1
-        o, r, d, _ = env.step(action)
-        env.render()
-        print(o['zbel'])
-        rewards += [r]
-        if d:
-            break
+    # rewards = []
+    # for t in range(500):
+    #     action = o['expert']
+    #     if t < 50:
+    #         action[2] = action[2] + np.random.normal()*0.1
+    #     o, r, d, _ = env.step(action)
+    #     env.render()
+    #     print(o['zbel'])
+    #     rewards += [r]
+    #     if d:
+    #         break
 
-    undiscounted_sum = np.sum(rewards)
+    # undiscounted_sum = np.sum(rewards)
 
-    print('undiscounted sum', undiscounted_sum)
-    import IPython; IPython.embed();
+    # print('undiscounted sum', undiscounted_sum)
+    # import IPython; IPython.embed();
+
+    # Test UPMLE
+    env = UPMLEMazeEnv()
+    o = env.reset()
+    for _ in range(400):
+        o, r, d, info = env.step([0,0,1])
+        print(o['zparam'], np.around(env.estimator.get_belief(), 2))
+
+    print(env.env.target)
+    import IPython; IPython.embed()

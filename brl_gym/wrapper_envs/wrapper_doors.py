@@ -317,23 +317,32 @@ if __name__ == "__main__":
     #     env.render()
 
     # # Test expert
-    env = ExplicitBayesDoorsEnv()
+    # env = ExplicitBayesDoorsEnv()
+    # obs = env.reset()
+    # doors = env.env.open_doors
+    # expert = Expert()
+
+    # done = False
+    # rewards = []
+    # while not done:
+    #     action = expert.action((obs['obs'].reshape(1, -1), obs['zbel'].reshape(1, -1)))
+    #     print('obs', np.around(obs['obs'][:2], 2), 'act', action, 'zbel', obs['zbel'])
+    #     obs, r, done, _ = env.step(action.ravel())
+
+    #     env.render()
+
+    #     rewards += [r]
+    #     if done:
+    #         break
+
+    # print("Length", len(rewards))
+    # print(np.sum(rewards))
+
+    # Test upmle env
+    env = UPMLEDoorsEnv()
     obs = env.reset()
-    doors = env.env.open_doors
-    expert = Expert()
+    for _ in range(100):
+        o, r, d, info = env.step([0,0,1])
+        print(o['zparam'], env.estimator.belief)
+    import IPython; IPython.embed()
 
-    done = False
-    rewards = []
-    while not done:
-        action = expert.action((obs['obs'].reshape(1, -1), obs['zbel'].reshape(1, -1)))
-        print('obs', np.around(obs['obs'][:2], 2), 'act', action, 'zbel', obs['zbel'])
-        obs, r, done, _ = env.step(action.ravel())
-
-        env.render()
-
-        rewards += [r]
-        if done:
-            break
-
-    print("Length", len(rewards))
-    print(np.sum(rewards))

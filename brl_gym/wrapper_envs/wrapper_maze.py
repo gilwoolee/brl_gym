@@ -37,6 +37,10 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.env = env
         self.reset_params = reset_params
         self.reward_entropy = reward_entropy
+        if reward_entropy:
+            self.entropy_weight = 1
+        else:
+            self.entropy_weight = 0.0
         utils.EzPickle.__init__(self)
 
     def _update_belief(self,
@@ -63,8 +67,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         entropy = np.sum(-np.log(bel+1e-5)/np.log(len(bel)) * bel)
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
-        if self.reward_entropy:
-            reward += ent_reward * 100
+        reward += ent_reward * self.entropy_weight
         info['entropy'] = entropy
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
@@ -106,6 +109,10 @@ class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.env = env
         self.reset_params = reset_params
         self.reward_entropy = reward_entropy
+
+        # Copy the reward entropy
+        bayes_env = ExplicitBayesMazeEnv(reward_entropy=reward_entropy)
+        self.entropy_weight = bayes_env.entropy_weight
         utils.EzPickle.__init__(self)
 
     def _update_belief(self,
@@ -132,8 +139,7 @@ class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         entropy = np.sum(-np.log(bel+1e-5)/np.log(len(bel)) * bel)
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
-        if self.reward_entropy:
-            reward += ent_reward * 100
+        reward += ent_reward * self.entropy_weight
         info['entropy'] = entropy
         param = self.estimator.get_mle()
         return {'obs':obs, 'zparam':param}, reward, done, info

@@ -337,7 +337,7 @@ class Expert:
 
     def action(self, inputs, infos=[]):
         obs, bel = split_inputs(inputs)
-        if bel == None:
+        if not isinstance(bel, np.ndarray) and bel is None:
             if len(infos) == 0:
                 bel = np.ones((obs.shape[0], GOAL_POSE.shape[0])) / GOAL_POSE.shape[0]
             else:

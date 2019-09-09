@@ -340,7 +340,7 @@ def split_inputs(inputs, infos):
                 bel = None # last elt is entropy
         num_inputs = inputs[0].shape[0]
 
-    if bel == None:
+    if not isinstance(bel, np.ndarray) and bel is None:
         if len(infos) == 0:
             bel = np.ones((obs.shape[0], 16))
         else:

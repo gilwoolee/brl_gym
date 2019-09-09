@@ -357,7 +357,7 @@ class Expert:
         action = action.reshape(len(actions), -1)
 
         # print(action, action.shape, obs.shape)
-        action = np.concatenate([action, np.zeros((action.shape[0], 1))], axis=1) * 0.1
+        action = np.concatenate([action, np.zeros((action.shape[0], 1))], axis=1) * 1.0
         return action
 
     def qvals(self, inputs):

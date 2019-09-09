@@ -72,6 +72,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.prev_entropy = entropy
         reward += ent_reward * self.entropy_weight
         info['entropy'] = entropy
+        info['bel'] = bel
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
     def reset(self):

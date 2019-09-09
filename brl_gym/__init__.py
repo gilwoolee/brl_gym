@@ -185,19 +185,26 @@ register(
 )
 
 register(
+    id='Maze-entropy-only-v0',
+    entry_point='brl_gym.wrapper_envs:BayesMazeEntropyEnv',
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
+    id='Maze-entropy-hidden-v0',
+    entry_point='brl_gym.wrapper_envs:BayesMazeHiddenEntropyEnv',
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
     id='Maze-no-entropy-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnvNoEntropyReward',
     max_episode_steps=500,
     reward_threshold=10,
 )
 
-
-register(
-    id='Maze-expert-v0',
-    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnvWithExpert',
-    max_episode_steps=500,
-    reward_threshold=10,
-)
 
 register(
     id='Maze-upmle-v0',
@@ -241,6 +248,20 @@ register(
     entry_point='brl_gym.wrapper_envs:UPMLEDoorsEnvNoEntropyReward',
     max_episode_steps=300,
     reward_threshold=100,
+)
+
+register(
+    id='Door-entropy-only-v0',
+    entry_point='brl_gym.wrapper_envs:BayesDoorsEntropyEnv',
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
+    id='Door-entropy-hidden-v0',
+    entry_point='brl_gym.wrapper_envs:BayesDoorsHiddenEntropyEnv',
+    max_episode_steps=500,
+    reward_threshold=10,
 )
 
 

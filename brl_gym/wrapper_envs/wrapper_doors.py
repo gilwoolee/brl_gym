@@ -161,10 +161,56 @@ class UPMLEDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         return {'obs':obs, 'zparam':param}
 
 
-
 class UPMLEDoorsEnvNoEntropyReward(UPMLEDoorsEnv):
     def __init__(self):
         super(UPMLEDoorsEnvNoEntropyReward, self).__init__(True, False)
+
+
+class BayesDoorsEntropyEnv(ExplicitBayesDoorsEnv):
+    """
+    Environment that provides entropy instead of belief as observation
+    """
+    def __init__(self, reward_entropy=True, reset_params=True, observe_entropy=True):
+        super(BayesDoorsEntropyEnv, self).__init__(reward_entropy=reward_entropy, reset_params=reset_params)
+        utils.EzPickle.__init__(self)
+
+        entropy_space = Box(np.array([0.0]), np.array([1.0]))
+        self.observation_space = Dict(
+            {"obs": self.env.observation_space, "zentropy": entropy_space})
+
+        self.observe_entropy = observe_entropy
+
+    def step(self, action):
+        obs, reward, done, info = super().step(action)
+        info['bel'] = obs['zbel'].copy()
+        del obs['zbel']
+        if self.observe_entropy:
+            obs['zentropy'] = np.array([info['entropy']])
+        return obs, reward, done, info
+
+    def reset(self):
+        obs = super().reset()
+        del obs['zbel']
+        if self.observe_entropy:
+            obs['zentropy'] = np.array([self.prev_entropy])
+        return obs
+
+
+class BayesDoorsHiddenEntropyEnv(BayesDoorsEntropyEnv):
+    """
+    Hides entropy. Info has everything experts need
+    """
+    def __init__(self):
+        super(BayesDoorsHiddenEntropyEnv, self).__init__(True, True, observe_entropy=False)
+        self.observation_space = env.observation_space
+
+    def step(self, action):
+        obs, reward, done, info = super().step(action)
+        return obs['obs'], reward, done, info
+
+    def reset(self):
+        obs = super().reset()
+        return obs['obs']
 
 
 # Divide regions into 4 regions, L0, L1, L2, L3 from left to right
@@ -236,9 +282,9 @@ def get_closest_door(open_doors, states):
 class SimpleExpert:
     def __init__(self):
         env = DoorsEnv()
-        self.target_pos = env.data.site_xpos[env.target_sid].ravel()[:2]
+        self.target_pos = np.array([0.0, 1.2])
         self.door_pos = env.door_pos[:, :2]
-        self.door_pos[:, 1] = 0.21
+        self.door_pos[:, 1] = 0.25
 
     def action(self, open_doors, states):
         binary = []
@@ -256,18 +302,51 @@ class SimpleExpert:
 
         # If the agent is above the bar, go straight to the goal
         # if state[1] >= door_pos[0, 1]:
-        direction_to_bar = target_pos - states
-        above_bar = states[:, 1] >= 0.225 # bar colliding height self.door_pos[0, 1]
-        actions[above_bar] = direction_to_bar[above_bar]
-
+        direction_to_target = target_pos - states
+        above_bar = states[:, 1] >= 0.25 # bar colliding height self.door_pos[0, 1]
+        actions[above_bar] = direction_to_target[above_bar]
         door = get_closest_door(open_doors, states)
 
         direction_to_door = self.door_pos[door] - states
+
         actions[np.logical_not(above_bar)] = direction_to_door[np.logical_not(above_bar)]
 
         actions = (actions / np.linalg.norm(actions, axis=1).reshape(-1, 1)) * 0.1
-        # actions[actions[:, 1] < 0.05] = 0.05
+
         return actions
+
+env = DoorsEnv()
+OBS_DIM = env.observation_space.shape[0]
+
+def split_inputs(inputs, infos):
+    if isinstance(inputs, np.ndarray):
+        if inputs.shape[1] == OBS_DIM + 16:
+            obs, bel = inputs[:, :-16], inputs[:, -16:]
+            num_inputs = inputs.shape[0]
+        else:
+            obs = inputs
+            num_inputs = inputs.shape[0]
+            bel = None
+    else:
+        if inputs[0].shape[0] > 1:
+            obs = inputs[0].squeeze()
+            bel = inputs[1].squeeze()
+            if len(bel.shape) == 1:
+                bel = None # last elt is entropy
+        else:
+            obs = inputs[0]
+            bel = inputs[1]
+            if bel.shape[0] == 1:
+                bel = None # last elt is entropy
+        num_inputs = inputs[0].shape[0]
+
+    if bel == None:
+        if len(infos) == 0:
+            bel = np.ones((obs.shape[0], 16))
+        else:
+            bel = np.array([info['bel'] for info in infos])
+
+    return obs, bel, num_inputs
 
 
 class Expert:
@@ -277,27 +356,16 @@ class Expert:
         self.door_pos = env.door_pos[:, :2]
         self.simple_expert = SimpleExpert()
 
-    def action(self, inputs):
+    def action(self, inputs, infos=[]):
         door_pos = self.door_pos
         target_pos = self.target_pos
-        if isinstance(inputs, np.ndarray):
-            obs, bel = inputs[:, :-16], inputs[:, -16:]
-            num_inputs = inputs.shape[0]
-        else:
-            if inputs[0].shape[0] > 1:
-                obs = inputs[0].squeeze()
-                bel = inputs[1].squeeze()
-            else:
-                obs = inputs[0]
-                bel = inputs[1]
-            num_inputs = inputs[0].shape[0]
+        obs, bel, num_inputs = split_inputs(inputs, infos)
 
         actions = np.zeros((num_inputs, 2))
 
         for i, case in enumerate(np.arange(15)):
             c = np.array([case] * obs.shape[0])
             proposal = self.simple_expert.action(c, obs[:, :2])
-            # print(CASES[case], "proposal", proposal, bel[:, i+1])
             actions += proposal *  bel[:, [i+1]]
 
         actions = np.concatenate([actions, np.zeros((actions.shape[0], 1))], axis=1)
@@ -339,10 +407,28 @@ if __name__ == "__main__":
     # print(np.sum(rewards))
 
     # Test upmle env
-    env = UPMLEDoorsEnv()
-    obs = env.reset()
-    for _ in range(100):
-        o, r, d, info = env.step([0,0,1])
-        print(o['zparam'], env.estimator.belief)
-    import IPython; IPython.embed()
+    # env = UPMLEDoorsEnv()
+    # obs = env.reset()
+    # for _ in range(100):
+    #     o, r, d, info = env.step([0,0,1])
+    #     print(o['zparam'], env.estimator.belief)
+    # import IPython; IPython.embed()
 
+    # Test entropy-only env
+    env = BayesDoorsEntropyEnv()
+    expert = Expert()
+    o = env.reset()
+    print(o)
+    info = []
+
+    for _ in range(300):
+        o = np.concatenate([o['obs'], o['zentropy']], axis=0).reshape(1, -1)
+        action = expert.action(o, info).ravel()
+        action[-1] = 1
+        o, r, d, info = env.step(action)
+        info = [info]
+        if d:
+            break
+        env.render()
+        print("expert action", action, np.around(info[0]['bel'],1))
+    import IPython; IPython.embed()

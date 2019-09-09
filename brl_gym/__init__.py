@@ -250,6 +250,20 @@ register(
     reward_threshold=100,
 )
 
+register(
+    id='Door-entropy-only-v0',
+    entry_point='brl_gym.wrapper_envs:BayesDoorsEntropyEnv',
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
+    id='Door-entropy-hidden-v0',
+    entry_point='brl_gym.wrapper_envs:BayesDoorsHiddenEntropyEnv',
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
 
 # [GL] MLE
 # ---------

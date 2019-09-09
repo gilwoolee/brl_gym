@@ -200,7 +200,15 @@ class BayesMazeHiddenEntropyEnv(BayesMazeEntropyEnv):
     """
     def __init__(self):
         super(BayesMazeHiddenEntropyEnv, self).__init__(True, True, observe_entropy=False)
+        self.observation_space = env.observation_space
 
+    def step(self, action):
+        obs, reward, done, info = super().step(action)
+        return obs['obs'], reward, done, info
+
+    def reset(self):
+        obs = super().reset()
+        return obs['obs']
 
 def get_closest_point(waypoints, position):
     if waypoints is None or waypoints is False:

@@ -199,6 +199,20 @@ register(
     reward_threshold=10,
 )
 
+register(
+    id='Maze-upmle-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEMazeEnv',
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
+    id='Maze-upmle-no-entropy-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEMazeEnvNoEntropyReward',
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
 
 register(
     id='Door-v0',

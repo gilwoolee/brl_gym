@@ -155,7 +155,7 @@ class MapEnvironment(object):
 
         plt.tight_layout()
 
-        plt.scatter(path[0,1], path[0,0], c='r', s=30)
+        plt.scatter(path[0,1], path[0,0], c='g', s=30)
         plt.scatter(path[-1,1], path[-1,0], c='b', s=30)
 
         if saveto != "":
@@ -170,7 +170,7 @@ class MapEnvironment(object):
 
     def visualize_graph(self, G, saveto=""):
         plt.clf()
-        plt.imshow(self.sampling_map, interpolation='nearest', origin='lower')
+        plt.imshow(self.map, interpolation='nearest', origin='lower')
         edges = G.edges()
         for edge in edges:
             config1 = G.nodes[edge[0]]["config"]

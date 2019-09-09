@@ -70,10 +70,10 @@ class MotionPlanner:
             G = make_graph(planning_env,
                 sampler=Sampler(planning_env),
                 num_vertices=300,
-                connection_radius=50,
+                connection_radius=75,
                 saveto="graph.pkl")
             # input('check')
-            # planning_env.visualize_graph(G)
+            planning_env.visualize_graph(G)
 
         self.G = G
         self.planning_env = planning_env
@@ -84,17 +84,17 @@ class MotionPlanner:
         states = convert_3D_to_2D(configs_3D)
         return self.planning_env.state_validity_checker(states, use_sampling_map)
 
-    def motion_plan(self, start, goal):
+    def motion_plan(self, start, goal, reuse=True, shortcut=False):
 
         start = convert_3D_to_2D(start)
         goal = convert_3D_to_2D(goal)
 
-        if tuple(goal) in self.plans:
+        if tuple(goal) in self.plans and reuse:
             # retreive existing plan
             path = self.plans[tuple(goal)]
             dist = np.linalg.norm(start - path, axis=1)
             idx = min(len(dist) - 1, np.argmin(dist) + 1)
-            if dist[idx] < 50 and self.planning_env.edge_validity_checker(start, path[idx]):
+            if dist[idx] < 5 and self.planning_env.edge_validity_checker(start, path[idx]):
                 path = np.concatenate([[start], path[idx:]], axis=0)
                 return convert_2D_to_3D(path)
 
@@ -106,9 +106,9 @@ class MotionPlanner:
 
         # Add start and goal nodes
         G, start_id = add_node(self.G, start, env=planning_env,
-            connection_radius=50)
+            connection_radius=75)
         G, goal_id = add_node(G, goal, env=planning_env,
-            connection_radius=50)
+            connection_radius=75)
 
         # Uncomment this to visualize the graph
         # planning_env.visualize_graph(G)
@@ -124,8 +124,9 @@ class MotionPlanner:
 
                 # planning_env.visualize_plan(G, path)
 
-                # path = planning_env.shortcut(G, path)
-                # planning_env.visualize_plan(G, path, "path.png")
+                if shortcut:
+                    path = planning_env.shortcut(G, path)
+                # planning_env.visualize_plan(G, path)
                 configs = planning_env.get_path_on_graph(G, path)
 
                 self.plans[tuple(goal)] = configs
@@ -135,19 +136,13 @@ class MotionPlanner:
                 return convert_2D_to_3D(configs)
 
             except nx.NetworkXNoPath as e:
-                # print("failed to plan, make new graph")
 
                 G.remove_node(start_id)
                 G.remove_node(goal_id)
 
                 return False
-                # G = make_graph(planning_env,
-                # sampler=Sampler(planning_env),
-                # num_vertices=300,
-                # connection_radius=150)
 
-                # # Add start and goal nodes
-                # G, start_id = add_node(G, start, env=planning_env,
-                #     connection_radius=150)
-                # G, goal_id = add_node(G, goal, env=planning_env,
-                #     connection_radius=150)
+
+if __name__ == "__main__":
+
+    mp = MotionPlanner(make_new=True)

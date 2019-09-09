@@ -13,6 +13,7 @@ from gym.spaces import Box, Dict
 # from multiprocessing import Pool
 from brl_gym.wrapper_envs.util import discount
 from brl_gym.envs.mujoco.motion_planner.maze import MotionPlanner
+from brl_gym.envs.mujoco.motion_planner.VectorFieldGenerator import VectorField
 
 import cProfile
 
@@ -38,7 +39,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.reset_params = reset_params
         self.reward_entropy = reward_entropy
         if reward_entropy:
-            self.entropy_weight = 1
+            self.entropy_weight = 1.0
         else:
             self.entropy_weight = 0.0
         utils.EzPickle.__init__(self)
@@ -181,7 +182,9 @@ def simple_expert_actor(mp, pose, target):
     idx = min(get_closest_point(waypoints, pose[:2]) + lookahead, waypoints.shape[0]-1)
 
     direction = waypoints[idx] - pose[:2]
+
     direction /= (np.linalg.norm(direction) + 1e-3)
+
 
     while True:
         # Add noise
@@ -208,136 +211,98 @@ def simple_expert_actor(mp, pose, target):
 
         return direction
 
-def get_value_approx(pose, target):
-    start = pose[:, :2]
 
-    # waypoints = mp.motion_plan(start, target)
-    # if not isinstance(waypoints, np.ndarray) and (waypoints == False or waypoints is None):
-    #     return np.linalg.norm(pose - target)
-    # idx = min(get_closest_point(waypoints, pose[:2]), waypoints.shape[0]-1)
+def simple_combined_expert(mp, s, bel, use_vf):
+    assert use_vf
 
-    return -np.linalg.norm(target - start, axis=1)
-    # rewards = -np.sum(dist[idx:] * 0.01) + 1
-
-
-    # return rewards
-
-def qmdp_expert(obs, bel):
-    obs = obs.squeeze()
-    start = obs[:, :2]
-
-    # values = []
-
-    # for s, b in zip(start, bel):
-
-        # vals = [np.array(get_value_approx(mp, s, gp)) for gp in GOAL_POSE]
-        # vals = np.array(vals).transpose()
-        # values += np.sum(vals * bel)
-
-    vals = [np.array(get_value_approx(start, gp)) for gp in GOAL_POSE]
-    vals = np.array(vals).transpose()
-    return np.sum(vals * bel, axis=1)
-
-def simple_combined_expert(mp, obs, bel):
-    obs = obs.squeeze()
-    s = obs[:GOAL_POSE.shape[0]]
-    b = bel
     actions = []
 
     # for s, b in zip(start, bel):
-    if (np.any(bel > 0.9)):
-        idx = np.argwhere(bel.ravel()>0.9)[0,0]
-        action = simple_expert_actor(mp, s, GOAL_POSE[idx])
-        if not isinstance(action, np.ndarray) and action == None:
-            return np.zeros(2)
-            # continue
+    if not use_vf:
+        if (np.any(bel > 0.9)):
+            idx = np.argwhere(bel.ravel()>0.9)[0,0]
+            action = simple_expert_actor(mp, s, GOAL_POSE[idx])
+            if not isinstance(action, np.ndarray) and action == None:
+                return np.zeros(2)
+                # continue
+            else:
+                return action
+
+        action = []
+        for i, gp in enumerate(GOAL_POSE):
+            if not use_vf:
+                action += [simple_expert_actor(mp, s, gp)]
+            else:
+                action += [simple_expert_actor(mp[i], s, gp)]
+            if not isinstance(action[-1], np.ndarray) and action[-1] == None:
+                return np.zeros(2)
+
+        action = np.array(action)
+        return np.sum(action * bel.reshape(-1,1), axis=0)
+
+    else:
+        actions = []
+        for idx, m in enumerate(mp):
+            actions += [m.motion_plan(s, GOAL_POSE[idx])]
+        actions = np.array(actions)
+
+        actions = actions.transpose(1, 0, 2)
+        actions_cp = actions.copy()
+
+        high_belief = bel > 0.9
+        bel = bel[:,:,None]
+        actions = np.sum(actions * bel, axis=1)
+
+        actions[np.any(high_belief, axis=1), :] = actions_cp[high_belief, :]
+
+        return actions
+
+
+def split_inputs(inputs):
+    if isinstance(inputs, np.ndarray):
+        obs, bel = inputs[:, :-GOAL_POSE.shape[0]], inputs[:, -GOAL_POSE.shape[0]:]
+    else:
+        if inputs[0].shape[0] > 1:
+            obs = inputs[0].squeeze()
+            bel = inputs[1].squeeze()
         else:
-            return action
-    action = []
-    for gp in GOAL_POSE:
-        action += [simple_expert_actor(mp, s, gp)]
-        if not isinstance(action[-1], np.ndarray) and action[-1] == None:
-            return np.zeros(2)
-
-    action = np.array(action)
-
-    # if np.any(action == None):
-    #     return np.zeros(2) #random.normal(size=2)*0.05
-
-    return np.sum(action * b.reshape(-1,1), axis=0)
+            obs = inputs[0]
+            bel = inputs[1]
+    return obs, bel
 
 class Expert:
-    def __init__(self, nenv=10):
-        self.mps = [MotionPlanner() for i in range(nenv)]
+    def __init__(self, nenv=10, use_vf=True):
+        if not use_vf:
+            self.mps = [MotionPlanner() for i in range(nenv)]
+        else:
+            self.mps = [VectorField(target=i) for i in range(len(GOAL_POSE))]
+
+        self.use_vf = use_vf
         self.bel_dim = len(GOAL_POSE)
 
     def action(self, inputs):
-        if isinstance(inputs, np.ndarray):
-            obs, bel = inputs[:, :-GOAL_POSE.shape[0]], inputs[:, -GOAL_POSE.shape[0]:]
-        else:
-            if inputs[0].shape[0] > 1:
-                obs = inputs[0].squeeze()
-                bel = inputs[1].squeeze()
-            else:
-                obs = inputs[0]
-                bel = inputs[1]
-
+        obs, bel = split_inputs(inputs)
         actions = []
-        for i, mp in enumerate(self.mps):
-            actions += [simple_combined_expert(mp, obs[i], bel[i])]
+        if not self.use_vf:
+            for i, mp in enumerate(self.mps):
+                actions += [simple_combined_expert(mp, obs[i].squeeze()[:GOAL_POSE.shape[1]], bel[i], use_vf=False)]
+        else:
+            # for i in np.arange(obs.shape[0]):
+            #     actions += [simple_combined_expert(self.mps, obs[[i], :GOAL_POSE.shape[1]], bel[i].reshape(1,-1), use_vf=True)]
+            actions = simple_combined_expert(self.mps, obs[:, :GOAL_POSE.shape[1]], bel, use_vf=True)
 
         action = np.array(actions)
-        if obs.shape[0] >1:
-            action = action.squeeze()
+        action = action.reshape(len(actions), -1)
 
-        action = np.concatenate([action, np.zeros((action.shape[0], 1))], axis=1) * 0.2
+        # print(action, action.shape, obs.shape)
+        action = np.concatenate([action, np.zeros((action.shape[0], 1))], axis=1) * 0.1
         return action
 
     def qvals(self, inputs):
-
         obs = inputs[0].squeeze()
         bel = inputs[1].squeeze()
 
         return qmdp_expert(obs, bel).squeeze()
-
-def trial_combined_expert(i):
-
-    gamma = 0.999
-    env = ExplicitBayesMazeEnv(reset_params=True)
-    exp = Expert(nenv=1)
-    all_rewards = []
-
-    o = env.reset()
-    print(env.env.target)
-
-    done = False
-    # profile = cProfile.Profile()
-    # profile.enable()
-    val_approx = []
-    rewards = []
-    for t in range(400):
-        # val_approx += [get_value_approx(o['obs'].reshape(1, -1), friction)]
-        inp = np.concatenate([o['obs'].ravel(), o['zbel'].ravel()]).reshape(1, -1)
-        action = exp.action(inp)
-        # action = simple_expert_actor(exp.mp, o['obs'], GOAL_POSE[env.env.target])
-        print(action)
-        # action[2] = np.random.normal()*0.1
-        o, r, done, _ = env.step(action)
-        rewards += [r]
-
-        # env.render()
-
-        # input('continue')
-        print(np.around(o['zbel'],2))
-
-    # profile.disable()
-    # profile.print_stats()
-    rewards = np.array(rewards)
-    discounted_sum = discount(rewards, gamma)[0]
-    undiscounted_sum = np.sum(rewards)
-    print(' discounted sum', discounted_sum)
-    # import IPython; IPython.embed();
-    return discounted_sum, undiscounted_sum
 
 class ExplicitBayesMazeEnvWithExpert(ExplicitBayesEnv, utils.EzPickle):
     """
@@ -390,7 +355,7 @@ class ExplicitBayesMazeEnvWithExpert(ExplicitBayesEnv, utils.EzPickle):
         ent_reward = -(entropy - self.prev_entropy)
         self.prev_entropy = entropy
         if self.reward_entropy:
-            reward += ent_reward * 100
+            reward += ent_reward
 
         expert_action = self.expert.action(np.concatenate([obs, bel]).reshape(1, -1)).ravel()
 
@@ -411,7 +376,6 @@ class ExplicitBayesMazeEnvWithExpert(ExplicitBayesEnv, utils.EzPickle):
 
 if __name__ == "__main__":
 
-    # gamma = 0.999
     # env = ExplicitBayesMazeEnv(reset_params=True)
     # # env.env.target = 4
     # exp = Expert(nenv=1)
@@ -471,11 +435,30 @@ if __name__ == "__main__":
     # import IPython; IPython.embed();
 
     # Test UPMLE
-    env = UPMLEMazeEnv()
-    o = env.reset()
-    for _ in range(400):
-        o, r, d, info = env.step([0,0,1])
-        print(o['zparam'], np.around(env.estimator.get_belief(), 2))
+    # env = UPMLEMazeEnv()
+    # o = env.reset()
+    # for _ in range(400):
+    #     o, r, d, info = env.step([0,0,1])
+    #     print(o['zparam'], np.around(env.estimator.get_belief(), 2))
 
-    print(env.env.target)
-    import IPython; IPython.embed()
+    # print(env.env.target)
+    # import IPython; IPython.embed()
+
+    # Test VF expert
+    env = ExplicitBayesMazeEnv(reset_params=True)
+    # env.env.target = 3
+    o = env.reset()
+    print("env", env.env.target)
+
+    exp = Expert(nenv=1, use_vf=True)
+    done = False
+    while True:
+        action = exp.action(
+            (o['obs'].reshape(1, -1),
+                o['zbel'].reshape(1, -1))).ravel()
+        print("Zbel", np.around(o['zbel'], 1), "Action", action)
+        action[-1] = 1
+        o, r, d, info = env.step(action.ravel())
+        env.render()
+        if d:
+            break

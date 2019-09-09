@@ -31,7 +31,7 @@ See LICENSE file for legal notices. LICENSE must be kept together with this file
 
         <geom conaffinity="1" fromto="-1.0  -1.0 .02 0.5  -1.0 .02" name="sideN3" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
 
-        <geom conaffinity="1" fromto="1.0 -1.0 .02 1.0 1.0 .02" name="sideW4" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="1.0 -0.95 .02 1.0 1.0 .02" name="sideW4" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
 
         <geom conaffinity="1" fromto="0.0 -1.0 .02 .0 1.0 .02" name="sideW5" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
 

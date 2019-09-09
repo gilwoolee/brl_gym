@@ -53,19 +53,35 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         if len(a) == 3:
             if a[2] > 0:
                 dist, noise_scale = self._sense()
-                reward += -0.1
+                # reward += -0.1
                 obs[-1] = dist
                 info = {'goal_dist':dist, 'noise_scale':noise_scale}
             else:
                 info = {}
         else:
             info = {}
+
+        # if collision == True:
+        #     reward -= 1
+
         return obs, reward, done, info
 
     def _get_obs(self):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
         target_pos = self.data.site_xpos[self.target_sid].ravel()
         goal_dist = GOAL_POSE - agent_pos[:2]
+
+        # sim = self.sim
+        # collision = 0
+
+        # for i in range(sim.data.ncon):
+        #     # Note that the contact array has more than `ncon` entries,
+        #     # so be careful to only read the valid entries.
+        #     contact = sim.data.contact[i]
+        #     name1 = sim.model.geom_id2name(contact.geom1)
+        #     name2 = sim.model.geom_id2name(contact.geom2)
+        #     if name1 == 'agent' or name2 == 'agent':
+        #         collision = 1
 
         return np.concatenate([agent_pos[:2], self.data.qvel.ravel(), goal_dist.ravel(),
             [0]])
@@ -75,6 +91,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         goal_dist = GOAL_POSE - agent_pos[:2]
         # Noisy distance
         noise_scale = np.linalg.norm(goal_dist[self.target]) / (1.8*np.sqrt(2))
+        # noise_scale = 0.01
         dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * noise_scale
         return dist, noise_scale
 
@@ -84,8 +101,8 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         # agent_x = self.np_random.uniform(low=-0.2, high=0.2) + 0.3
         # agent_y = self.np_random.uniform(low=-0.2, high=0.2) + 0.3
 
-        agent_x = self.np_random.uniform(low=-1.0, high=1.0)
-        agent_y = -1.2
+        agent_x = self.np_random.uniform(low=-0.5, high=0.5)
+        agent_y = -1.3
 
 
         target = self.target #np.random.choice(4)

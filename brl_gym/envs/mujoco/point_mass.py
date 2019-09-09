@@ -53,7 +53,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         if len(a) == 3:
             if a[2] > 0:
                 dist, noise_scale = self._sense()
-                # reward += -0.1
+                reward += -0.1
                 obs[-1] = dist
                 info = {'goal_dist':dist, 'noise_scale':noise_scale}
             else:

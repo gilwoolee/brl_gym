@@ -299,8 +299,8 @@ def simple_combined_expert(mp, s, bel, use_vf):
 
         high_belief = bel > 0.9
         bel = bel[:,:,None]
-        actions = np.sum(actions * bel, axis=1)
 
+        actions = np.sum(actions * bel, axis=1)
         actions[np.any(high_belief, axis=1), :] = actions_cp[high_belief, :]
 
         return actions
@@ -351,7 +351,7 @@ class Expert:
         if self.mle:
             mle_indices = np.argmax(bel, axis=1)
             bel_cp = np.zeros(bel.shape)
-            bel_cp[:, mle_indices] = 1.0
+            bel_cp[tuple(np.array([np.arange(len(mle_indices)), mle_indices]))] = 1.0
             bel = bel_cp
 
         actions = []
@@ -359,8 +359,6 @@ class Expert:
             for i, mp in enumerate(self.mps):
                 actions += [simple_combined_expert(mp, obs[i].squeeze()[:GOAL_POSE.shape[1]], bel[i], use_vf=False)]
         else:
-            # for i in np.arange(obs.shape[0]):
-            #     actions += [simple_combined_expert(self.mps, obs[[i], :GOAL_POSE.shape[1]], bel[i].reshape(1,-1), use_vf=True)]
             actions = simple_combined_expert(self.mps, obs[:, :GOAL_POSE.shape[1]], bel, use_vf=True)
 
         action = np.array(actions)

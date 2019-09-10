@@ -365,7 +365,7 @@ class Expert:
         if self.mle:
             mle_indices = np.argmax(bel, axis=1)
             bel_cp = np.zeros(bel.shape)
-            bel_cp[:, mle_indices] = 1.0
+            bel_cp[tuple(np.array([np.arange(len(mle_indices)), mle_indices]))] = 1.0
             bel = bel_cp
 
         actions = np.zeros((num_inputs, 2))

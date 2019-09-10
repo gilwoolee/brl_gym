@@ -2,7 +2,7 @@ from brl_gym.wrapper_envs.wrapper_maze import Expert, ExplicitBayesMazeEnv
 import numpy as np
 if __name__ == "__main__":
 
-    expert = Expert(nenv=1)
+    expert = Expert(nenv=1, use_vf=True)
 
     all_rewards = []
     for _ in range(500):
@@ -15,8 +15,8 @@ if __name__ == "__main__":
                 np.concatenate([o['obs'], o['zbel']]).reshape(1, -1)).ravel()
 
             # print(action)
-            if t < 100:
-                action[2] = action[2] + np.random.normal()*0.1
+            # if t < 100:
+            action[2] = action[2] + np.random.normal()
             o, r, d, _ = env.step(action)
             # env.render()
             # print(np.around(o['zbel'], 2))

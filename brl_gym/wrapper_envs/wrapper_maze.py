@@ -308,7 +308,7 @@ def simple_combined_expert(mp, s, bel, use_vf):
 
 def split_inputs(inputs, infos):
     if isinstance(inputs, np.ndarray):
-        if inputs.shape[0] == OBS_DIM + GOAL_POSE.shape[0]:
+        if inputs.shape[1] == OBS_DIM + GOAL_POSE.shape[0]:
             obs, bel = inputs[:, :-GOAL_POSE.shape[0]], inputs[:, -GOAL_POSE.shape[0]:]
         else:
             obs = inputs

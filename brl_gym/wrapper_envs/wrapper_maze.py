@@ -306,28 +306,36 @@ def simple_combined_expert(mp, s, bel, use_vf):
         return actions
 
 
-def split_inputs(inputs):
+def split_inputs(inputs, infos):
     if isinstance(inputs, np.ndarray):
         if inputs.shape[0] == OBS_DIM + GOAL_POSE.shape[0]:
             obs, bel = inputs[:, :-GOAL_POSE.shape[0]], inputs[:, -GOAL_POSE.shape[0]:]
         else:
-            return inputs, None
+            obs = inputs
+            bel = None
     else:
         if inputs[0].shape[0] > 1:
             obs = inputs[0].squeeze()
             bel = inputs[1].squeeze()
             if len(bel.shape) == 1:
-                return obs, None # last elt is entropy
+                bel = None # last elt is entropy
         else:
             obs = inputs[0]
             bel = inputs[1]
             if bel.shape[0] == 1:
-                return obs, None
+                bel = None
+
+    if not isinstance(bel, np.ndarray) and bel is None:
+        if len(infos) == 0:
+            bel = np.ones((obs.shape[0], GOAL_POSE.shape[0])) / GOAL_POSE.shape[0]
+        else:
+            bel = np.array([info['bel'] for info in infos])
 
     return obs, bel
 
+
 class Expert:
-    def __init__(self, nenv=10, use_vf=True):
+    def __init__(self, nenv=10, use_vf=True, mle=False):
         if not use_vf:
             self.mps = [MotionPlanner() for i in range(nenv)]
         else:
@@ -335,14 +343,16 @@ class Expert:
 
         self.use_vf = use_vf
         self.bel_dim = len(GOAL_POSE)
+        self.mle = mle
 
     def action(self, inputs, infos=[]):
-        obs, bel = split_inputs(inputs)
-        if not isinstance(bel, np.ndarray) and bel is None:
-            if len(infos) == 0:
-                bel = np.ones((obs.shape[0], GOAL_POSE.shape[0])) / GOAL_POSE.shape[0]
-            else:
-                bel = np.array([info['bel'] for info in infos])
+        obs, bel = split_inputs(inputs, infos)
+
+        if self.mle:
+            mle_indices = np.argmax(bel, axis=1)
+            bel_cp = np.zeros(bel.shape)
+            bel_cp[:, mle_indices] = 1.0
+            bel = bel_cp
 
         actions = []
         if not self.use_vf:
@@ -459,17 +469,16 @@ if __name__ == "__main__":
 
     # Test entropy-only env
     env = BayesMazeEntropyEnv()
-    expert = Expert()
+    expert = Expert(mle=True)
     o = env.reset()
     print(o)
     info = []
-    for _ in range(5):
-
+    for _ in range(500):
         o = np.concatenate([o['obs'], o['zentropy']], axis=0).reshape(1, -1)
         action = expert.action(o, info).ravel()
         action[-1] = 1
         o, r, d, info = env.step(action)
         info = [info]
 
-        # env.render()
+        env.render()
     import IPython; IPython.embed()

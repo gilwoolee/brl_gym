@@ -350,16 +350,23 @@ def split_inputs(inputs, infos):
 
 
 class Expert:
-    def __init__(self):
+    def __init__(self, mle=False):
         env = DoorsEnv()
         self.target_pos = env.data.site_xpos[env.target_sid].ravel()[:2]
         self.door_pos = env.door_pos[:, :2]
         self.simple_expert = SimpleExpert()
+        self.mle = mle
 
     def action(self, inputs, infos=[]):
         door_pos = self.door_pos
         target_pos = self.target_pos
         obs, bel, num_inputs = split_inputs(inputs, infos)
+
+        if self.mle:
+            mle_indices = np.argmax(bel, axis=1)
+            bel_cp = np.zeros(bel.shape)
+            bel_cp[:, mle_indices] = 1.0
+            bel = bel_cp
 
         actions = np.zeros((num_inputs, 2))
 
@@ -416,7 +423,7 @@ if __name__ == "__main__":
 
     # Test entropy-only env
     env = BayesDoorsEntropyEnv()
-    expert = Expert()
+    expert = Expert(mle=True)
     o = env.reset()
     print(o)
     info = []

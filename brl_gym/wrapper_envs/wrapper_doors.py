@@ -175,8 +175,11 @@ class BayesDoorsEntropyEnv(ExplicitBayesDoorsEnv):
         utils.EzPickle.__init__(self)
 
         entropy_space = Box(np.array([0.0]), np.array([1.0]))
-        self.observation_space = Dict(
-            {"obs": self.env.observation_space, "zentropy": entropy_space})
+        if observe_entropy:
+            self.observation_space = Dict(
+                {"obs": env.observation_space, "zentropy": entropy_space})
+        else:
+            self.observation_space = env.observation_space
 
         self.observe_entropy = observe_entropy
 
@@ -186,31 +189,34 @@ class BayesDoorsEntropyEnv(ExplicitBayesDoorsEnv):
         del obs['zbel']
         if self.observe_entropy:
             obs['zentropy'] = np.array([info['entropy']])
-        return obs, reward, done, info
+            return obs, reward, done, info
+        else:
+            return obs['obs'], reward, done, info
 
     def reset(self):
         obs = super().reset()
-        del obs['zbel']
         if self.observe_entropy:
             obs['zentropy'] = np.array([self.prev_entropy])
-        return obs
+            return obs
+        else:
+            return obs['obs']
 
 
-class BayesDoorsHiddenEntropyEnv(BayesDoorsEntropyEnv):
-    """
-    Hides entropy. Info has everything experts need
-    """
-    def __init__(self):
-        super(BayesDoorsHiddenEntropyEnv, self).__init__(True, True, observe_entropy=False)
-        self.observation_space = env.observation_space
+# class BayesDoorsHiddenEntropyEnv(BayesDoorsEntropyEnv):
+#     """
+#     Hides entropy. Info has everything experts need
+#     """
+#     def __init__(self):
+#         super(BayesDoorsHiddenEntropyEnv, self).__init__(True, True, observe_entropy=False)
+#         self.observation_space = env.observation_space
 
-    def step(self, action):
-        obs, reward, done, info = super().step(action)
-        return obs['obs'], reward, done, info
+#     def step(self, action):
+#         obs, reward, done, info = super().step(action)
+#         return obs['obs'], reward, done, info
 
-    def reset(self):
-        obs = super().reset()
-        return obs['obs']
+#     def reset(self):
+#         obs = super().reset()
+#         return obs['obs']
 
 
 # Divide regions into 4 regions, L0, L1, L2, L3 from left to right

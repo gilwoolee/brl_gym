@@ -84,6 +84,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.last_obs = (obs, bel)
         entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
         self.prev_entropy = entropy
+
         return {'obs':obs, 'zbel':bel}
 
 
@@ -175,10 +176,13 @@ class BayesMazeEntropyEnv(ExplicitBayesMazeEnv, utils.EzPickle):
         utils.EzPickle.__init__(self)
 
         entropy_space = Box(np.array([0.0]), np.array([1.0]))
-        self.observation_space = Dict(
-            {"obs": env.observation_space, "zentropy": entropy_space})
 
         self.observe_entropy = observe_entropy
+        if observe_entropy:
+            self.observation_space = Dict(
+                {"obs": env.observation_space, "zentropy": entropy_space})
+        else:
+            self.observation_space = env.observation_space
 
     def step(self, action):
         obs, reward, done, info = super().step(action)
@@ -186,30 +190,36 @@ class BayesMazeEntropyEnv(ExplicitBayesMazeEnv, utils.EzPickle):
         del obs['zbel']
         if self.observe_entropy:
             obs['zentropy'] = np.array([info['entropy']])
-        return obs, reward, done, info
+            return obs, reward, done, info
+        else:
+            return obs['obs'], reward, done, info
+
 
     def reset(self):
         obs = super().reset()
         del obs['zbel']
         if self.observe_entropy:
             obs['zentropy'] = np.array([self.prev_entropy])
-        return obs
+            return obs
+        else:
+            return obs['obs']
 
-class BayesMazeHiddenEntropyEnv(BayesMazeEntropyEnv):
-    """
-    Hides entropy. Info has everything experts need
-    """
-    def __init__(self):
-        super(BayesMazeHiddenEntropyEnv, self).__init__(True, True, observe_entropy=False)
-        self.observation_space = env.observation_space
+# class BayesMazeHiddenEntropyEnv(BayesMazeEntropyEnv):
+#     """
+#     Hides entropy. Info has everything experts need
+#     """
+#     def __init__(self, reward_entropy=True):
+#         super(BayesMazeHiddenEntropyEnv, self).__init__(reward_param=True,
+#             reward_entropy=reward_entropy, observe_entropy=False)
+#         self.observation_space = env.observation_space
 
-    def step(self, action):
-        obs, reward, done, info = super().step(action)
-        return obs['obs'], reward, done, info
+#     def step(self, action):
+#         obs, reward, done, info = super().step(action)
+#         return obs['obs'], reward, done, info
 
-    def reset(self):
-        obs = super().reset()
-        return obs['obs']
+#     def reset(self):
+#         obs = super().reset()
+#         return obs['obs']
 
 def get_closest_point(waypoints, position):
     if waypoints is None or waypoints is False:
@@ -364,7 +374,6 @@ class Expert:
         action = np.array(actions)
         action = action.reshape(len(actions), -1)
 
-        # print(action, action.shape, obs.shape)
         action = np.concatenate([action, np.zeros((action.shape[0], 1))], axis=1) * 1.0
         return action
 

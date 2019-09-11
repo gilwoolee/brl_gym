@@ -16,15 +16,15 @@ from brl_gym.wrapper_envs.wrapper_pusher import ExplicitPusherEnv
 from brl_gym.wrapper_envs.wrapper_maze import (ExplicitBayesMazeEnv,
 											   ExplicitBayesMazeEnvNoEntropyReward,
 											   BayesMazeEntropyEnv,
-											   BayesMazeHiddenEntropyEnv,
+											   # BayesMazeHiddenEntropyEnv,
 											   UPMLEMazeEnv,
 											   UPMLEMazeEnvNoEntropyReward)
 from brl_gym.wrapper_envs.wrapper_doors import (ExplicitBayesDoorsEnv,
 												ExplicitBayesDoorsEnvNoEntropyReward,
 												UPMLEDoorsEnvNoEntropyReward,
 												UPMLEDoorsEnv,
-												BayesDoorsEntropyEnv,
-												BayesDoorsHiddenEntropyEnv)
+												BayesDoorsEntropyEnv)
+												# BayesDoorsHiddenEntropyEnv)
 
 
 # from gym.classic_control.cartpole import CartPoleEnv as ExplicitBayesCartPoleEnv

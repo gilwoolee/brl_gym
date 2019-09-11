@@ -84,6 +84,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.last_obs = (obs, bel)
         entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
         self.prev_entropy = entropy
+
         return {'obs':obs, 'zbel':bel}
 
 
@@ -175,10 +176,13 @@ class BayesMazeEntropyEnv(ExplicitBayesMazeEnv, utils.EzPickle):
         utils.EzPickle.__init__(self)
 
         entropy_space = Box(np.array([0.0]), np.array([1.0]))
-        self.observation_space = Dict(
-            {"obs": env.observation_space, "zentropy": entropy_space})
 
         self.observe_entropy = observe_entropy
+        if observe_entropy:
+            self.observation_space = Dict(
+                {"obs": env.observation_space, "zentropy": entropy_space})
+        else:
+            self.observation_space = env.observation_space
 
     def step(self, action):
         obs, reward, done, info = super().step(action)
@@ -186,30 +190,36 @@ class BayesMazeEntropyEnv(ExplicitBayesMazeEnv, utils.EzPickle):
         del obs['zbel']
         if self.observe_entropy:
             obs['zentropy'] = np.array([info['entropy']])
-        return obs, reward, done, info
+            return obs, reward, done, info
+        else:
+            return obs['obs'], reward, done, info
+
 
     def reset(self):
         obs = super().reset()
         del obs['zbel']
         if self.observe_entropy:
             obs['zentropy'] = np.array([self.prev_entropy])
-        return obs
+            return obs
+        else:
+            return obs['obs']
 
-class BayesMazeHiddenEntropyEnv(BayesMazeEntropyEnv):
-    """
-    Hides entropy. Info has everything experts need
-    """
-    def __init__(self):
-        super(BayesMazeHiddenEntropyEnv, self).__init__(True, True, observe_entropy=False)
-        self.observation_space = env.observation_space
+# class BayesMazeHiddenEntropyEnv(BayesMazeEntropyEnv):
+#     """
+#     Hides entropy. Info has everything experts need
+#     """
+#     def __init__(self, reward_entropy=True):
+#         super(BayesMazeHiddenEntropyEnv, self).__init__(reward_param=True,
+#             reward_entropy=reward_entropy, observe_entropy=False)
+#         self.observation_space = env.observation_space
 
-    def step(self, action):
-        obs, reward, done, info = super().step(action)
-        return obs['obs'], reward, done, info
+#     def step(self, action):
+#         obs, reward, done, info = super().step(action)
+#         return obs['obs'], reward, done, info
 
-    def reset(self):
-        obs = super().reset()
-        return obs['obs']
+#     def reset(self):
+#         obs = super().reset()
+#         return obs['obs']
 
 def get_closest_point(waypoints, position):
     if waypoints is None or waypoints is False:
@@ -299,35 +309,43 @@ def simple_combined_expert(mp, s, bel, use_vf):
 
         high_belief = bel > 0.9
         bel = bel[:,:,None]
-        actions = np.sum(actions * bel, axis=1)
 
+        actions = np.sum(actions * bel, axis=1)
         actions[np.any(high_belief, axis=1), :] = actions_cp[high_belief, :]
 
         return actions
 
 
-def split_inputs(inputs):
+def split_inputs(inputs, infos):
     if isinstance(inputs, np.ndarray):
-        if inputs.shape[0] == OBS_DIM + GOAL_POSE.shape[0]:
+        if inputs.shape[1] == OBS_DIM + GOAL_POSE.shape[0]:
             obs, bel = inputs[:, :-GOAL_POSE.shape[0]], inputs[:, -GOAL_POSE.shape[0]:]
         else:
-            return inputs, None
+            obs = inputs
+            bel = None
     else:
         if inputs[0].shape[0] > 1:
             obs = inputs[0].squeeze()
             bel = inputs[1].squeeze()
             if len(bel.shape) == 1:
-                return obs, None # last elt is entropy
+                bel = None # last elt is entropy
         else:
             obs = inputs[0]
             bel = inputs[1]
             if bel.shape[0] == 1:
-                return obs, None
+                bel = None
+
+    if not isinstance(bel, np.ndarray) and bel is None:
+        if len(infos) == 0:
+            bel = np.ones((obs.shape[0], GOAL_POSE.shape[0])) / GOAL_POSE.shape[0]
+        else:
+            bel = np.array([info['bel'] for info in infos])
 
     return obs, bel
 
+
 class Expert:
-    def __init__(self, nenv=10, use_vf=True):
+    def __init__(self, nenv=10, use_vf=True, mle=False):
         if not use_vf:
             self.mps = [MotionPlanner() for i in range(nenv)]
         else:
@@ -335,28 +353,27 @@ class Expert:
 
         self.use_vf = use_vf
         self.bel_dim = len(GOAL_POSE)
+        self.mle = mle
 
     def action(self, inputs, infos=[]):
-        obs, bel = split_inputs(inputs)
-        if not isinstance(bel, np.ndarray) and bel is None:
-            if len(infos) == 0:
-                bel = np.ones((obs.shape[0], GOAL_POSE.shape[0])) / GOAL_POSE.shape[0]
-            else:
-                bel = np.array([info['bel'] for info in infos])
+        obs, bel = split_inputs(inputs, infos)
+
+        if self.mle:
+            mle_indices = np.argmax(bel, axis=1)
+            bel_cp = np.zeros(bel.shape)
+            bel_cp[tuple(np.array([np.arange(len(mle_indices)), mle_indices]))] = 1.0
+            bel = bel_cp
 
         actions = []
         if not self.use_vf:
             for i, mp in enumerate(self.mps):
                 actions += [simple_combined_expert(mp, obs[i].squeeze()[:GOAL_POSE.shape[1]], bel[i], use_vf=False)]
         else:
-            # for i in np.arange(obs.shape[0]):
-            #     actions += [simple_combined_expert(self.mps, obs[[i], :GOAL_POSE.shape[1]], bel[i].reshape(1,-1), use_vf=True)]
             actions = simple_combined_expert(self.mps, obs[:, :GOAL_POSE.shape[1]], bel, use_vf=True)
 
         action = np.array(actions)
         action = action.reshape(len(actions), -1)
 
-        # print(action, action.shape, obs.shape)
         action = np.concatenate([action, np.zeros((action.shape[0], 1))], axis=1) * 1.0
         return action
 
@@ -459,17 +476,16 @@ if __name__ == "__main__":
 
     # Test entropy-only env
     env = BayesMazeEntropyEnv()
-    expert = Expert()
+    expert = Expert(mle=True)
     o = env.reset()
     print(o)
     info = []
-    for _ in range(5):
-
+    for _ in range(500):
         o = np.concatenate([o['obs'], o['zentropy']], axis=0).reshape(1, -1)
         action = expert.action(o, info).ravel()
         action[-1] = 1
         o, r, d, info = env.step(action)
         info = [info]
 
-        # env.render()
+        env.render()
     import IPython; IPython.embed()

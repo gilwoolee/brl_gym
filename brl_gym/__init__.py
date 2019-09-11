@@ -192,8 +192,25 @@ register(
 )
 
 register(
+    id='Maze-entropy-only-no-reward-v0',
+    entry_point='brl_gym.wrapper_envs:BayesMazeEntropyEnv',
+    kwargs={'reward_entropy': False},
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
     id='Maze-entropy-hidden-v0',
-    entry_point='brl_gym.wrapper_envs:BayesMazeHiddenEntropyEnv',
+    entry_point='brl_gym.wrapper_envs:BayesMazeEntropyEnv',
+    kwargs={"reward_entropy": True, "observe_entropy":False},
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
+    id='Maze-entropy-hidden-no-reward-v0',
+    entry_point='brl_gym.wrapper_envs:BayesMazeEntropyEnv',
+    kwargs={"reward_entropy": False, "observe_entropy": False},
     max_episode_steps=500,
     reward_threshold=10,
 )
@@ -205,7 +222,6 @@ register(
     reward_threshold=10,
 )
 
-
 register(
     id='Maze-upmle-v0',
     entry_point='brl_gym.wrapper_envs:UPMLEMazeEnv',
@@ -213,6 +229,13 @@ register(
     reward_threshold=10,
 )
 
+register(
+    id='Maze-upmle-no-reward-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEMazeEnv',
+    kwargs={"reward_entropy": False},
+    max_episode_steps=500,
+    reward_threshold=10,
+)
 register(
     id='Maze-upmle-no-entropy-v0',
     entry_point='brl_gym.wrapper_envs:UPMLEMazeEnvNoEntropyReward',
@@ -259,11 +282,27 @@ register(
 
 register(
     id='Door-entropy-hidden-v0',
-    entry_point='brl_gym.wrapper_envs:BayesDoorsHiddenEntropyEnv',
+    entry_point='brl_gym.wrapper_envs:BayesDoorsEntropyEnv',
+    kwargs={"observe_entropy": False},
     max_episode_steps=500,
     reward_threshold=10,
 )
 
+register(
+    id='Door-entropy-hidden-no-reward-v0',
+    entry_point='brl_gym.wrapper_envs:BayesDoorsEntropyEnv',
+    kwargs={"reward_entropy": False, "observe_entropy": False},
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
+    id='Door-entropy-only-no-reward-v0',
+    entry_point='brl_gym.wrapper_envs:BayesDoorsEntropyEnv',
+    kwargs={'reward_entropy': False},
+    max_episode_steps=500,
+    reward_threshold=10,
+)
 
 # [GL] MLE
 # ---------

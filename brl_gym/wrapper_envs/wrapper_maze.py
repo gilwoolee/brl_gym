@@ -21,7 +21,7 @@ env = PointMassEnv()
 OBS_DIM = env.observation_space.shape[0]
 
 class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
-    def __init__(self, reward_entropy=True, reset_params=True):
+    def __init__(self, reward_entropy=True, reset_params=True, entropy_weight=1.0):
 
         envs = []
         for i in range(GOAL_POSE.shape[0]):
@@ -41,7 +41,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.reset_params = reset_params
         self.reward_entropy = reward_entropy
         if reward_entropy:
-            self.entropy_weight = 1.0
+            self.entropy_weight = entropy_weight
         else:
             self.entropy_weight = 0.0
         utils.EzPickle.__init__(self)

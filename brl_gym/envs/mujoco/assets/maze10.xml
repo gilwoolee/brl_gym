@@ -1,0 +1,49 @@
+<mujoco model="Point Mass Maze">
+  <include file="./common/skybox.xml"/>
+  <include file="./common/visual.xml"/>
+  <include file="./common/materials.xml"/>
+
+  <asset>
+    <!-- size: (x-extent, y-extent, z-max, depth of base below minimum elevation point) -->
+    <hfield name="maze" file="walls.png" size=".3 .3 .05 .1"/>
+  </asset>
+
+  <option timestep="0.02"/>
+
+  <default>
+    <joint type="slide" axis="0 0 1" limited="true" range="-.29 .29" damping="0.5"/>
+    <motor gear=".1" ctrlrange="-1 1" ctrllimited="true"/>
+  </default>
+
+  <worldbody>
+    <light name="light" pos="0 0 1.2"/>
+    <camera name="fixed" pos="0 0 1" quat="1 0 0 0"/>
+    <geom name="ground" type="plane" pos="0 0 .001" size=".3 .3 .001" material="site"/>
+    <geom name="maze" type="hfield" hfield="maze" material="decoration"/>
+
+    <body name="pointmass" pos="0 0 .012">
+      <!-- <camera name="cam0" pos="0 -0.3 0.3" xyaxes="1 0 0 0 0.7 0.7"/> -->
+      <joint name="agent_x" pos="0 0 0" axis="1 0 0" />
+      <joint name="agent_y" pos="0 0 0" axis="0 1 0" />
+      <geom name="pointmass" type="sphere" size=".01" material="self" mass=".1"/>
+    </body>
+
+    <site name="target1" pos="0.075 -0.265 0.01" material="target_highlight" type="sphere" size=".01"/>
+    <site name="target2" pos="0.065 0.04 0.01" material="target_hidden" type="sphere" size=".01"/>
+    <site name="target3" pos="-0.13 0.08 0.01" material="target_hidden" type="sphere" size=".01"/>
+    <site name="target4" pos="-0.2 -0.265 0.01" material="target_hidden" type="sphere" size=".01"/>
+    <site name="target5" pos="-0.265 -0.265 0.01" material="target_hidden" type="sphere" size=".01"/>
+    <site name="target6" pos="-0.265 0.265 0.01" material="target_hidden" type="sphere" size=".01"/>
+    <site name="target7" pos="-0.13 0.15 0.01" material="target_hidden" type="sphere" size=".01"/>
+    <site name="target8" pos="0.0 -0.265 0.01" material="target_hidden" type="sphere" size=".01"/>
+    <site name="target9" pos="0.13 0.265 0.01" material="target_hidden" type="sphere" size=".01"/>
+    <site name="target10" pos="0.06 0.12 0.01" material="target_hidden" type="sphere" size=".01"/>
+
+    <!-- <site name="origin" pos="0 0.28 0.01" material="target" type="sphere" size=".01"/> -->
+  </worldbody>
+
+  <actuator>
+    <motor name="t1" joint="agent_x"/>
+    <motor name="t2" joint="agent_y"/>
+  </actuator>
+</mujoco>

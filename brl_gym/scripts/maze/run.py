@@ -12,11 +12,11 @@ dry_run = False
 algo_to_alg = {
     # "single_expert_rbpo": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
     # "entropy_hidden_rbpo": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
-    # "rbpo_stronger_expert": ["bppo2_expert", "Maze-no-entropy-v0"],
+    #"rbpo_stronger_expert": ["bppo2_expert", "Maze-no-entropy-v0"],
     # "entropy_rbpo": ["bppo2_expert", "Maze-entropy-only-no-reward-v0"],
-    "bpo": ["ppo2","Maze-no-entropy-v0"],
+    # "bpo": ["ppo2","Maze-no-entropy-v0"],
     # "upmle": ["ppo2", "Maze-upmle-no-reward-v0"],
-    # "expert_no_residual": ["bpo_expert_no_residual", "Maze-no-entropy-v0"],
+    "expert_no_residual": ["bpo_expert_no_residual", "Maze-no-entropy-v0"],
     # "noentropy_rbpo": ["bppo2_expert", "Maze-no-entropy-v0"],
     # "rbpo_hidden_belief_no_ent_reward": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
 }
@@ -33,12 +33,12 @@ for algo in algos:
     checkpoints.sort()
     last = int(checkpoints[-1].split("/")[-1])
 
-    outputdir = "output/"+algname
+    outputdir = "/home/gilwoo/output/maze/"+algname
     if not os.path.exists(outputdir):
         print("Make ", outputdir)
         os.makedirs(outputdir)
 
-    for i in list(range(100, last, 100)):
+    for i in [1] + list(range(100, last, 100)):
         outputfile = "{}/{}.txt".format(outputdir, str(i).zfill(5))
         if os.path.exists(outputfile):
             continue

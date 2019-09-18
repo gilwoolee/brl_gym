@@ -2,10 +2,10 @@ from brl_gym.wrapper_envs.wrapper_maze import Expert, ExplicitBayesMazeEnv
 import numpy as np
 if __name__ == "__main__":
 
-    expert = Expert(nenv=1, use_vf=True)
+    expert = Expert(nenv=1, use_vf=True, mle=True)
 
     all_rewards = []
-    for _ in range(500):
+    for _ in range(300):
         env = ExplicitBayesMazeEnv(reward_entropy=False)
         o = env.reset()
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
         undiscounted_sum = np.sum(rewards)
         all_rewards += [undiscounted_sum]
-        print('undiscounted sum', undiscounted_sum)
+        # print('undiscounted sum', undiscounted_sum)
 
     print("stat", np.mean(all_rewards), np.std(all_rewards) / np.sqrt(len(all_rewards)))
     # 229.978 17.471892485704004

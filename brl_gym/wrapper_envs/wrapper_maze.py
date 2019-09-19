@@ -179,7 +179,7 @@ class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         idx = np.argmax(mle)
         for i, o in enumerate(mle):
             self.env.model.site_rgba[i, 0] = 0.0
-        print(idx)
+        # print(idx)
         self.env.model.site_rgba[idx, 0] = 1.0
 
     def reset(self):
@@ -308,7 +308,7 @@ def simple_combined_expert(mp, s, bel, use_vf, maze_type=4):
     assert use_vf
 
     actions = []
-    print("bel", np.around(bel,1), "s", s)
+    # print("bel", np.around(bel,1), "s", s)
     # for s, b in zip(start, bel):
     if not use_vf:
         if (np.any(bel > 0.9)):
@@ -423,34 +423,37 @@ class Expert:
 if __name__ == "__main__":
 
     maze_type = 10
-    # env = ExplicitBayesMazeEnv(reset_params=False, maze_type=maze_type)
-    # env.env.target = 4
-    # exp = Expert(nenv=1, maze_type=maze_type)
-    # all_rewards = []
+    env = ExplicitBayesMazeEnv(reset_params=False, maze_type=maze_type)
+    env.env.target = 2
+    exp = Expert(nenv=1, maze_type=maze_type)
+    all_rewards = []
 
-    # # Test expert
-    # o = env.reset()
-    # done = False
-    # val_approx = []
-    # rewards = []
-    # t = 0
-    # while True:
-    #     # bel = np.zeros(maze_type)
-    #     # bel[env.env.target] = 1
+    # Test expert
+    o = env.reset()
+    done = False
+    val_approx = []
+    rewards = []
+    t = 0
+    while True:
+        # bel = np.zeros(maze_type)
+        # bel[env.env.target] = 1
 
-    #     action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
-    #     action = action.squeeze() + np.random.normal() * 3
-    #     print(action)
+        action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
+        action = action.squeeze() + np.random.normal()
+        print(action)
 
-    #     o, r, done, _ = env.step(action)
-    #     rewards += [r]
-    #     env.render()
+        o, r, done, _ = env.step(action)
+        rewards += [r]
+        env.render()
 
-    #     t += 1
-    #     if done:
-    #         break
+        t += 1
+        if done:
+            print(t)
+            break
+        else:
+            t += 1
 
-    # print(t)
+    print(t)
     # rewards = np.array(rewards)
     # # discounted_sum = discount(rewards, gamma)[0]
     # undiscounted_sum = np.sum(rewards)
@@ -481,13 +484,13 @@ if __name__ == "__main__":
     # import IPython; IPython.embed();
 
     # Test UPMLE
-    env = UPMLEMazeEnv(maze_type=maze_type)
-    o = env.reset()
-    for _ in range(5000):
-        o, r, d, info = env.step(env.action_space.sample())
-        print(o['zparam'], np.around(env.estimator.get_belief(), 2))
-        env.render()
-    print(env.env.target)
+    # env = UPMLEMazeEnv(maze_type=maze_type)
+    # o = env.reset()
+    # for _ in range(5000):
+    #     o, r, d, info = env.step(env.action_space.sample())
+    #     print(o['zparam'], np.around(env.estimator.get_belief(), 2))
+    #     env.render()
+    # print(env.env.target)
 
     # Test VF expert
     # env = ExplicitBayesMazeEnv(reset_params=True)

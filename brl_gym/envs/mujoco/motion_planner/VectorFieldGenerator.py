@@ -148,7 +148,7 @@ class VectorField:
         min_dist_idx = np.argmin(dist, axis=0)
 
         original_direction = self.vf[min_dist_idx, -2:]
-        direction = 0.5*original_direction #+ 0.5*(self.vf[min_dist_idx, :2] - start)
+        direction = 0.5*original_direction + 0.5*(self.vf[min_dist_idx, :2] - start)
         direction /= np.linalg.norm(direction, axis=1).reshape(-1, 1)
 
         return direction

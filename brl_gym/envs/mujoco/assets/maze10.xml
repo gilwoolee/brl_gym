@@ -9,8 +9,8 @@
   </asset>
 
   <default>
-    <joint type="slide" axis="0 0 1" damping="0.01"/>
-    <motor gear="0.1" ctrlrange="-1 1" ctrllimited="true"/>
+    <joint type="slide" axis="0 0 1" damping="0.1"/>
+    <motor gear="0.5" ctrlrange="-1 1" ctrllimited="true"/>
   </default>
 
   <worldbody>

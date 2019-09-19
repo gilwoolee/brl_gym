@@ -51,12 +51,11 @@ class Maze10(mujoco_env.MujocoEnv, utils.EzPickle):
 
         reward = 0 #-np.linalg.norm(a) * 0.1
         done = False
-        if dist < 0.2:
+        if dist < 0.1:
             reward = 500.0 # bonus for being very close
             done = True
         if np.any(dist_to_others < 0.1):
             reward = -500 # Penalty for getting close to the other target
-
             done = True
 
         obs = self._get_obs()

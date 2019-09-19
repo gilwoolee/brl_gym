@@ -60,12 +60,17 @@ class MotionPlanner:
             self.connection_radius = 75
         else:
             mapfile = os.path.join(dir_path, "../assets/walls.png")
+            sampling_mapfile = os.path.join(dir_path, "../assets/walls_padding.png")
             img = Image.open(mapfile).convert('L')
             map_data = np.array(img)
-            print("Map data", map_data.shape)
+
+            sampling_mapfile = os.path.join(dir_path, "../assets/walls_padding.png")
+            sampling_img = Image.open(sampling_mapfile).convert('L')
+            sampling_map_data = np.array(sampling_img)
+
             num_vertices = 500
             self.connection_radius = 25
-            planning_env = MapEnvironment(map_data, map_data, maze_type=maze_type)
+            planning_env = MapEnvironment(map_data, sampling_map_data, maze_type=maze_type)
 
         if not make_new:
             if maze_type == 4:
@@ -166,5 +171,5 @@ class MotionPlanner:
 
 if __name__ == "__main__":
 
-    # mp = MotionPlanner(make_new=True, maze_type=10)
-    mp = MotionPlanner(make_new=False, maze_type=10)
+    mp = MotionPlanner(make_new=True, maze_type=10)
+    # mp = MotionPlanner(make_new=False, maze_type=10)

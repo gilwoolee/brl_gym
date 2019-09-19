@@ -51,7 +51,7 @@ class MapEnvironment(object):
         path, length = self.generate_path(config1, config2)
         if length == 0:
             return False, 0
-        valid = self.state_validity_checker(path)
+        valid = self.state_validity_checker(path, use_sampling_map=use_sampling_map)
 
         if not np.all(self.state_validity_checker(path, use_sampling_map)):
             return False, self.maxdist
@@ -112,7 +112,7 @@ class MapEnvironment(object):
             config1 = G.nodes[waypoints[idx1]]['config']
             config2 = G.nodes[waypoints[idx2]]['config']
 
-            valid, length = self.edge_validity_checker(config1, config2)
+            valid, length = self.edge_validity_checker(config1, config2, use_sampling_map=True)
             if valid:
                 waypoints = waypoints[:idx1 + 1] + waypoints[idx2:]
         # print("Path shortcut to {} waypoints".format(len(waypoints)))

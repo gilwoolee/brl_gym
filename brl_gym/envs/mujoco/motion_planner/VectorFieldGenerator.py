@@ -175,4 +175,4 @@ class VectorField:
         plt.savefig(os.path.join(dir_path, "resource/vf_maze{}_{}.png".format(self.maze_type,
             self.target_id)))
         print("Saved fig for {}".format(self.target_id))
-        plt.show()
+        # plt.show()

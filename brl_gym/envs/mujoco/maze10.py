@@ -6,20 +6,30 @@ from mujoco_py import MjViewer
 import os
 asset_dir = "/home/gilwoo/Workspace/brl_gym/brl_gym/envs/mujoco/"
 
-GOAL_POSE = np.array([[-0.25, 0.3], [1.2, 1.2], [1.2, 0.6], [0.25, 0.8]])
+GOAL_POSE = np.array([
+    [0.3, 0.6],
+    [0.375, -1.325],
+    [0.325, 0.2],
+    [-0.65, 0.4],
+    [-1.0, -1.325],
+    [-1.325, -1.325],
+    [-1.325, 1.325],
+    [-0.65, 0.75],
+    [0.0, -1.325],
+    [-0.65, 1.325]
+    ])
 
-class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
+class Maze10(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
         self.agent_bid = 0
         utils.EzPickle.__init__(self)
         self.target = 0
         self.target_sid = 0
 
-        self.fullpath = os.path.join(asset_dir, "assets", 'point_mass.xml')
+        self.fullpath = os.path.join(asset_dir, "assets", 'maze10.xml')
         mujoco_env.MujocoEnv.__init__(self, self.fullpath, 5)
 
         self.agent_bid = self.sim.model.body_name2id('agent')
-        self.target_sid = self.sim.model.site_name2id('target')
 
         self.action_space = Box(np.ones(3) * -1, np.ones(3))
 
@@ -41,12 +51,11 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         reward = 0 #-np.linalg.norm(a) * 0.1
         done = False
-        if dist < 0.2:
+        if dist < 0.1:
             reward = 500.0 # bonus for being very close
             done = True
-        if np.any(dist_to_others < 0.3):
+        if np.any(dist_to_others < 0.1):
             reward = -500 # Penalty for getting close to the other target
-
             done = True
 
         obs = self._get_obs()
@@ -76,23 +85,27 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         goal_dist = GOAL_POSE - agent_pos[:2]
 
         # Noisy distance
-        noise_scale = np.linalg.norm(goal_dist[self.target]) / (1.8*np.sqrt(2))
+        noise_scale = np.linalg.norm(goal_dist[self.target]) * 1.5#/ (1.8*np.sqrt(2))
         dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * noise_scale
         return dist, noise_scale
 
 
     def reset_model(self):
-        # randomize the agent and goal
-        agent_x = self.np_random.uniform(low=-0.5, high=0.5)
-        agent_y = -1.3
 
-        target = self.target #np.random.choice(4)
+        # randomize the agent and goal
+        agent_x = 0.0 #self.np_random.uniform(low=-0.2, high=0.2)
+        agent_y = self.np_random.uniform(low=-0.2, high=0.2)
+
         qp = np.array([agent_x, agent_y])
         qv = self.init_qvel.copy()
         self.set_state(qp, qv)
+        target = self.target
+        self.target_sid = self.sim.model.site_name2id('target{}'.format(target))
+
         self.model.site_pos[self.target_sid][0] = GOAL_POSE[target,0]
         self.model.site_pos[self.target_sid][1] = GOAL_POSE[target,1]
 
+        # self.model.site_rgba[self.target_sid] = np.array([1.0, 0.0, 0.0, 0.1])
         self.sim.forward()
         return self._get_obs()
 
@@ -116,34 +129,14 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
 
 if __name__ == "__main__":
-    env = PointMassEnv()
+    env = Maze10()
     env.target = 3
     o = env.reset()
-    # import IPython; IPython.embed()
-
-    from brl_gym.envs.mujoco.motion_planner.maze import MotionPlanner
-
-    start = o[:2]
-    target = o[-2:]
-    mp = MotionPlanner()
-    waypoints = mp.motion_plan(start, target)
-
-    # print(waypoints)
-    # import IPython; IPython.embed()
-    lookahead = 2
 
     d = False
-    # while not d:
-    while True:
-
-        #idx = min(mp.get_closest_point(waypoints, o[:2]) + lookahead, waypoints.shape[0]-1)
-
-        #direction = waypoints[idx] - o[:2]
-        #direction /= (np.linalg.norm(direction) + 1e-3)
-
-        # xy = np.array([direction[1], direction[0]])
-        # print(start, target, direction)
-        #o, _, _, _ = env.step(direction + np.random.normal(size=2)*0.02)
-        o, r, d, _ = env.step(env.action_space.sample())
+    while not d:
+        # o, r, d, info = env.step(env.action_space.sample())
+        o, r, d, info = env.step(np.array([0,-0.1]))
+        print(info)
         env.render()
     print("final reward", r)

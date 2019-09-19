@@ -4,8 +4,12 @@ from gym import utils
 
 from brl_gym.wrapper_envs.bayes_env import BayesEnv
 from brl_gym.wrapper_envs.env_sampler import DiscreteEnvSampler
-from brl_gym.envs.mujoco.point_mass import PointMassEnv, GOAL_POSE
+from brl_gym.envs.mujoco.point_mass import PointMassEnv
+from brl_gym.envs.mujoco.maze10 import Maze10
+
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
+from brl_gym.envs.mujoco.point_mass import GOAL_POSE as GOAL_POSE4
+from brl_gym.envs.mujoco.maze10 import GOAL_POSE as GOAL_POSE10
 
 from brl_gym.estimators.bayes_maze_estimator import BayesMazeEstimator
 
@@ -17,19 +21,31 @@ from brl_gym.envs.mujoco.motion_planner.VectorFieldGenerator import VectorField
 
 import cProfile
 
-env = PointMassEnv()
-OBS_DIM = env.observation_space.shape[0]
+OBS_DIM = dict()
+GOAL_POSE = dict()
+ENVS = dict()
+ENVS[4] = PointMassEnv
+ENVS[10] = Maze10
+
+env4 = PointMassEnv()
+OBS_DIM[4] = env4.observation_space.shape[0]
+GOAL_POSE[4] = GOAL_POSE4.copy()
+
+env10 = Maze10()
+OBS_DIM[10] = env10.observation_space.shape[0]
+GOAL_POSE[10] = GOAL_POSE10.copy()
 
 class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
-    def __init__(self, reward_entropy=True, reset_params=True):
+    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, entropy_weight=1.0):
 
+        self.GOAL_POSE = GOAL_POSE[maze_type]
         envs = []
-        for i in range(GOAL_POSE.shape[0]):
-            env = PointMassEnv()
+        for i in range(GOAL_POSE[maze_type].shape[0]):
+            env = ENVS[maze_type]()
             env.target = i
             envs += [env]
 
-        self.estimator = BayesMazeEstimator()
+        self.estimator = BayesMazeEstimator(maze_type=maze_type)
         self.env_sampler = DiscreteEnvSampler(envs)
         super(ExplicitBayesMazeEnv, self).__init__(env, self.estimator)
         self.nominal_env = env
@@ -41,7 +57,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.reset_params = reset_params
         self.reward_entropy = reward_entropy
         if reward_entropy:
-            self.entropy_weight = 1.0
+            self.entropy_weight = entropy_weight
         else:
             self.entropy_weight = 0.0
         utils.EzPickle.__init__(self)
@@ -73,6 +89,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         reward += ent_reward * self.entropy_weight
         info['entropy'] = entropy
         info['bel'] = bel
+        self.color_belief(bel)
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
     def reset(self):
@@ -87,6 +104,11 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
 
         return {'obs':obs, 'zbel':bel}
 
+    def color_belief(self, bel):
+        for i, b in enumerate(bel.ravel()):
+            self.env.model.site_rgba[i, 0] = b
+            self.env.model.site_rgba[i, -1] = b
+
 
 
 class ExplicitBayesMazeEnvNoEntropyReward(ExplicitBayesMazeEnv):
@@ -95,15 +117,16 @@ class ExplicitBayesMazeEnvNoEntropyReward(ExplicitBayesMazeEnv):
 
 
 class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
-    def __init__(self, reward_entropy=True, reset_params=True):
+    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True):
 
+        self.GOAL_POSE = GOAL_POSE[maze_type]
         envs = []
-        for i in range(GOAL_POSE.shape[0]):
-            env = PointMassEnv()
+        for i in range(GOAL_POSE[maze_type].shape[0]):
+            env = ENVS[maze_type]()
             env.target = i
             envs += [env]
 
-        self.estimator = BayesMazeEstimator()
+        self.estimator = BayesMazeEstimator(maze_type=maze_type)
         self.env_sampler = DiscreteEnvSampler(envs)
         super(UPMLEMazeEnv, self).__init__(env, self.estimator)
         self.nominal_env = env
@@ -116,7 +139,9 @@ class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.reward_entropy = reward_entropy
 
         # Copy the reward entropy
-        bayes_env = ExplicitBayesMazeEnv(reward_entropy=reward_entropy)
+        bayes_env = ExplicitBayesMazeEnv(
+            maze_type=maze_type,
+            reward_entropy=reward_entropy)
         self.entropy_weight = bayes_env.entropy_weight
         utils.EzPickle.__init__(self)
 
@@ -147,7 +172,15 @@ class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         reward += ent_reward * self.entropy_weight
         info['entropy'] = entropy
         param = self.estimator.get_mle()
+        self.color_mle(param)
         return {'obs':obs, 'zparam':param}, reward, done, info
+
+    def color_mle(self, mle):
+        idx = np.argmax(mle)
+        for i, o in enumerate(mle):
+            self.env.model.site_rgba[i, 0] = 0.0
+        # print(idx)
+        self.env.model.site_rgba[idx, 0] = 1.0
 
     def reset(self):
         if self.reset_params:
@@ -171,8 +204,9 @@ class BayesMazeEntropyEnv(ExplicitBayesMazeEnv, utils.EzPickle):
     """
     Environment that provides entropy instead of belief as observation
     """
-    def __init__(self, reward_entropy=True, reset_params=True, observe_entropy=True):
-        super(BayesMazeEntropyEnv, self).__init__(reward_entropy=reward_entropy, reset_params=reset_params)
+    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, observe_entropy=True):
+        super(BayesMazeEntropyEnv, self).__init__(
+            maze_type=maze_type, reward_entropy=reward_entropy, reset_params=reset_params)
         utils.EzPickle.__init__(self)
 
         entropy_space = Box(np.array([0.0]), np.array([1.0]))
@@ -180,9 +214,9 @@ class BayesMazeEntropyEnv(ExplicitBayesMazeEnv, utils.EzPickle):
         self.observe_entropy = observe_entropy
         if observe_entropy:
             self.observation_space = Dict(
-                {"obs": env.observation_space, "zentropy": entropy_space})
+                {"obs": ENVS[maze_type].observation_space, "zentropy": entropy_space})
         else:
-            self.observation_space = env.observation_space
+            self.observation_space = ENVS[maze_type].observation_space
 
     def step(self, action):
         obs, reward, done, info = super().step(action)
@@ -270,11 +304,11 @@ def simple_expert_actor(mp, pose, target):
         return direction
 
 
-def simple_combined_expert(mp, s, bel, use_vf):
+def simple_combined_expert(mp, s, bel, use_vf, maze_type=4):
     assert use_vf
 
     actions = []
-
+    # print("bel", np.around(bel,1), "s", s)
     # for s, b in zip(start, bel):
     if not use_vf:
         if (np.any(bel > 0.9)):
@@ -287,7 +321,7 @@ def simple_combined_expert(mp, s, bel, use_vf):
                 return action
 
         action = []
-        for i, gp in enumerate(GOAL_POSE):
+        for i, gp in enumerate(GOAL_POSE[maze_type]):
             if not use_vf:
                 action += [simple_expert_actor(mp, s, gp)]
             else:
@@ -301,7 +335,7 @@ def simple_combined_expert(mp, s, bel, use_vf):
     else:
         actions = []
         for idx, m in enumerate(mp):
-            actions += [m.motion_plan(s, GOAL_POSE[idx])]
+            actions += [m.motion_plan(s, GOAL_POSE[maze_type][idx])]
         actions = np.array(actions)
 
         actions = actions.transpose(1, 0, 2)
@@ -312,14 +346,14 @@ def simple_combined_expert(mp, s, bel, use_vf):
 
         actions = np.sum(actions * bel, axis=1)
         actions[np.any(high_belief, axis=1), :] = actions_cp[high_belief, :]
-
         return actions
 
 
-def split_inputs(inputs, infos):
+def split_inputs(inputs, infos, maze_type=4):
+
     if isinstance(inputs, np.ndarray):
-        if inputs.shape[1] == OBS_DIM + GOAL_POSE.shape[0]:
-            obs, bel = inputs[:, :-GOAL_POSE.shape[0]], inputs[:, -GOAL_POSE.shape[0]:]
+        if inputs.shape[1] == OBS_DIM[maze_type] + GOAL_POSE[maze_type].shape[0]:
+            obs, bel = inputs[:, :-GOAL_POSE[maze_type].shape[0]], inputs[:, -GOAL_POSE[maze_type].shape[0]:]
         else:
             obs = inputs
             bel = None
@@ -337,7 +371,7 @@ def split_inputs(inputs, infos):
 
     if not isinstance(bel, np.ndarray) and bel is None:
         if len(infos) == 0:
-            bel = np.ones((obs.shape[0], GOAL_POSE.shape[0])) / GOAL_POSE.shape[0]
+            bel = np.ones((obs.shape[0], GOAL_POSE[maze_type].shape[0])) / GOAL_POSE[maze_type].shape[0]
         else:
             bel = np.array([info['bel'] for info in infos])
 
@@ -345,18 +379,18 @@ def split_inputs(inputs, infos):
 
 
 class Expert:
-    def __init__(self, nenv=10, use_vf=True, mle=False):
+    def __init__(self, nenv=10, use_vf=True, mle=False, maze_type=4):
         if not use_vf:
-            self.mps = [MotionPlanner() for i in range(nenv)]
+            self.mps = [MotionPlanner(maze_type=maze_type) for i in range(nenv)]
         else:
-            self.mps = [VectorField(target=i) for i in range(len(GOAL_POSE))]
-
+            self.mps = [VectorField(target=i, maze_type=maze_type) for i in range(len(GOAL_POSE[maze_type]))]
         self.use_vf = use_vf
-        self.bel_dim = len(GOAL_POSE)
+        self.bel_dim = len(GOAL_POSE[maze_type])
         self.mle = mle
+        self.maze_type = maze_type
 
     def action(self, inputs, infos=[]):
-        obs, bel = split_inputs(inputs, infos)
+        obs, bel = split_inputs(inputs, infos, maze_type=self.maze_type)
 
         if self.mle:
             mle_indices = np.argmax(bel, axis=1)
@@ -367,9 +401,11 @@ class Expert:
         actions = []
         if not self.use_vf:
             for i, mp in enumerate(self.mps):
-                actions += [simple_combined_expert(mp, obs[i].squeeze()[:GOAL_POSE.shape[1]], bel[i], use_vf=False)]
+                actions += [simple_combined_expert(
+                    mp, obs[i].squeeze()[:GOAL_POSE[self.maze_type].shape[1]], bel[i], use_vf=False, maze_type=self.maze_type)]
         else:
-            actions = simple_combined_expert(self.mps, obs[:, :GOAL_POSE.shape[1]], bel, use_vf=True)
+            actions = simple_combined_expert(
+                self.mps, obs[:, :GOAL_POSE[self.maze_type].shape[1]], bel, use_vf=True, maze_type=self.maze_type)
 
         action = np.array(actions)
         action = action.reshape(len(actions), -1)
@@ -386,35 +422,39 @@ class Expert:
 
 if __name__ == "__main__":
 
-    # env = ExplicitBayesMazeEnv(reset_params=True)
-    # # env.env.target = 4
-    # exp = Expert(nenv=1)
-    # all_rewards = []
+    maze_type = 10
+    env = ExplicitBayesMazeEnv(reset_params=False, maze_type=maze_type)
+    env.env.target = 1
+    exp = Expert(nenv=1, maze_type=maze_type)
+    all_rewards = []
 
-    # o = env.reset()
-    # print(env.env.target)
+    # Test expert
+    o = env.reset()
+    done = False
+    val_approx = []
+    rewards = []
+    t = 0
+    while True:
+        bel = np.zeros(maze_type)
+        bel[env.env.target] = 1
 
-    # done = False
+        action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
+        # action = exp.action(np.concatenate([o['obs'], bel]).reshape(1,-1))
+        action = action.squeeze() + np.random.normal()
+        print(action)
 
-    # val_approx = []
-    # rewards = []
-    # for t in range(250):
-    #     # val_approx += [get_value_approx(o['obs'].reshape(1, -1), friction)]
-    #     action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
-    #     # action = simple_expert_actor(exp.mp, o['obs'], GOAL_POSE[env.env.target])
-    #     # print("action", action)
-    #     action = action.squeeze()
-    #     if t < 50:
-    #         action[2] = action[2] + np.random.normal()*0.1
-    #     o, r, done, _ = env.step(action)
-    #     rewards += [r]
-    #     #print(np.around(o['zbel'],2))
+        o, r, done, _ = env.step(action)
+        rewards += [r]
+        env.render()
 
-    #     env.render()
+        t += 1
+        if done:
+            print(t)
+            break
+        else:
+            t += 1
 
-    #     # input('continue')
-    #     # print(np.around(o['zbel'],2))
-
+    print(t)
     # rewards = np.array(rewards)
     # # discounted_sum = discount(rewards, gamma)[0]
     # undiscounted_sum = np.sum(rewards)
@@ -445,14 +485,13 @@ if __name__ == "__main__":
     # import IPython; IPython.embed();
 
     # Test UPMLE
-    # env = UPMLEMazeEnv()
+    # env = UPMLEMazeEnv(maze_type=maze_type)
     # o = env.reset()
-    # for _ in range(400):
-    #     o, r, d, info = env.step([0,0,1])
+    # for _ in range(5000):
+    #     o, r, d, info = env.step(env.action_space.sample())
     #     print(o['zparam'], np.around(env.estimator.get_belief(), 2))
-
+    #     env.render()
     # print(env.env.target)
-    # import IPython; IPython.embed()
 
     # Test VF expert
     # env = ExplicitBayesMazeEnv(reset_params=True)
@@ -475,17 +514,19 @@ if __name__ == "__main__":
 
 
     # Test entropy-only env
-    env = BayesMazeEntropyEnv()
-    expert = Expert(mle=True)
-    o = env.reset()
-    print(o)
-    info = []
-    for _ in range(500):
-        o = np.concatenate([o['obs'], o['zentropy']], axis=0).reshape(1, -1)
-        action = expert.action(o, info).ravel()
-        action[-1] = 1
-        o, r, d, info = env.step(action)
-        info = [info]
+    # maze_type = 10
+    # env = BayesMazeEntropyEnv(maze_type=maze_type, reset_params=False)
+    # env.env.target = 3
+    # expert = Expert(mle=True, maze_type=maze_type)
+    # o = env.reset()
+    # print(o)
+    # info = []
+    # for _ in range(500):
+    #     o = np.concatenate([o['obs'], o['zentropy']], axis=0).reshape(1, -1)
+    #     action = expert.action(o, info).ravel()
+    #     action[-1] = 1
+    #     o, r, d, info = env.step(action)
+    #     info = [info]
 
-        env.render()
+    #     env.render()
     import IPython; IPython.embed()

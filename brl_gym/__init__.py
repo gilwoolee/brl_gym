@@ -185,6 +185,30 @@ register(
 )
 
 register(
+    id='Maze10-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    kwargs={"maze_type":10, "entropy_weight":100.0},
+    max_episode_steps=3000,
+    reward_threshold=500,
+)
+
+register(
+    id='Maze-entropy-10-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    kwargs={"reward_entropy": True, "entropy_weight": 10},
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
+    id='Maze-entropy-100-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    kwargs={"reward_entropy": True, "entropy_weight": 100},
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+register(
     id='Maze-entropy-only-v0',
     entry_point='brl_gym.wrapper_envs:BayesMazeEntropyEnv',
     max_episode_steps=500,
@@ -217,9 +241,19 @@ register(
 
 register(
     id='Maze-no-entropy-v0',
-    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnvNoEntropyReward',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    kwargs={"reward_entropy": False},
     max_episode_steps=500,
     reward_threshold=10,
+)
+
+
+register(
+    id='Maze10-no-entropy-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    kwargs={"reward_entropy": False, "maze_type": 10},
+    max_episode_steps=3000,
+    reward_threshold=500,
 )
 
 register(
@@ -229,6 +263,16 @@ register(
     reward_threshold=10,
 )
 
+
+register(
+    id='Maze10-upmle-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEMazeEnv',
+    kwargs={"maze_type": 10},
+    max_episode_steps=3000,
+    reward_threshold=500,
+)
+
+
 register(
     id='Maze-upmle-no-reward-v0',
     entry_point='brl_gym.wrapper_envs:UPMLEMazeEnv',
@@ -236,6 +280,7 @@ register(
     max_episode_steps=500,
     reward_threshold=10,
 )
+
 register(
     id='Maze-upmle-no-entropy-v0',
     entry_point='brl_gym.wrapper_envs:UPMLEMazeEnvNoEntropyReward',

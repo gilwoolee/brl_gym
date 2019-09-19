@@ -2,7 +2,8 @@ import numpy as np
 
 from gym.spaces import Box
 from brl_gym.estimators.estimator import Estimator
-from brl_gym.envs.mujoco.point_mass import PointMassEnv, GOAL_POSE
+from brl_gym.envs.mujoco.point_mass import PointMassEnv
+from brl_gym.envs.mujoco.maze10 import Maze10
 from scipy.stats import norm
 
 
@@ -10,8 +11,16 @@ class BayesMazeEstimator(Estimator):
     """
     This class estimates tiger location given a known observation error
     """
-    def __init__(self):
-        env = PointMassEnv()
+    def __init__(self, maze_type=4):
+        self.maze_type = maze_type
+        if maze_type == 4:
+            from brl_gym.envs.mujoco.point_mass import GOAL_POSE
+            env = PointMassEnv()
+        else:
+            from brl_gym.envs.mujoco.maze10 import GOAL_POSE
+            env = Maze10()
+
+        self.GOAL_POSE = GOAL_POSE.copy()
         self.belief_high = np.ones(GOAL_POSE.shape[0])
         self.belief_low = np.zeros(GOAL_POSE.shape[0])
         belief_space = Box(self.belief_low, self.belief_high, dtype=np.float32)
@@ -24,7 +33,7 @@ class BayesMazeEstimator(Estimator):
 
 
     def reset(self):
-        self.belief = np.ones(GOAL_POSE.shape[0])
+        self.belief = np.ones(self.GOAL_POSE.shape[0])
         self.belief /= np.sum(self.belief)
         return self.belief.copy()
 
@@ -40,7 +49,7 @@ class BayesMazeEstimator(Estimator):
         if 'goal_dist' in kwargs:
             obs_goal_dist = kwargs['goal_dist']
             noise_scale = kwargs['noise_scale']
-            dist_to_goals = np.linalg.norm(observation[4:4+GOAL_POSE.shape[0]*2].reshape(-1,2), axis=1)
+            dist_to_goals = np.linalg.norm(observation[4:4+self.GOAL_POSE.shape[0]*2].reshape(-1,2), axis=1)
             p_obs_given_prior = norm.pdf(dist_to_goals - obs_goal_dist, scale=noise_scale) * self.belief
             p_goal_obs  = p_obs_given_prior / np.sum(p_obs_given_prior)
             self.belief = p_goal_obs
@@ -56,11 +65,16 @@ class BayesMazeEstimator(Estimator):
 
 
 if __name__ == "__main__":
-    env = PointMassEnv()
-    estimator = BayesMazeEstimator()
+    maze_type = 8
+
+    if maze_type == 4:
+        env = PointMassEnv()
+    else:
+        env = Maze10()
+    estimator = BayesMazeEstimator(maze_type)
     state = env.reset()
 
-    for _ in range(50):
+    for _ in range(500):
         a = env.action_space.sample()
         obs, reward, done, info = env.step(a)
 

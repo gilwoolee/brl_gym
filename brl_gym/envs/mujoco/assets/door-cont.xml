@@ -29,25 +29,20 @@ See LICENSE file for legal notices. LICENSE must be kept together with this file
         <geom conaffinity="0" fromto="-1.5  1.5 .02 1.5  1.5 .02" name="sideN" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
         <geom conaffinity="0" fromto="-1.5 -1.5 .02 -1.5 1.5 .02" name="sideW" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
 
-        <geom conaffinity="1" fromto="-1.5  0.3 .02 -1.2  0.3 .02" name="wall1" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
-        <geom conaffinity="1" fromto="-0.8  0.3 .02 -0.6  0.3 .02" name="wall2" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
-        <geom conaffinity="1" fromto="-0.2  0.3 .02  0.2  0.3 .02" name="wall3" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
-        <geom conaffinity="1"  fromto="0.6  0.3 .02  0.8  0.3 .02" name="wall4" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
-        <geom conaffinity="1"  fromto="1.2  0.3 .02  1.5  0.3 .02" name="wall5" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="-1.5  0.5 .02 -1.2  0.5 .02" name="wall1" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="-1.2  0.5 .02 0.8  0.5 .02" name="wall-area1" rgba=".6 0.2 0.2 0.6" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="1.2  0.5 .02 1.5  0.5 .02" name="wall2" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
 
-        <!-- <body name="door0_body" pos="0 0 0"> -->
-        <geom conaffinity="1" fromto="-1.2  0.3 .02 -0.8  0.3 .02" name="door0_geom" rgba="1.0 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
-        <!-- </body> -->
-        <!-- <body name="door1_body" pos="0 0 0"> -->
-        <geom conaffinity="1" fromto="-0.6  0.3 .02 -0.2  0.3 .02" name="door1_geom" rgba="1.0 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
-        <!-- </body> -->
-        <!-- <body name="door2_body" pos="0 0 0"> -->
-        <geom conaffinity="1"  fromto="0.2  0.3 .02  0.6  0.3 .02" name="door2_geom" rgba="1.0 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
-        <!-- </body> -->
-        <!-- <body name="door3_body" pos="0 0 0"> -->
-        <geom conaffinity="1"  fromto="0.8  0.3 .02  1.2  0.3 .02" name="door3_geom" rgba="1.0 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
-        <!-- </body> -->
+        <geom conaffinity="1" fromto="-1.5  -0.5 .02 -1.2  -0.5 .02" name="wall3" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="-1.2  -0.5 .02 -1.0  -0.5 .02" name="wall-area2" rgba=".6 0.2 0.2 0.6" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="-0.6  -0.5 .02 1.2  -0.5 .02" name="wall-area" rgba=".6 0.2 0.2 0.6" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="1.2  -0.5 .02 1.5  -0.5 .02" name="wall4" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
 
+
+        <geom conaffinity="1" fromto="-1.5  0.0 .02 -1.2  0.0 .02" name="wall5" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="-1.2  0.0 .02 0.3  0.0 .02" name="wall-area3" rgba=".6 0.2 0.2 0.6" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="0.7  0.0 .02 1.2  0.0 .02" name="wall-area5" rgba=".6 0.2 0.2 0.6" size=".04" type="capsule" mass="0.1"/>
+        <geom conaffinity="1" fromto="1.2  0.0 .02 1.5  0.0 .02" name="wall6" rgba="0.3 0.4 0.3 1.0" size=".04" type="capsule" mass="0.1"/>
 
         <!-- Agent -->
         <body name="agent" pos="0 0 .05">
@@ -60,10 +55,11 @@ See LICENSE file for legal notices. LICENSE must be kept together with this file
         <site name="target" pos="0 1.2 .05" rgba="0.6 0.2 0.2 1.0" size=".07" type="sphere" />
 
         <!-- Doors -->
-        <site name="door0" pos="-1.0 0.3 .05" rgba="0.6 0.2 0.2 0." size=".07" type="sphere" />
-        <site name="door1" pos="-0.4 0.3 .05" rgba="0.6 0.2 0.2 0." size=".07" type="sphere" />
-        <site name="door2" pos="0.4 0.3 .05" rgba="0.6 0.2 0.2 0." size=".07" type="sphere" />
-        <site name="door3" pos="1.0 0.3 .05" rgba="0.6 0.2 0.2 0." size=".07" type="sphere" />
+        <site name="door1" pos="0.8 0.3 .05" rgba="0.6 0.2 0.2 0." size=".07" type="sphere" />
+        <site name="door2" pos="0.8 0.3 .05" rgba="0.6 0.2 0.2 0." size=".07" type="sphere" />
+        <site name="door3" pos="0.8 0.3 .05" rgba="0.6 0.2 0.2 0." size=".07" type="sphere" />
+
+        <site name="door0" pos="0.8 0.3 .05" rgba="0.6 0.2 0.2 0." size=".07" type="sphere" />
 
 
     </worldbody>

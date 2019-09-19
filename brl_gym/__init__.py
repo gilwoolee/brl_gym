@@ -187,7 +187,7 @@ register(
 register(
     id='Maze10-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
-    kwargs={"maze_type":4},
+    kwargs={"maze_type":10},
     max_episode_steps=5000,
     reward_threshold=500,
 )

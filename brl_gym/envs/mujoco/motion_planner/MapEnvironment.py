@@ -1,9 +1,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from .util import convert_3D_to_2D, convert_2D_to_3D
 
 class MapEnvironment(object):
 
-    def __init__(self, map_data, sampling_map, stepsize=1):
+    def __init__(self, map_data, sampling_map, stepsize=1, maze_type=4):
         """
         @param map_data: 2D numpy array of map
         @param stepsize: size of a step to generate waypoints
@@ -17,6 +18,7 @@ class MapEnvironment(object):
         self.limit = np.array([self.xlimit, self.ylimit])
         self.maxdist = np.float('inf')
         self.stepsize = stepsize
+        self.maze_type = maze_type
 
         # Display the map.
         # plt.imshow(self.map, interpolation='nearest', origin='lower')
@@ -134,7 +136,7 @@ class MapEnvironment(object):
         plan = np.array(plan)
 
         plt.clf()
-        plt.imshow(self.map, interpolation='none', cmap='gray', origin='lower')
+        plt.imshow(self.map, interpolation='none', cmap='gray')#, origin='lower')
 
         # Comment this to hide all edges. This can take long.
         # edges = G.edges()
@@ -170,7 +172,9 @@ class MapEnvironment(object):
 
     def visualize_graph(self, G, saveto=""):
         plt.clf()
-        plt.imshow(self.map, interpolation='nearest', origin='lower')
+        fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
+
+        plt.imshow(self.map, interpolation='nearest')#, origin='lower')
         edges = G.edges()
         for edge in edges:
             config1 = G.nodes[edge[0]]["config"]
@@ -190,6 +194,19 @@ class MapEnvironment(object):
                 plt.scatter(config[1], config[0], s=30, c='g')
             else:
                 plt.scatter(config[1], config[0], s=30, c='r')
+
+        # xy = convert_3D_to_2D(np.array([0.65, 1.325]), maze_type=self.maze_type)
+        # print([0.65, 1.325], xy)
+
+        # xy = convert_3D_to_2D(np.array([-1.3, -1.3]), maze_type=self.maze_type)
+        # print([-1.3, -1.3], xy)
+        # circle = plt.Circle((xy[1], xy[0]), 3.0, color='g', zorder=10)
+        # ax.add_artist(circle)
+
+        # xy = convert_3D_to_2D(np.array([0.3, 0.6]), maze_type=self.maze_type)
+        # print([0.3, 0.6], xy)
+        # circle = plt.Circle((xy[1], xy[0]), 1.0, color='k', zorder=10)
+        # ax.add_artist(circle)
 
         plt.tight_layout()
 

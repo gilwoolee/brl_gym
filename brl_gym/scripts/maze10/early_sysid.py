@@ -2,15 +2,15 @@ from brl_gym.wrapper_envs.wrapper_maze import Expert, ExplicitBayesMazeEnv
 import numpy as np
 if __name__ == "__main__":
 
-    expert = Expert(nenv=1, use_vf=True, mle=True)
+    expert = Expert(nenv=1, use_vf=True, maze_type=10)
 
     all_rewards = []
     for _ in range(300):
-        env = ExplicitBayesMazeEnv(reward_entropy=False)
+        env = ExplicitBayesMazeEnv(reward_entropy=False, maze_type=10)
         o = env.reset()
 
         rewards = []
-        for t in range(500):
+        for t in range(750):
             action = expert.action(
                 np.concatenate([o['obs'], o['zbel']]).reshape(1, -1)).ravel()
 
@@ -26,9 +26,9 @@ if __name__ == "__main__":
 
         undiscounted_sum = np.sum(rewards)
         all_rewards += [undiscounted_sum]
-        # print('undiscounted sum', undiscounted_sum)
+        print('undiscounted sum', env.env.target, undiscounted_sum, len(rewards))
 
     print("stat", np.mean(all_rewards), np.std(all_rewards) / np.sqrt(len(all_rewards)))
-    # 229.978 17.471892485704004
+    #[-106.44, 29.75]
     import IPython; IPython.embed();
 

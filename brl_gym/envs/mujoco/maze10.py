@@ -85,7 +85,7 @@ class Maze10(mujoco_env.MujocoEnv, utils.EzPickle):
         goal_dist = GOAL_POSE - agent_pos[:2]
 
         # Noisy distance
-        noise_scale = np.linalg.norm(goal_dist[self.target]) * 1.5#/ (1.8*np.sqrt(2))
+        noise_scale = np.linalg.norm(goal_dist[self.target]) * 1.0#/ (1.8*np.sqrt(2))
         dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * noise_scale
         return dist, noise_scale
 

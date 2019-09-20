@@ -3,7 +3,7 @@ import glob
 
 #os.system('source ~/venv/brl/bin/activate')
 
-rootdir = "/home/gilwoo/scp_models/models/maze/"
+rootdir = "/home/gilwoo/models/maze/"
 algos = [x[0] for x in os.walk(rootdir) if "checkpoints" in x[0]]
 
 num_trials = 500
@@ -16,9 +16,10 @@ algo_to_alg = {
     # "entropy_rbpo": ["bppo2_expert", "Maze-entropy-only-no-reward-v0"],
     # "bpo": ["ppo2","Maze-no-entropy-v0"],
     # "upmle": ["ppo2", "Maze-upmle-no-reward-v0"],
-    "expert_no_residual": ["bpo_expert_no_residual", "Maze-no-entropy-v0"],
+    # "expert_no_residual": ["bpo_expert_no_residual", "Maze-no-entropy-v0"],
     # "noentropy_rbpo": ["bppo2_expert", "Maze-no-entropy-v0"],
     # "rbpo_hidden_belief_no_ent_reward": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
+    "rbpo-noent-alpha-1.0":["bppo2_expert", "Maze-no-entropy-v0", 1.0]
 }
 
 for algo in algos:
@@ -26,8 +27,8 @@ for algo in algos:
     if algname not in algo_to_alg:
         continue
     print("--------------------")
-    alg, env = algo_to_alg[algname]
-    print(algo, alg)
+    alg, env, alpha = algo_to_alg[algname]
+    print(algo, alg, alpha)
 
     checkpoints = glob.glob(os.path.join(algo, "*"))
     checkpoints.sort()
@@ -43,7 +44,7 @@ for algo in algos:
         if os.path.exists(outputfile):
             continue
 
-        cmd = "python -m brl_baselines.run --alg={} --env={} --num_timesteps=0 --play --load_path={}/{}  --num_env=1  --num_trials={} --output={}/{}.txt".format(alg, env, algo, str(i).zfill(5), num_trials, outputdir, str(i).zfill(5))
+        cmd = "python -m brl_baselines.run --alg={} --env={} --num_timesteps=0 --play --load_path={}/{}  --num_env=1  --num_trials={} --output={}/{}.txt --residual_weight={}".format(alg, env, algo, str(i).zfill(5), num_trials, outputdir, str(i).zfill(5),alpha)
         print(cmd)
         if not dry_run:
             os.system(cmd)

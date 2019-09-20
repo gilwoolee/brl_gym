@@ -424,7 +424,7 @@ if __name__ == "__main__":
 
     maze_type = 10
     env = ExplicitBayesMazeEnv(reset_params=False, maze_type=maze_type)
-    env.env.target = 1
+    env.env.target = 5
     exp = Expert(nenv=1, maze_type=maze_type)
     all_rewards = []
 
@@ -438,8 +438,8 @@ if __name__ == "__main__":
         bel = np.zeros(maze_type)
         bel[env.env.target] = 1
 
-        action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
-        # action = exp.action(np.concatenate([o['obs'], bel]).reshape(1,-1))
+        # action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
+        action = exp.action(np.concatenate([o['obs'], bel]).reshape(1,-1))
         action = action.squeeze() + np.random.normal()
         print(action)
 

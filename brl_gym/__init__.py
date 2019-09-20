@@ -299,11 +299,18 @@ register(
 register(
     id='Door-entropy-10-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
-    kwargs={"reward_entropy": True, "entropy_weight": 100},
+    kwargs={"reward_entropy": True, "entropy_weight": 10},
     max_episode_steps=300,
     reward_threshold=100,
 )
 
+register(
+    id='Door-entropy-100-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
+    kwargs={"reward_entropy": True, "entropy_weight": 100},
+    max_episode_steps=300,
+    reward_threshold=100,
+)
 
 register(
     id='Door-no-entropy-v0',

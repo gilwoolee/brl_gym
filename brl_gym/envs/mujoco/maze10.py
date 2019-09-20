@@ -27,17 +27,17 @@ class Maze10(mujoco_env.MujocoEnv, utils.EzPickle):
         self.target_sid = 0
 
         self.fullpath = os.path.join(asset_dir, "assets", 'maze10.xml')
-        mujoco_env.MujocoEnv.__init__(self, self.fullpath, 5)
+        mujoco_env.MujocoEnv.__init__(self, self.fullpath, 20) # originally 5
 
         self.agent_bid = self.sim.model.body_name2id('agent')
 
         self.action_space = Box(np.ones(3) * -1, np.ones(3))
 
     def step(self, a):
-        if len(a) == 3:
-            a = np.clip(a, np.array([-1.4, -1.4, -1]), np.array([1.4, 1.4, 1]))
-        else:
-            a = np.clip(a, np.array([-1.4, -1.4]), np.array([1.4, 1.4]))
+        # if len(a) == 3:
+        #     a = np.clip(a, np.array([-1.4, -1.4, -1]), np.array([1.4, 1.4, 1]))
+        # else:
+        #     a = np.clip(a, np.array([-1.4, -1.4]), np.array([1.4, 1.4]))
         self.do_simulation(a[:2], self.frame_skip)
 
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()

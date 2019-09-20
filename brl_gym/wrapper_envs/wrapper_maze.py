@@ -424,7 +424,7 @@ if __name__ == "__main__":
 
     maze_type = 10
     env = ExplicitBayesMazeEnv(reset_params=False, maze_type=maze_type)
-    env.env.target = 5
+    env.env.target = 8
     exp = Expert(nenv=1, maze_type=maze_type)
     all_rewards = []
 
@@ -454,7 +454,7 @@ if __name__ == "__main__":
         else:
             t += 1
 
-    print(t)
+    print(t, r)
     # rewards = np.array(rewards)
     # # discounted_sum = discount(rewards, gamma)[0]
     # undiscounted_sum = np.sum(rewards)

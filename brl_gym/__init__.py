@@ -201,6 +201,14 @@ register(
 )
 
 register(
+    id='Maze10-ent-100-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    kwargs={"maze_type":10, "entropy_weight":100.0},
+    max_episode_steps=750,
+    reward_threshold=500,
+)
+
+register(
     id='Maze-entropy-10-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
     kwargs={"reward_entropy": True, "entropy_weight": 10},

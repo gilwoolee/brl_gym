@@ -10,7 +10,7 @@
 
   <default>
     <joint type="slide" axis="0 0 1" damping="0.1"/>
-    <motor gear="0.7" ctrlrange="-1 1" ctrllimited="true"/>
+    <motor gear="1.0" ctrlrange="-2 2" ctrllimited="true"/>
   </default>
 
   <worldbody>

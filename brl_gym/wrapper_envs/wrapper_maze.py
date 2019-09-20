@@ -211,12 +211,13 @@ class BayesMazeEntropyEnv(ExplicitBayesMazeEnv, utils.EzPickle):
 
         entropy_space = Box(np.array([0.0]), np.array([1.0]))
 
+        env = ENVS[maze_type]()
         self.observe_entropy = observe_entropy
         if observe_entropy:
             self.observation_space = Dict(
-                {"obs": ENVS[maze_type].observation_space, "zentropy": entropy_space})
+                {"obs": env.observation_space, "zentropy": entropy_space})
         else:
-            self.observation_space = ENVS[maze_type].observation_space
+            self.observation_space = env.observation_space
 
     def step(self, action):
         obs, reward, done, info = super().step(action)

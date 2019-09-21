@@ -261,7 +261,7 @@ register(
     kwargs={
     "maze_type": 10,
     "reward_entropy": True,
-    "entropy_weight":10,
+    "entropy_weight":10.0,
     "observe_entropy": False},
     max_episode_steps=750,
     reward_threshold=500,
@@ -273,10 +273,10 @@ register(
     kwargs={
     "maze_type": 10,
     "reward_entropy": True,
-    "entropy_weight":10,
+    "entropy_weight":10.0,
     "observe_entropy": True},
-    max_episode_steps=500,
-    reward_threshold=10,
+    max_episode_steps=750,
+    reward_threshold=500,
 )
 
 

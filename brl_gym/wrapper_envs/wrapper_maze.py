@@ -204,9 +204,10 @@ class BayesMazeEntropyEnv(ExplicitBayesMazeEnv, utils.EzPickle):
     """
     Environment that provides entropy instead of belief as observation
     """
-    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, observe_entropy=True):
+    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, observe_entropy=True, entropy_weight=1.0):
         super(BayesMazeEntropyEnv, self).__init__(
-            maze_type=maze_type, reward_entropy=reward_entropy, reset_params=reset_params)
+            maze_type=maze_type, reward_entropy=reward_entropy,
+            reset_params=reset_params, entropy_weight=entropy_weight)
         utils.EzPickle.__init__(self)
 
         entropy_space = Box(np.array([0.0]), np.array([1.0]))
@@ -425,7 +426,7 @@ if __name__ == "__main__":
 
     maze_type = 10
     env = ExplicitBayesMazeEnv(reset_params=False, maze_type=maze_type)
-    env.env.target = 8
+    env.env.target = 2
     exp = Expert(nenv=1, maze_type=maze_type)
     all_rewards = []
 
@@ -437,10 +438,10 @@ if __name__ == "__main__":
     t = 0
     while True:
         bel = np.zeros(maze_type)
-        bel[env.env.target] = 1
+        # bel[env.env.target] = 1
 
-        # action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
-        action = exp.action(np.concatenate([o['obs'], bel]).reshape(1,-1))
+        action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
+        # action = exp.action(np.concatenate([o['obs'], bel]).reshape(1,-1))
         action = action.squeeze() + np.random.normal()
         print(action)
 

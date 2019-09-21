@@ -256,6 +256,31 @@ register(
 )
 
 register(
+    id='Maze10-entropy-hidden-ent-10-v0',
+    entry_point='brl_gym.wrapper_envs:BayesMazeEntropyEnv',
+    kwargs={
+    "maze_type": 10,
+    "reward_entropy": True,
+    "entropy_weight":10,
+    "observe_entropy": False},
+    max_episode_steps=750,
+    reward_threshold=500,
+)
+
+register(
+    id='Maze-entropy-only-ent-10-v0',
+    entry_point='brl_gym.wrapper_envs:BayesMazeEntropyEnv',
+    kwargs={
+    "maze_type": 10,
+    "reward_entropy": True,
+    "entropy_weight":10,
+    "observe_entropy": True},
+    max_episode_steps=500,
+    reward_threshold=10,
+)
+
+
+register(
     id='Maze-no-entropy-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
     kwargs={"reward_entropy": False},
@@ -271,6 +296,7 @@ register(
     max_episode_steps=750,
     reward_threshold=500,
 )
+
 
 register(
     id='Maze-upmle-v0',

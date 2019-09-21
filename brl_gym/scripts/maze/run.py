@@ -14,7 +14,7 @@ algo_to_alg = {
     # "entropy_hidden_rbpo": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
     #"rbpo_stronger_expert": ["bppo2_expert", "Maze-no-entropy-v0"],
     # "entropy_rbpo": ["bppo2_expert", "Maze-entropy-only-no-reward-v0"],
-    "bpo_noent": ["ppo2","Maze-no-entropy-v0"],
+    "bpo_noent": ["ppo2","Maze-no-entropy-v0", 0.0],
     # "upmle": ["ppo2", "Maze-upmle-no-reward-v0"],
     # "expert_no_residual": ["bpo_expert_no_residual", "Maze-no-entropy-v0"],
     # "noentropy_rbpo": ["bppo2_expert", "Maze-no-entropy-v0"],
@@ -44,13 +44,14 @@ for algo in algos:
         if os.path.exists(outputfile):
             continue
 
-	if alg.startswith("bpo") or alg.startswith("upmle"):
+        if alg.startswith("ppo2"):
            cmd = "python -m brl_baselines.run --alg={} --env={} --num_timesteps=0 --play --load_path={}/{}  --num_env=1  --num_trials={} --output={}/{}.txt".format(alg, env, algo, str(i).zfill(5), num_trials, outputdir, str(i).zfill(5))
 
-	else:
+        else:
 
            cmd = "python -m brl_baselines.run --alg={} --env={} --num_timesteps=0 --play --load_path={}/{}  --num_env=1  --num_trials={} --output={}/{}.txt --residual_weight={}".format(alg, env, algo, str(i).zfill(5), num_trials, outputdir, str(i).zfill(5),alpha)
-		print(cmd)
+
+        print(cmd)
         if not dry_run:
             os.system(cmd)
 

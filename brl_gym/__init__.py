@@ -343,9 +343,9 @@ register(
 
 
 register(
-    id='Maze10-upmle-v0',
+    id='Maze10-upmle-ent-100-v0',
     entry_point='brl_gym.wrapper_envs:UPMLEMazeEnv',
-    kwargs={"maze_type": 10},
+    kwargs={"maze_type": 10, "entropy_weight":100},
     max_episode_steps=750,
     reward_threshold=500,
 )

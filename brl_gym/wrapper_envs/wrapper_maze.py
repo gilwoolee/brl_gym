@@ -148,7 +148,7 @@ class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
             self.entropy_weight = bayes_env.entropy_weight
         else:
             self.entropy_weight = entropy_weight
-            print(UPMLE Entropy weight, self.entropy_weight)
+            print("UPMLE Entropy weight", self.entropy_weight)
         utils.EzPickle.__init__(self)
 
     def _update_belief(self,

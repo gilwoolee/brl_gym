@@ -117,7 +117,9 @@ class ExplicitBayesMazeEnvNoEntropyReward(ExplicitBayesMazeEnv):
 
 
 class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
-    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True):
+    def __init__(self, maze_type=4,
+        reward_entropy=True, reset_params=True,
+        entropy_weight=None):
 
         self.GOAL_POSE = GOAL_POSE[maze_type]
         envs = []
@@ -139,10 +141,14 @@ class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.reward_entropy = reward_entropy
 
         # Copy the reward entropy
-        bayes_env = ExplicitBayesMazeEnv(
-            maze_type=maze_type,
-            reward_entropy=reward_entropy)
-        self.entropy_weight = bayes_env.entropy_weight
+        if entropy_weight is None:
+            bayes_env = ExplicitBayesMazeEnv(
+                maze_type=maze_type,
+                reward_entropy=reward_entropy)
+            self.entropy_weight = bayes_env.entropy_weight
+        else:
+            self.entropy_weight = entropy_weight
+            print(UPMLE Entropy weight, self.entropy_weight)
         utils.EzPickle.__init__(self)
 
     def _update_belief(self,

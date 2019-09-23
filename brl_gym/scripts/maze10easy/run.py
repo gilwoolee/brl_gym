@@ -17,7 +17,7 @@ algo_to_alg = {
     #"rbpo_stronger_expert": ["bppo2_expert", "Maze-no-entropy-v0"],
     # "entropy_rbpo": ["bppo2_expert", "Maze-entropy-only-no-reward-v0"],
     # "bpo": ["ppo2","Maze-no-entropy-v0"],
-    "upmle": ["ppo2", "Maze10easy-upmle-no-reward-v0"],
+    "upmle_ent1": ["ppo2", "Maze10easy-upmle-no-reward-v0", 0.0],
     # "expert_no_residual": ["bpo_expert_no_residual", "Maze-no-entropy-v0"],
     # "noentropy_rbpo": ["bppo2_expert", "Maze-no-entropy-v0"],
     # "rbpo_hidden_belief_no_ent_reward": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],

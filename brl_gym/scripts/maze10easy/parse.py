@@ -11,14 +11,14 @@ from matplotlib import pyplot as plt
 
 
 # ent weights
-algo_to_alg = {
-    "rbpo_ent100_alpha_1": ["100",'#8C7F70'],
-    "rbpo_ent10_alpha_1": ["10",'#BFBFBF'],
-    "rbpo_noent_alpha_1": ["0",'#FA1900'],
-}
-name = "ent"
-algnames = ['rbpo_noent_alpha_1', 'rbpo_ent10_alpha_1',
-            'rbpo_ent100_alpha_1']
+# algo_to_alg = {
+#     "rbpo_ent100_alpha_1": ["100",'#8C7F70'],
+#     "rbpo_ent10_alpha_1": ["10",'#BFBFBF'],
+#     "rbpo_noent_alpha_1": ["0",'#FA1900'],
+# }
+# name = "ent"
+# algnames = ['rbpo_noent_alpha_1', 'rbpo_ent10_alpha_1',
+#             'rbpo_ent100_alpha_1']
 
 # # ent input
 # algo_to_alg = {
@@ -32,14 +32,14 @@ algnames = ['rbpo_noent_alpha_1', 'rbpo_ent10_alpha_1',
 #             'rbpo_noent_alpha_1']
 
 # baselines
-# algo_to_alg = {
-#     "bpo_ent100": ["BPO",'#8C7F70'],
-#     "upmle_ent_100": ["UPMLE",'#F2D39B'],
-#     "rbpo_ent_100_alpha_1": [r'\bf{RBPO}','#FA1900']
-# }
-# name = "baseline"
-# algnames = ['bpo_ent100', 'upmle_ent_100',
-#             'rbpo_ent_100_alpha_1']
+algo_to_alg = {
+    "bpo_ent1": ["BPO",'#8C7F70'],
+    "upmle_ent1": ["UPMLE",'#F2D39B'],
+    "rbpo_noent_alpha_1": [r'\bf{BRPO}','#FA1900']
+}
+name = "baseline"
+algnames = ['bpo_ent1', 'upmle_ent1',
+            'rbpo_noent_alpha_1']
 
 
 stat = dict()
@@ -59,7 +59,7 @@ random = 500 * 0.1 + -50 * 0.9
 maximum = 500
 print ('random', random)
 
-plt.plot([0, max_step], [500, 500], 'k--', lw=4)
+plt.plot([0, max_step], [500, 500], '--', lw=4, color='k')
 # plt.text(max_step + 40, maximum - 10, r'Optimal$^*$', color='k')
 
 plt.fill_between([0,max_step], y1=[we[0]-we[1],we[0]-we[1]],
@@ -68,10 +68,10 @@ plt.plot([0, max_step], [we[0],we[0]],  color='#597223', lw=4)
 # plt.text(max_step + 40, we[0] - 10, r'Expert', color='#597223')
 
 if name == "baseline":
-    # plt.ylim(random, 500)
-    plt.yticks([random, 0, we[0], maximum])
+    plt.ylim(-50, 500)
+    plt.yticks(np.around([0, we[0], maximum]))
 
-    plt.plot([0, max_step], [random, random], '--', color="#878787", lw=4)
+    # plt.plot([0, max_step], [random, random], '--', color="#878787", lw=4)
     # plt.text(max_step + 40, random - 10, r'Random', color='#878787')
 
 else:

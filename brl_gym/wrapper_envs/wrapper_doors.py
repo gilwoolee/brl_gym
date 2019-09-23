@@ -1,6 +1,7 @@
 import numpy as np
 from brl_gym.estimators.bayes_doors_estimator import BayesDoorsEstimator
 from brl_gym.envs.mujoco.doors import DoorsEnv
+from brl_gym.envs.mujoco.doors_slow import DoorsSlowEnv
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
 from brl_gym.wrapper_envs.env_sampler import DiscreteEnvSampler
 
@@ -8,7 +9,9 @@ from gym.spaces import Box, Dict
 from gym import utils
 
 class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
-    def __init__(self, reset_params=True, reward_entropy=True, entropy_weight=1.0):
+    def __init__(self, reset_params=True,
+        reward_entropy=True, entropy_weight=1.0,
+        doors_slow=False):
 
         self.num_doors = 4
         self.num_cases = 2**self.num_doors
@@ -17,8 +20,10 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         self.cases_np = [np.array([int(x) for x in case]) for case in self.cases]
 
         envs = []
+
+        env_class = DoorsEnv if not doors_slow else DoorsSlowEnv
         for case in self.cases_np:
-            env = DoorsEnv()
+            env = env_class()
             env.open_doors = case.astype(np.bool)
             envs += [env]
 
@@ -65,6 +70,7 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         self.prev_entropy = entropy
         reward += ent_reward * self.entropy_weight
         info['entropy'] = entropy
+        self.color_belief()
 
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
@@ -80,7 +86,13 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         bel, _ = self._update_belief(action=None, obs=obs)
         entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
         self.prev_entropy = entropy
+        self.color_belief()
         return {'obs':obs, 'zbel':bel}
+
+    def color_belief(self):
+        bel = self.estimator.belief
+        for i, b in enumerate(bel.ravel()):
+            self.env.model.geom_rgba[10+i, -1] = 1 - b
 
 
 class ExplicitBayesDoorsEnvNoEntropyReward(ExplicitBayesDoorsEnv):

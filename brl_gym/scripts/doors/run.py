@@ -14,14 +14,14 @@ algo_to_alg = {
     # "upmle": ["ppo2", "Door-upmle-no-entropy-v0"],
     # "expert_no_residual": ["bpo_expert_no_residual", "Door-no-entropy-v0"],
     # "rbpo": ["bppo2_expert", "Door-no-entropy-v0"],
-    "rbpo_ent_alpha_1": ["bppo2_expert", "Door-no-entropy-v0", 1.0],
-    "rbpo_noent_alpha_0.25": ["bppo2_expert", "Door-no-entropy-v0", 0.25],
-    "rbpo_noent_alpha_0.5": ["bppo2_expert", "Door-no-entropy-v0", 0.5],
-    "rbpo_noent_alpha_1": ["bppo2_expert", "Door-no-entropy-v0", 1.0],
-    # "entropy_hidden_rbpo": ["bppo2_expert", "Door-entropy-hidden-no-reward-v0"],
+    # "rbpo_ent_alpha_1": ["bppo2_expert", "Door-no-entropy-v0", 1.0],
+    #"rbpo_noent_alpha_0.25": ["bppo2_expert", "Door-no-entropy-v0", 0.25],
+    #"rbpo_noent_alpha_0.5": ["bppo2_expert", "Door-no-entropy-v0", 0.5],
+    #"rbpo_noent_alpha_1": ["bppo2_expert", "Door-no-entropy-v0", 1.0],
+    "entropy_hidden_rbpo": ["bppo2_expert", "Door-entropy-hidden-no-reward-v0", 0.1],
     # "entropy_rbpo": ["bppo2_expert", "Door-entropy-only-no-reward-v0"],
     #"rbpo_ent_100": ["bppo2_expert", "Door-no-entropy-v0"]
-    "entropy_hidden_no_expert_input_rbpo_noent": ["bppo2", "Door-entropy-hidden-no-reward-v0"]
+    #"entropy_hidden_no_expert_input_rbpo_noent": ["bppo2", "Door-entropy-hidden-no-reward-v0"]
 }
 
 for algo in algos:

@@ -30,20 +30,20 @@ from matplotlib import pyplot as plt
 # algo_to_alg = {
 #     # "rbpo": ["{1}",'k'],
 #     "rbpo-ent-10": ["{10}",'#BFBFBF'],
-#     "rbpo-ent-100": ["{100}",'#FA1900'],
-#     "rbpo_noent":["{0}",'#8C7F70'],
+#     "rbpo-ent-100": ["{100}",'#8C7F70'],
+#     "rbpo_noent":["{0}",'#FA1900'],
 # }
 # name = "entropy_reward"
-# algnames = ['rbpo_noent', 'rbpo-ent-10', 'rbpo-ent-100']
+# algnames = ['rbpo-ent-10', 'rbpo-ent-100', 'rbpo_noent']
 
 # entropy-inputs
 algo_to_alg = {
-    "entropy_hidden_no_expert_input_rbpo_noent": ["None",'b'],
+    "entropy_hidden_no_expert_input_rbpo_noent": ["None",'#8C7F70'],
     "rbpo_hidden_belief_no_ent_reward": ["E",'#504E75'],
-    "rbpo": ["B+E",'#FA1900'],
+    "rbpo_noent": ["B+E",'#FA1900'],
 }
 name = "ent_input"
-algnames = ['entropy_hidden_no_expert_input_rbpo_noent', 'rbpo_hidden_belief_no_ent_reward', 'rbpo']
+algnames = ['entropy_hidden_no_expert_input_rbpo_noent', 'rbpo_hidden_belief_no_ent_reward', 'rbpo_noent']
 
 
 # baselines

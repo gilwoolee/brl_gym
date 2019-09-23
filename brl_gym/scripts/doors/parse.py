@@ -9,12 +9,13 @@ matplotlib.rc('text', usetex=True)
 
 # Ent input
 algo_to_alg = {
-    "rbpo": ["B+E",'#FA1900'],
+    "rbpo_noent": ["B+E",'#FA1900'],
     "entropy_hidden_rbpo": ["E",'#504E75'],
-    "entropy_hidden_no_expert_input_rbpo_noent": ["None",'b']#'#698F6E']
+    "entropy_hidden_no_expert_input_rbpo_noent": ["None",'#8C7F70']#'#698F6E']
 }
 type_name = "ent_input"
-algnames = ["entropy_hidden_rbpo", "entropy_hidden_no_expert_input_rbpo_noent", "rbpo", ]
+algnames = ["entropy_hidden_rbpo",
+ "entropy_hidden_no_expert_input_rbpo_noent", "rbpo_noent", ]
 
 
 # Ent reward
@@ -44,7 +45,7 @@ name = "reward"
 indices = {"reward": 1, "sensing": 3, "crashing": 5}
 index = indices[name]
 
-max_step = 5000
+max_step = 8000
 fig, ax = plt.subplots(figsize=(8, 6))
 
 ax.spines['right'].set_visible(False)
@@ -76,9 +77,9 @@ if name == "reward" or name == "sensing":
         plt.plot([0, max_step], [random, random], '--', color="#878787", lw=4)
         # plt.text(max_step + 10, random - padding, r'Random', color='#878787')
 
-
-    plt.yticks([random, 0, we[0], maximum])
-    plt.xticks([5000])
+    ticks = np.array([random, 0, we[0], maximum])
+    plt.yticks(np.around(ticks, 0))
+    plt.xticks([max_step])
 
 for i, pr in enumerate(algnames):
     files = glob.glob("/home/gilwoo/output/doors/{}/*.txt".format(pr))

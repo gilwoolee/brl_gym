@@ -395,6 +395,13 @@ register(
     reward_threshold=10,
 )
 
+register(
+    id='Maze10easy-upmle-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEMazeEnv',
+    kwargs={"maze_type":10, "entropy_weight":1.0, 'difficulty':'easy'},
+    max_episode_steps=1000,
+    reward_threshold=500,
+)
 
 register(
     id='Maze10-upmle-ent-100-v0',
@@ -432,6 +439,14 @@ register(
     id='Door-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
     max_episode_steps=300,
+    reward_threshold=100,
+)
+
+register(
+    id='Doorslow-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
+    kwargs={"doors_slow":True},
+    max_episode_steps=3000,
     reward_threshold=100,
 )
 

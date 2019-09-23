@@ -115,7 +115,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         self.last_obs = (obs, bel)
         entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
         self.prev_entropy = entropy
-
+        self.color_belief(bel)
         return {'obs':obs, 'zbel':bel}
 
     def color_belief(self, bel):
@@ -166,7 +166,7 @@ class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
             self.entropy_weight = bayes_env.entropy_weight
         else:
             self.entropy_weight = entropy_weight
-            print("UPMLE Entropy weight", self.entropy_weight)
+        print("UPMLE Entropy weight", self.entropy_weight)
         utils.EzPickle.__init__(self)
 
     def _update_belief(self,

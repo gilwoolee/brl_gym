@@ -210,10 +210,28 @@ register(
 )
 
 register(
+    id='Maze10easy-ent-10-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    kwargs={"maze_type":10, "entropy_weight":10.0, 'difficulty':'easy'},
+    max_episode_steps=1000,
+    reward_threshold=500,
+)
+
+
+register(
     id='Maze10-ent-100-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
     kwargs={"maze_type":10, "entropy_weight":100.0},
     max_episode_steps=750,
+    reward_threshold=500,
+)
+
+
+register(
+    id='Maze10easy-ent-100-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    kwargs={"maze_type":10, "entropy_weight":100.0, 'difficulty':'easy'},
+    max_episode_steps=1000,
     reward_threshold=500,
 )
 

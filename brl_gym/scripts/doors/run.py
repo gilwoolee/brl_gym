@@ -3,12 +3,7 @@ import glob
 
 #os.system('source ~/venv/brl/bin/activate')
 
-<<<<<<< Updated upstream
 rootdir = "/home/gilwoo/models/doors/"
-=======
-# rootdir = "/home/gilwoo/scp_models/models/doors/"
-rootdir = "/home/gilwoo/scp_models/doors_alpha/"
->>>>>>> Stashed changes
 algos = [x[0] for x in os.walk(rootdir) if "checkpoints" in x[0]]
 
 num_trials = 250

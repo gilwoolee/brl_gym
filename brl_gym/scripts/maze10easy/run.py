@@ -10,8 +10,8 @@ num_trials = 500
 dry_run = False
 
 algo_to_alg = {
-        "rbpo_noent_alpha_1":["bppo2_expert", "Maze10easy-noent-v0", 1.0]
-        # "entropy_hidden_no_expert_input_rbpo_noent":["bppo2", "Maze10easy-entropy-hidden-no-reward-v0", 1.0]
+#        "rbpo_noent_alpha_1":["bppo2_expert", "Maze10easy-noent-v0", 1.0]
+        "entropy_hidden_no_expert_input_rbpo_noent":["bppo2", "Maze10easy-entropy-hidden-noent-v0", 1.0]
     # "single_expert_rbpo": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
     # "entropy_hidden_rbpo": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
     #"rbpo_stronger_expert": ["bppo2_expert", "Maze-no-entropy-v0"],

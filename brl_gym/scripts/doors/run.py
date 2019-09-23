@@ -3,7 +3,12 @@ import glob
 
 #os.system('source ~/venv/brl/bin/activate')
 
+<<<<<<< Updated upstream
 rootdir = "/home/gilwoo/models/doors/"
+=======
+# rootdir = "/home/gilwoo/scp_models/models/doors/"
+rootdir = "/home/gilwoo/scp_models/doors_alpha/"
+>>>>>>> Stashed changes
 algos = [x[0] for x in os.walk(rootdir) if "checkpoints" in x[0]]
 
 num_trials = 250
@@ -14,6 +19,10 @@ algo_to_alg = {
     # "upmle": ["ppo2", "Door-upmle-no-entropy-v0"],
     # "expert_no_residual": ["bpo_expert_no_residual", "Door-no-entropy-v0"],
     # "rbpo": ["bppo2_expert", "Door-no-entropy-v0"],
+    "rbpo_ent_alpha_1": ["bppo2_expert", "Door-no-entropy-v0", 1.0],
+    "rbpo_noent_alpha_0.25": ["bppo2_expert", "Door-no-entropy-v0", 0.25],
+    "rbpo_noent_alpha_0.5": ["bppo2_expert", "Door-no-entropy-v0", 0.5],
+    "rbpo_noent_alpha_1": ["bppo2_expert", "Door-no-entropy-v0", 1.0],
     # "entropy_hidden_rbpo": ["bppo2_expert", "Door-entropy-hidden-no-reward-v0"],
     # "entropy_rbpo": ["bppo2_expert", "Door-entropy-only-no-reward-v0"],
     "rbpo_ent_100": ["bppo2_expert", "Door-no-entropy-v0"]
@@ -24,7 +33,7 @@ for algo in algos:
     if algname not in algo_to_alg:
         continue
     print("--------------------")
-    alg, env = algo_to_alg[algname]
+    alg, env, alpha = algo_to_alg[algname]
     print(algo, alg)
 
     checkpoints = glob.glob(os.path.join(algo, "*"))
@@ -36,12 +45,12 @@ for algo in algos:
         print("Make ", outputdir)
         os.makedirs(outputdir)
 
-    for i in [1]+ list(range(100, last, 100)):
+    for i in [last]:#[1] + list(range(100, last, 100)):
         outputfile = "{}/{}.txt".format(outputdir, str(i).zfill(5))
         if os.path.exists(outputfile):
             continue
 
-        cmd = "python -m brl_baselines.run --alg={} --env={} --num_timesteps=0 --play --load_path={}/{}  --num_env=1  --num_trials={} --output={}/{}.txt".format(alg, env, algo, str(i).zfill(5), num_trials, outputdir, str(i).zfill(5))
+        cmd = "python -m brl_baselines.run --alg={} --env={} --num_timesteps=0 --play --load_path={}/{}  --num_env=1  --num_trials={} --output={}/{}.txt --residual_weight={}".format(alg, env, algo, str(i).zfill(5), num_trials, outputdir, str(i).zfill(5), alpha)
         print(cmd)
         if not dry_run:
             os.system(cmd)

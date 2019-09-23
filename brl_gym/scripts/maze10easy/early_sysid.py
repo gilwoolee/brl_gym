@@ -6,11 +6,11 @@ if __name__ == "__main__":
 
     all_rewards = []
     for _ in range(300):
-        env = ExplicitBayesMazeEnv(reward_entropy=False, maze_type=10)
+        env = ExplicitBayesMazeEnv(reward_entropy=False, maze_type=10, difficulty="easy")
         o = env.reset()
 
         rewards = []
-        for t in range(750):
+        for t in range(1000):
             action = expert.action(
                 np.concatenate([o['obs'], o['zbel']]).reshape(1, -1)).ravel()
 
@@ -29,6 +29,6 @@ if __name__ == "__main__":
         print('undiscounted sum', env.env.target, undiscounted_sum, len(rewards))
 
     print("stat", np.mean(all_rewards), np.std(all_rewards) / np.sqrt(len(all_rewards)))
-    #[-106.44, 29.75]
+    #398.391 12.22959419954
     import IPython; IPython.embed();
 

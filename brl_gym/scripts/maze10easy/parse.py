@@ -9,47 +9,27 @@ matplotlib.rc('text', usetex=True)
 
 from matplotlib import pyplot as plt
 
-algo_to_alg = {
-    "rbpo_ent_100_alpha_1": ["E100-A1",'c'],
-    # "rbpo_ent_100_alpha_0.1": ["E100-A0.1",'b'],
-    # "rbpo_ent_100_alpha_0.5": ["E100-A0.5",[0.8,0.7,0.7]],
-
-    # "rbpo_ent10_alpha_1": ["E10-A1",'r'],
-    # "rbpo_ent10_alpha_0.1": ["E10-A0.5",'y'],
-    "rbpo_ent10_alpha_0.25": ["E10-A0.25",'m'],
-    "rbpo_ent10_alpha_0.5": ["E10-A0.5",'k'],
-
-    "rbpo_ent1_alpha_1": ["E1-A1",[1.0,0.0,0.8]],
-
-    "rbpo_noent_alpha_1": ["E0-A1",'g'],
-}
-
 
 # ent weights
-# algo_to_alg = {
-#     "rbpo_ent_100_alpha_1": ["100",'#FA1900'],
-#     "rbpo_ent10_alpha_1": ["10",'#BFBFBF'],
-#     "rbpo_noent_alpha_1": ["0",'#8C7F70'],
-# }
-# name = "ent"
-# algnames = ['rbpo_noent_alpha_1', 'rbpo_ent10_alpha_1',
-#             'rbpo_ent_100_alpha_1']
-
-# ent input
 algo_to_alg = {
-    "rbpo_ent_100_alpha_1": ["Belief",'#FA1900'],
-    # "rbpo_ent_100_alpha_0.1": ["E100-A0.1",'b'],
-    # "rbpo_ent_100_alpha_0.5": ["E100-A0.5",[0.8,0.7,0.7]],
-
-    # "rbpo_ent10_alpha_1": ["E10-A1",'r'],
-    # "rbpo_ent10_alpha_0.1": ["E10-A0.5",'y'],
-    "rbpo_ent_hidden_ent100_alpha_1": ["None",'#504E75'],
-    "rbpo_ent_input_ent100_alpha_1": ["Entropy",'#698F6E']
+    "rbpo_ent100_alpha_1": ["100",'#8C7F70'],
+    "rbpo_ent10_alpha_1": ["10",'#BFBFBF'],
+    "rbpo_noent_alpha_1": ["0",'#FA1900'],
 }
-name = "ent_input"
-algnames = ['rbpo_ent_hidden_ent100_alpha_1',
-            'rbpo_ent_input_ent100_alpha_1',
-            'rbpo_ent_100_alpha_1']
+name = "ent"
+algnames = ['rbpo_noent_alpha_1', 'rbpo_ent10_alpha_1',
+            'rbpo_ent100_alpha_1']
+
+# # ent input
+# algo_to_alg = {
+#     "rbpo_noent_alpha_1": ["B+E",'#FA1900'],
+#     "rbpo_enthidden_noent_alpha_1": ["E",'#504E75'],
+#     "entropy_hidden_no_expert_input_rbpo_noent": ["None",'#8C7F70']
+# }
+# name = "ent_input"
+# algnames = ['rbpo_enthidden_noent_alpha_1',
+#             'entropy_hidden_no_expert_input_rbpo_noent',
+#             'rbpo_noent_alpha_1']
 
 # baselines
 # algo_to_alg = {
@@ -65,18 +45,19 @@ algnames = ['rbpo_ent_hidden_ent100_alpha_1',
 stat = dict()
 
 fig, ax = plt.subplots(figsize=(8,6))
-env = "maze10"
+env = "maze10easy"
 
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.xaxis.set_ticks_position('bottom')
 ax.yaxis.set_ticks_position('left')
 
-max_step = 7000
+max_step = 5000
 
-we = [80.73, 23.68*1.96]
-random = -500 * 0.9 + 500 * 0.1
+we = [398.391, 1.96*12.22959419954]
+random = 500 * 0.1 + -50 * 0.9
 maximum = 500
+print ('random', random)
 
 plt.plot([0, max_step], [500, 500], 'k--', lw=4)
 # plt.text(max_step + 40, maximum - 10, r'Optimal$^*$', color='k')
@@ -94,11 +75,12 @@ if name == "baseline":
     # plt.text(max_step + 40, random - 10, r'Random', color='#878787')
 
 else:
-    # plt.ylim(we[0]-we[1], 500)
-    plt.ylim(0, 500)
+    plt.ylim(we[0]-we[1], 500)
+    plt.yticks([round(we[0]), round(maximum)])
+    # plt.ylim(0, 500)
 
 plt.xlim(0, max_step)
-plt.xticks([6000])
+plt.xticks([max_step])
 for i, pr in enumerate(algnames):
     files = glob.glob("/home/gilwoo/output/{}/{}/*.txt".format(env, pr))
     files.sort()

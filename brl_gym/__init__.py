@@ -419,6 +419,16 @@ register(
     reward_threshold=500,
 )
 
+
+register(
+    id='Maze10easy-upmle-no-reward-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEMazeEnv',
+    kwargs={"maze_type":10, "reward_entropy": False,
+    "entropy_weight":0.0, 'difficulty':'easy'},
+    max_episode_steps=1000,
+    reward_threshold=500,
+)
+
 register(
     id='Maze-upmle-no-reward-v0',
     entry_point='brl_gym.wrapper_envs:UPMLEMazeEnv',

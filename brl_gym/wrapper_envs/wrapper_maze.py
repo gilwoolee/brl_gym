@@ -6,6 +6,7 @@ from brl_gym.wrapper_envs.bayes_env import BayesEnv
 from brl_gym.wrapper_envs.env_sampler import DiscreteEnvSampler
 from brl_gym.envs.mujoco.point_mass import PointMassEnv
 from brl_gym.envs.mujoco.maze10 import Maze10
+from brl_gym.envs.mujoco.maze10easy import Maze10Easy
 
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
 from brl_gym.envs.mujoco.point_mass import GOAL_POSE as GOAL_POSE4
@@ -26,6 +27,7 @@ GOAL_POSE = dict()
 ENVS = dict()
 ENVS[4] = PointMassEnv
 ENVS[10] = Maze10
+ENVS[(10, 'easy')] = Maze10Easy
 
 env4 = PointMassEnv()
 OBS_DIM[4] = env4.observation_space.shape[0]
@@ -34,10 +36,14 @@ GOAL_POSE[4] = GOAL_POSE4.copy()
 env10 = Maze10()
 OBS_DIM[10] = env10.observation_space.shape[0]
 GOAL_POSE[10] = GOAL_POSE10.copy()
+GOAL_POSE[(10, 'easy')] = GOAL_POSE10.copy()
 
 class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
-    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, entropy_weight=1.0):
+    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, entropy_weight=1.0,
+        difficulty='hard'):
 
+        if difficulty == 'easy':
+            maze_type = (maze_type, 'easy')
         self.GOAL_POSE = GOAL_POSE[maze_type]
         envs = []
         for i in range(GOAL_POSE[maze_type].shape[0]):
@@ -119,7 +125,11 @@ class ExplicitBayesMazeEnvNoEntropyReward(ExplicitBayesMazeEnv):
 class UPMLEMazeEnv(ExplicitBayesEnv, utils.EzPickle):
     def __init__(self, maze_type=4,
         reward_entropy=True, reset_params=True,
-        entropy_weight=None):
+        entropy_weight=None,
+        difficulty='hard'):
+
+        if difficulty == 'easy':
+            maze_type = (maze_type, 'easy')
 
         self.GOAL_POSE = GOAL_POSE[maze_type]
         envs = []
@@ -210,13 +220,19 @@ class BayesMazeEntropyEnv(ExplicitBayesMazeEnv, utils.EzPickle):
     """
     Environment that provides entropy instead of belief as observation
     """
-    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, observe_entropy=True, entropy_weight=1.0):
+    def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, observe_entropy=True, entropy_weight=1.0,
+        difficulty='hard'):
+
         super(BayesMazeEntropyEnv, self).__init__(
             maze_type=maze_type, reward_entropy=reward_entropy,
-            reset_params=reset_params, entropy_weight=entropy_weight)
+            reset_params=reset_params, entropy_weight=entropy_weight,
+            difficulty=difficulty)
         utils.EzPickle.__init__(self)
 
         entropy_space = Box(np.array([0.0]), np.array([1.0]))
+
+        if difficulty == 'easy':
+            maze_type = (maze_type, 'easy')
 
         env = ENVS[maze_type]()
         self.observe_entropy = observe_entropy
@@ -431,8 +447,8 @@ class Expert:
 if __name__ == "__main__":
 
     maze_type = 10
-    env = ExplicitBayesMazeEnv(reset_params=False, maze_type=maze_type)
-    env.env.target = 2
+    env = ExplicitBayesMazeEnv(reset_params=False, maze_type=maze_type, difficulty="easy")
+    env.env.target = 5
     exp = Expert(nenv=1, maze_type=maze_type)
     all_rewards = []
 
@@ -444,10 +460,10 @@ if __name__ == "__main__":
     t = 0
     while True:
         bel = np.zeros(maze_type)
-        # bel[env.env.target] = 1
+        bel[env.env.target] = 5
 
-        action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
-        # action = exp.action(np.concatenate([o['obs'], bel]).reshape(1,-1))
+        # action = exp.action(np.concatenate([o['obs'], o['zbel']]).reshape(1,-1))
+        action = exp.action(np.concatenate([o['obs'], bel]).reshape(1,-1))
         action = action.squeeze() + np.random.normal()
         print(action)
 

@@ -3,14 +3,15 @@ import glob
 
 #os.system('source ~/venv/brl/bin/activate')
 
-rootdir = "/home/gilwoo/models/maze10/"
+rootdir = "/home/gilwoo/models/maze10easy/"
 algos = [x[0] for x in os.walk(rootdir) if "checkpoints" in x[0]]
 
 num_trials = 500
 dry_run = False
 
 algo_to_alg = {
-        "rbpo_ent_100_alpha_1":["bppo2_expert", "Maze10-no-entropy-v0", 1.0]
+        "rbpo_noent_alpha_1":["bppo2_expert", "Maze10easy-noent-v0", 1.0]
+        # "entropy_hidden_no_expert_input_rbpo_noent":["bppo2", "Maze10easy-entropy-hidden-no-reward-v0", 1.0]
     # "single_expert_rbpo": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
     # "entropy_hidden_rbpo": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
     #"rbpo_stronger_expert": ["bppo2_expert", "Maze-no-entropy-v0"],
@@ -34,7 +35,7 @@ for algo in algos:
     checkpoints.sort()
     last = int(checkpoints[-1].split("/")[-1])
 
-    outputdir = "/home/gilwoo/output/maze10/"+algname
+    outputdir = "/home/gilwoo/output/maze10easy/"+algname
     if not os.path.exists(outputdir):
         print("Make ", outputdir)
         os.makedirs(outputdir)

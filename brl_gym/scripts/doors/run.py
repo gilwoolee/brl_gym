@@ -16,7 +16,8 @@ algo_to_alg = {
     # "rbpo": ["bppo2_expert", "Door-no-entropy-v0"],
     # "entropy_hidden_rbpo": ["bppo2_expert", "Door-entropy-hidden-no-reward-v0"],
     # "entropy_rbpo": ["bppo2_expert", "Door-entropy-only-no-reward-v0"],
-    "rbpo_ent_100": ["bppo2_expert", "Door-no-entropy-v0"]
+    #"rbpo_ent_100": ["bppo2_expert", "Door-no-entropy-v0"]
+    "entropy_hidden_no_expert_input_rbpo_noent": ["bppo2", "Door-entropy-hidden-no-reward-v0"]
 }
 
 for algo in algos:

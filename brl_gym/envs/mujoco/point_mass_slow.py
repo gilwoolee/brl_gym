@@ -8,7 +8,7 @@ asset_dir = "/home/gilwoo/Workspace/brl_gym/brl_gym/envs/mujoco/"
 
 GOAL_POSE = np.array([[-0.25, 0.3], [1.2, 1.2], [1.2, 0.6], [0.25, 0.8]])
 
-class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
+class PointMassSlowEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
         self.agent_bid = 0
         utils.EzPickle.__init__(self)

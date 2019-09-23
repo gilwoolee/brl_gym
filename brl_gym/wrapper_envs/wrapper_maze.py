@@ -5,6 +5,7 @@ from gym import utils
 from brl_gym.wrapper_envs.bayes_env import BayesEnv
 from brl_gym.wrapper_envs.env_sampler import DiscreteEnvSampler
 from brl_gym.envs.mujoco.point_mass import PointMassEnv
+from brl_gym.envs.mujoco.point_mass_slow import PointMassSlowEnv
 from brl_gym.envs.mujoco.maze10 import Maze10
 from brl_gym.envs.mujoco.maze10easy import Maze10Easy
 
@@ -28,10 +29,12 @@ ENVS = dict()
 ENVS[4] = PointMassEnv
 ENVS[10] = Maze10
 ENVS[(10, 'easy')] = Maze10Easy
+ENVS[(4, 'slow')] = PointMassSlowEnv
 
 env4 = PointMassEnv()
 OBS_DIM[4] = env4.observation_space.shape[0]
 GOAL_POSE[4] = GOAL_POSE4.copy()
+GOAL_POSE[(4, 'slow')] = GOAL_POSE4.copy()
 
 env10 = Maze10()
 OBS_DIM[10] = env10.observation_space.shape[0]
@@ -40,10 +43,14 @@ GOAL_POSE[(10, 'easy')] = GOAL_POSE10.copy()
 
 class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
     def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, entropy_weight=1.0,
-        difficulty='hard'):
+        difficulty='hard', maze_slow=False):
 
         if difficulty == 'easy':
             maze_type = (maze_type, 'easy')
+
+        if maze_slow:
+            maze_type = (maze_type, 'slow')
+
         self.GOAL_POSE = GOAL_POSE[maze_type]
         envs = []
         for i in range(GOAL_POSE[maze_type].shape[0]):
@@ -68,6 +75,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
             self.entropy_weight = 0.0
         utils.EzPickle.__init__(self)
 
+        print("obs space", self.observation_space)
     def _update_belief(self,
                              action,
                              obs,

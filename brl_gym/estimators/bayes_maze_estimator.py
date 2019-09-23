@@ -3,6 +3,7 @@ import numpy as np
 from gym.spaces import Box
 from brl_gym.estimators.estimator import Estimator
 from brl_gym.envs.mujoco.point_mass import PointMassEnv
+from brl_gym.envs.mujoco.point_mass_slow import PointMassSlowEnv
 from brl_gym.envs.mujoco.maze10 import Maze10
 from scipy.stats import norm
 
@@ -16,6 +17,9 @@ class BayesMazeEstimator(Estimator):
         if maze_type == 4:
             from brl_gym.envs.mujoco.point_mass import GOAL_POSE
             env = PointMassEnv()
+        elif maze_type == (4, 'slow'):
+            from brl_gym.envs.mujoco.point_mass import GOAL_POSE
+            env = PointMassSlowEnv()
         else:
             from brl_gym.envs.mujoco.maze10 import GOAL_POSE
             env = Maze10()

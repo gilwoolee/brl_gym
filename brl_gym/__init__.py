@@ -185,6 +185,13 @@ register(
 )
 
 register(
+    id='Maze-slow-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    kwargs={"maze_slow":True},
+    max_episode_steps=10000,
+    reward_threshold=10,
+)
+register(
     id='Maze10-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
     kwargs={"maze_type":10, "entropy_weight":1.0},

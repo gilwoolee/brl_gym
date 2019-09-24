@@ -8,6 +8,7 @@ from brl_gym.envs.mujoco.point_mass import PointMassEnv
 from brl_gym.envs.mujoco.point_mass_slow import PointMassSlowEnv
 from brl_gym.envs.mujoco.maze10 import Maze10
 from brl_gym.envs.mujoco.maze10easy import Maze10Easy
+from brl_gym.envs.mujoco.maze10easy_slow import Maze10EasySlow
 
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
 from brl_gym.envs.mujoco.point_mass import GOAL_POSE as GOAL_POSE4
@@ -30,6 +31,7 @@ ENVS[4] = PointMassEnv
 ENVS[10] = Maze10
 ENVS[(10, 'easy')] = Maze10Easy
 ENVS[(4, 'slow')] = PointMassSlowEnv
+ENVS[((10, 'easy'),'slow')] = Maze10EasySlow
 
 env4 = PointMassEnv()
 OBS_DIM[4] = env4.observation_space.shape[0]
@@ -40,6 +42,7 @@ env10 = Maze10()
 OBS_DIM[10] = env10.observation_space.shape[0]
 GOAL_POSE[10] = GOAL_POSE10.copy()
 GOAL_POSE[(10, 'easy')] = GOAL_POSE10.copy()
+GOAL_POSE[((10, 'easy'),'slow')] = GOAL_POSE10.copy()
 
 class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
     def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, entropy_weight=1.0,
@@ -120,7 +123,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
 
     def color_belief(self, bel):
         for i, b in enumerate(bel.ravel()):
-            self.env.model.site_rgba[i, 0] = b
+            self.env.model.site_rgba[i, 0] = 1.0
             self.env.model.site_rgba[i, -1] = b
 
 
@@ -443,7 +446,7 @@ class Expert:
         action = action.reshape(len(actions), -1)
 
         action = np.concatenate([action, np.zeros((action.shape[0], 1))], axis=1) * 1.0
-        return action
+        return action + np.random.normal(size=3) * 0.1
 
     def qvals(self, inputs):
         obs = inputs[0].squeeze()
@@ -455,7 +458,9 @@ class Expert:
 if __name__ == "__main__":
 
     maze_type = 10
-    env = ExplicitBayesMazeEnv(reset_params=False, maze_type=maze_type, difficulty="easy")
+    env = ExplicitBayesMazeEnv(reset_params=False,
+        maze_type=maze_type, difficulty="easy",
+        maze_slow=True)
     env.env.target = 5
     exp = Expert(nenv=1, maze_type=maze_type)
     all_rewards = []

@@ -35,8 +35,8 @@
     <site name="target6" pos="-1.325 1.325 0.35" material="target_hidden" type="sphere" size=".09"/>
     <site name="target7" pos="-0.65 0.75 0.35" material="target_hidden" type="sphere" size=".09"/>
     <site name="target8" pos="0.0 -1.325 0.35" material="target_hidden" type="sphere" size=".09"/>
-    <site name="target9" pos="0.65 1.325 0.35" 
-      material="target_hidden" type="sphere" size=".07"/>
+    <site name="target9" pos="-0.65 1.325 0.35" 
+      material="target_hidden" type="sphere" size=".09"/>
 
     <!-- <site name="target" pos="0 0.0 0.01" material="target" type="sphere" size=".10"/> -->
   </worldbody>

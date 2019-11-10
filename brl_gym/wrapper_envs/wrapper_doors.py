@@ -72,6 +72,7 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         info['entropy'] = entropy
         self.color_belief()
 
+
         return {'obs':obs, 'zbel':bel}, reward, done, info
 
     def reset(self):
@@ -397,6 +398,7 @@ class Expert:
             actions += proposal *  bel[:, [i+1]]
 
         actions = np.concatenate([actions, np.zeros((actions.shape[0], 1))], axis=1)
+        actions += np.random.normal(size=3)*0.1
         return actions
 
 if __name__ == "__main__":

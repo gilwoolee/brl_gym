@@ -15,35 +15,40 @@ for name in ["ent", "ent_input", "baseline"]:
     if name == "ent":
         # ent weights
         algo_to_alg = {
-            "rbpo_ent100_alpha_1": ["100",colors.ent_reward_100],
-            "rbpo_ent10_alpha_1": ["10",colors.ent_reward_10],
-            "rbpo_noent_alpha_1": ["0",colors.brpo_color],
+            "rbpo_ent100_alpha_0.1": ["100",colors.ent_reward_100],
+            "rbpo_ent10_alpha_0.1": ["10",colors.ent_reward_10],
+            "rbpo_noent_alpha_0.1": ["0",colors.brpo_color],
+            # "rbpo_noent_alpha_1": ["0-alpha1",'g'],
+
         }
         name = "ent"
-        algnames = ['rbpo_ent10_alpha_1',
-                    'rbpo_ent100_alpha_1',
-                    'rbpo_noent_alpha_1']
+        algnames = ['rbpo_ent10_alpha_0.1',
+                    'rbpo_ent100_alpha_0.1',
+                    'rbpo_noent_alpha_0.1',
+                    # 'rbpo_noent_alpha_1'
+                    ]
     elif name == "ent_input":
         # ent input
         algo_to_alg = {
-            "rbpo_noent_alpha_1": ["B+E",colors.brpo_color],
-            "rbpo_enthidden_noent_alpha_1": ["E",colors.ensemble_color],
-            "entropy_hidden_no_expert_input_rbpo_noent": ["None",colors.none_color]
+            "rbpo_noent_alpha_0.1": ["B+E",colors.brpo_color],
+            "rbpo_noent_enthidden_with_expert_alpha_0.1": ["E",colors.ensemble_color],
+            # "rbpo_noent_hidden_alpha_0.1": ["None",colors.none_color]
         }
         name = "ent_input"
-        algnames = ['rbpo_enthidden_noent_alpha_1',
-                    'entropy_hidden_no_expert_input_rbpo_noent',
-                    'rbpo_noent_alpha_1']
+        algnames = [
+        'rbpo_noent_enthidden_with_expert_alpha_0.1',
+                    # 'rbpo_noent_hidden_alpha_0.1',
+                    'rbpo_noent_alpha_0.1']
     else:
         # baselines
         algo_to_alg = {
             "bpo_ent100": ["BPO",colors.bpo_color],
             "upmle_ent100": ["UPMLE",colors.upmle_color],
-            "rbpo_noent_alpha_1": [r'\bf{BRPO}',colors.brpo_color]
+            "rbpo_noent_alpha_0.1": [r'\bf{BRPO}',colors.brpo_color]
         }
         name = "baseline"
         algnames = ['bpo_ent100', 'upmle_ent100',
-                    'rbpo_noent_alpha_1']
+                    'rbpo_noent_alpha_0.1']
 
 
     stat = dict()
@@ -61,7 +66,6 @@ for name in ["ent", "ent_input", "baseline"]:
     we = [398.391, 1.96*12.22959419954]
     random = 500 * 0.1 + -50 * 0.9
     maximum = 500
-    print ('random', random)
 
     plt.plot([0, max_step], [500, 500], color=colors.max_color, lw=4)
     # plt.text(max_step + 40, maximum - 10, r'Optimal$^*$', color='k')
@@ -72,19 +76,19 @@ for name in ["ent", "ent_input", "baseline"]:
     # plt.text(max_step + 40, we[0] - 10, r'Expert', color='#597223')
 
     if name == "baseline":
-        plt.ylim(-100, 505)
+        plt.ylim(0, 500)
         plt.yticks(np.around([0, round(we[0]), round(maximum)]))
 
         plt.plot([0, max_step], [random, random], color=colors.random_color, lw=4)
         # plt.text(max_step + 40, random - 10, r'Random', color='#878787')
     elif name == "ent_input":
-        plt.ylim(-100, 505)
+        plt.ylim(0, 500)
         plt.yticks([0, round(we[0]), round(maximum)])
-        plt.plot([0, max_step], [random, random], color=colors.random_color, lw=4)
+        # plt.plot([0, max_step], [random, random], color=colors.random_color, lw=4)
 
     else:
-        plt.ylim(we[0]-we[1], 505)
-        plt.yticks([round(we[0]), round(maximum)])
+        plt.ylim(0, 500)
+        plt.yticks([0, round(we[0]), round(maximum)])
         # plt.ylim(0, 500)
 
     plt.xlim(0, max_step)
@@ -92,8 +96,6 @@ for name in ["ent", "ent_input", "baseline"]:
     for i, pr in enumerate(algnames):
         files = glob.glob("/home/gilwoo/output/{}/{}/*.txt".format(env, pr))
         files.sort()
-
-        print(pr, len(files))
 
         if len(files) == 0:
             continue
@@ -105,8 +107,7 @@ for name in ["ent", "ent_input", "baseline"]:
                 data = np.genfromtxt(f, delimiter='\t', skip_header=1)
             except:
                 continue
-            print(f)
-            print(data.shape)
+
             if data.shape[0] < 5:
                 continue
             timestep = int(f.split("/")[-1].split(".")[0])
@@ -115,16 +116,19 @@ for name in ["ent", "ent_input", "baseline"]:
             rewards += [(timestep, np.mean(data[:, 1]), 1.96*np.std(data[:,1])/np.sqrt(data.shape[0]))]
 
         rewards = np.array(rewards)
-        print(rewards[:5])
         stat[pr] = rewards
-        plt.fill_between(rewards[:,0], y1=rewards[:,1] - rewards[:,2], y2=rewards[:max_step,1]+rewards[:max_step,2],
-            alpha=0.3, color=algo_to_alg[pr][1])
-        plt.plot(rewards[:,0], rewards[:,1], label=algo_to_alg[pr][0], lw=4, color=algo_to_alg[pr][1])
+        plt.fill_between(rewards[:,0], y1=rewards[:,1] - rewards[:,2],
+            y2=rewards[:max_step,1]+rewards[:max_step,2],
+            color=algo_to_alg[pr][1][colors.STANDARD],
+            alpha=0.3)
+        plt.plot(rewards[:,0], rewards[:,1], label=algo_to_alg[pr][0],
+            lw=4, color=algo_to_alg[pr][1][colors.EMPHASIS])
 
+        print (algo_to_alg[pr][1][colors.EMPHASIS], algo_to_alg[pr][1][colors.SHADE])
         if timestep < max_step:
             # extend the line
             plt.plot([rewards[-1,0], max_step], [rewards[-1,1], rewards[-1,1]],
-                '-', lw=4, color=algo_to_alg[pr][1])
+                '-', lw=4, color=algo_to_alg[pr][1][colors.EMPHASIS])
 
 
     # legend = plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.20),

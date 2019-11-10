@@ -10,17 +10,18 @@ num_trials = 500
 dry_run = False
 
 algo_to_alg = {
-#        "rbpo_noent_alpha_1":["bppo2_expert", "Maze10easy-noent-v0", 1.0]
+        # "rbpo_noent_alpha_1":["bppo2_expert", "Maze10easy-noent-v0", 1.0]
 #        "entropy_hidden_no_expert_input_rbpo_noent":["bppo2", "Maze10easy-entropy-hidden-noent-v0", 1.0]
     # "single_expert_rbpo": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
     # "entropy_hidden_rbpo": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
     #"rbpo_stronger_expert": ["bppo2_expert", "Maze-no-entropy-v0"],
     # "entropy_rbpo": ["bppo2_expert", "Maze-entropy-only-no-reward-v0"],
     # "bpo": ["ppo2","Maze-no-entropy-v0"],
-    "upmle_ent1": ["ppo2", "Maze10easy-upmle-no-reward-v0", 0.0],
+    #"upmle_ent1": ["ppo2", "Maze10easy-upmle-no-reward-v0", 0.0],
     # "expert_no_residual": ["bpo_expert_no_residual", "Maze-no-entropy-v0"],
     # "noentropy_rbpo": ["bppo2_expert", "Maze-no-entropy-v0"],
     # "rbpo_hidden_belief_no_ent_reward": ["bppo2_expert", "Maze-entropy-hidden-no-reward-v0"],
+    "rbpo_noent_enthidden_with_expert_alpha_0.1":["bppo2_expert", "Maze10easy-entropy-hidden-noent-v0", 0.1]
 }
 
 for algo in algos:
@@ -40,6 +41,7 @@ for algo in algos:
         print("Make ", outputdir)
         os.makedirs(outputdir)
 
+    print(last)
     for i in [1] + list(range(100, last, 100)):
         outputfile = "{}/{}.txt".format(outputdir, str(i).zfill(5))
         if os.path.exists(outputfile):

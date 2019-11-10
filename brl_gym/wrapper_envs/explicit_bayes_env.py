@@ -47,7 +47,7 @@ class ExplicitBayesEnv(gym.Env, utils.EzPickle):
         return self.env.seed(seed)
 
     def render(self, mode='human'):
-        self.env.render()
+        return self.env.render(mode=mode)
 
     def set_state(self, state):
         self.env.set_state(state)

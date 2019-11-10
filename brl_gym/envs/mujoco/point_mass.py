@@ -76,8 +76,13 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         goal_dist = GOAL_POSE - agent_pos[:2]
 
         # Noisy distance
-        noise_scale = np.linalg.norm(goal_dist[self.target]) / (1.8*np.sqrt(2))
+        noise_scale = np.linalg.norm(goal_dist[self.target])  #/ (1.8*np.sqrt(2))
         dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * noise_scale
+
+
+        with open("maze_sensing.txt","a+") as f:
+            f.write("{}\t{}\n".format(agent_pos[0], agent_pos[1]))
+
         return dist, noise_scale
 
 

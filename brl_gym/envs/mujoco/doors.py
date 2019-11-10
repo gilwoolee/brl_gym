@@ -129,6 +129,9 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             else:
                 noisy_sensing += [not self.open_doors[x]]
 
+        with open("door_sensing.txt","a+") as f:
+            f.write("{}\t{}\n".format(agent_pos[0], agent_pos[1]))
+
         return np.array(noisy_sensing), accuracy
 
 

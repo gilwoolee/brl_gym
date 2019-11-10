@@ -87,6 +87,10 @@ class Maze10Easy(mujoco_env.MujocoEnv, utils.EzPickle):
         # Noisy distance
         noise_scale = np.linalg.norm(goal_dist[self.target]) * 0.5#/ (1.8*np.sqrt(2))
         dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * noise_scale
+
+        with open("maze10easy_sensing.txt","a+") as f:
+            f.write("{}\t{}\n".format(agent_pos[0], agent_pos[1]))
+
         return dist, noise_scale
 
 

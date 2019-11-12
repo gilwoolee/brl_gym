@@ -17,6 +17,8 @@ def convert_3D_to_2D(xy, maze_type=4):
             xy = np.array([xy[1], xy[0]])
         else:
             xy = np.concatenate([xy[:, [1]], xy[:, [0]]], axis=1)
+
+    xy = np.clip(xy, 0, 100)
     return xy
 
 def convert_2D_to_3D(xy, maze_type=4):

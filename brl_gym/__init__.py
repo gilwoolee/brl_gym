@@ -200,6 +200,14 @@ register(
 )
 
 register(
+    id='MazeCont-v0',
+    entry_point='brl_gym.wrapper_envs:BayesMazeContinuousEnv',
+    kwargs={"entropy_weight":1.0},
+    max_episode_steps=750,
+    reward_threshold=500
+)
+
+register(
     id='Maze10easy-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
     kwargs={"maze_type":10, "entropy_weight":1.0, 'difficulty':'easy'},
@@ -368,6 +376,14 @@ register(
     "observe_entropy": True},
     max_episode_steps=750,
     reward_threshold=500,
+)
+
+register(
+    id='MazeCont-noent-v0',
+    entry_point='brl_gym.wrapper_envs:BayesMazeContinuousEnv',
+    kwargs={"entropy_weight":0.0},
+    max_episode_steps=750,
+    reward_threshold=500
 )
 
 

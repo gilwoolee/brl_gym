@@ -93,7 +93,7 @@ def add_node(G, config, env, connection_radius):
     indices = np.arange(len(distances))[distances <= connection_radius]
 
     edges = [(index, j, distances[j]) for j in indices
-        if env.edge_validity_checker(G_configs[index], G_configs[j])[0]]
+        if env.edge_validity_checker(G_configs[index], G_configs[j], use_sampling_map=True)[0]]
     G.add_weighted_edges_from(edges)
 
     return G, index

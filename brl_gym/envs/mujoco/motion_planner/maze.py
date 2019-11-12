@@ -58,7 +58,7 @@ class MotionPlanner:
             planning_env = MapEnvironment(map_data, sampling_maze, maze_type=maze_type)
             num_vertices = 300
             self.connection_radius = 75
-        else:
+        elif maze_type == 10 or maze_type == 'cont':
             mapfile = os.path.join(dir_path, "../assets/walls.png")
             sampling_mapfile = os.path.join(dir_path, "../assets/walls_padding.png")
             img = Image.open(mapfile).convert('L')
@@ -91,13 +91,8 @@ class MotionPlanner:
                     num_vertices=num_vertices,
                     connection_radius=self.connection_radius,
                     saveto="resource/graph10.pkl")
-        #     input('check')
-        # planning_env.visualize_graph(G)
-        # import sys; sys.exit(0)
-
         self.G = G
         self.planning_env = planning_env
-
         self.plans = dict()
 
     def state_validity_checker(self, configs_3D, use_sampling_map=True):

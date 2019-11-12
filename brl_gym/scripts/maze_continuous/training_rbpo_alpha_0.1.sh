@@ -1,0 +1,1 @@
+OPENAI_LOGDIR=~/models/maze_cont/rbpo_alpha_0.1_noent OPENAI_LOG_FORMAT=tensorboard python -m brl_baselines.run --alg=bppo2_expert --env=MazeCont-noent-v0 --num_timesteps=5e8 --save_path=~/models/complete/maze_cont_rbpo --num_env=10 --save_interval=50  --gamma=1 --value_network=copy  --nminibatches=10 --residual_weight=0.1

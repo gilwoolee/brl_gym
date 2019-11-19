@@ -17,8 +17,9 @@ if __name__ == "__main__":
                 np.concatenate([o['obs'], o['zbel']]).reshape(1, -1)).ravel()
 
             # print(action)
-            if t < 150:
-                action[2] = action[2] + 1
+            #if t < 150:
+            #    action[2] = action[2] + 1
+            action[2] = np.random.normal()
 
             o, r, d, _ = env.step(action)
             # env.render()

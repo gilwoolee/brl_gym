@@ -25,7 +25,7 @@ from brl_gym.wrapper_envs.wrapper_doors import (ExplicitBayesDoorsEnv,
 												UPMLEDoorsEnv,
 												BayesDoorsEntropyEnv)
 												# BayesDoorsHiddenEntropyEnv)
-from brl_gym.wrapper_envs.wrapper_maze_continuous import BayesMazeContinuousEnv
+from brl_gym.wrapper_envs.wrapper_maze_continuous import BayesMazeContinuousEnv, UPMLEMazeContEnv
 
 # from gym.classic_control.cartpole import CartPoleEnv as ExplicitBayesCartPoleEnv
 

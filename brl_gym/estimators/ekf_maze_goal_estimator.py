@@ -21,6 +21,7 @@ class EKFMazeGoalEstimator(Estimator):
 
         self.param_low = self.goal_min
         self.param_high = self.goal_max
+        self.param_space = Box(self.param_low, self.param_high, dtype=np.float32)
 
         self.reset()
 

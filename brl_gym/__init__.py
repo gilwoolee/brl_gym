@@ -225,6 +225,20 @@ register(
 )
 
 register(
+    id='Maze10easy-LearnableBF-noent-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    max_episode_steps=1000,
+    reward_threshold=500,
+    kwargs={
+    "entropy_weight":0.0,
+    "reward_entropy":False,
+    "maze_type":10,
+    "difficulty":"easy",
+    "learnable_bf":True
+    },
+)
+
+register(
     id='Maze10-ent-10-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
     kwargs={"maze_type":10, "entropy_weight":10.0},

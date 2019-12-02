@@ -20,7 +20,7 @@ GOAL_POSE = np.array([
     ])
 
 class Maze10Easy(mujoco_env.MujocoEnv, utils.EzPickle):
-    def __init__(self):
+    def __init__(self, reset_param=False):
         self.agent_bid = 0
         utils.EzPickle.__init__(self)
         self.target = 0
@@ -32,6 +32,7 @@ class Maze10Easy(mujoco_env.MujocoEnv, utils.EzPickle):
         self.agent_bid = self.sim.model.body_name2id('agent')
 
         self.action_space = Box(np.ones(3) * -1, np.ones(3))
+        self.reset_param = reset_param
 
     def step(self, a):
         # if len(a) == 3:
@@ -44,8 +45,7 @@ class Maze10Easy(mujoco_env.MujocoEnv, utils.EzPickle):
         target_pos = self.data.site_xpos[self.target_sid].ravel()
         dist = np.linalg.norm(agent_pos-target_pos)
 
-        # Distance to the other target
-        other_target = 1 if self.target == 0 else 0
+        # Distance to others
         dist_to_others = np.linalg.norm(GOAL_POSE - agent_pos[:2], axis=1)
         dist_to_others = np.array([x for i, x in enumerate(dist_to_others) if i != self.target])
 
@@ -103,6 +103,9 @@ class Maze10Easy(mujoco_env.MujocoEnv, utils.EzPickle):
         qp = np.array([agent_x, agent_y])
         qv = self.init_qvel.copy()
         self.set_state(qp, qv)
+
+        if self.reset_param:
+            self.target = self.np_random.choice(np.arange(len(GOAL_POSE)))
         target = self.target
         self.target_sid = self.sim.model.site_name2id('target{}'.format(target))
 

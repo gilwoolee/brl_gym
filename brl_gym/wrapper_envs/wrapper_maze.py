@@ -14,7 +14,7 @@ from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
 from brl_gym.envs.mujoco.point_mass import GOAL_POSE as GOAL_POSE4
 from brl_gym.envs.mujoco.maze10 import GOAL_POSE as GOAL_POSE10
 
-from brl_gym.estimators.bayes_maze_estimator import BayesMazeEstimator
+from brl_gym.estimators.bayes_maze_estimator import BayesMazeEstimator, LearnableMazeBF
 
 from gym.spaces import Box, Dict
 # from multiprocessing import Pool
@@ -46,7 +46,7 @@ GOAL_POSE[((10, 'easy'),'slow')] = GOAL_POSE10.copy()
 
 class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
     def __init__(self, maze_type=4, reward_entropy=True, reset_params=True, entropy_weight=1.0,
-        difficulty='hard', maze_slow=False):
+        difficulty='hard', maze_slow=False, learnable_bf=False):
 
         if difficulty == 'easy':
             maze_type = (maze_type, 'easy')
@@ -61,7 +61,11 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
             env.target = i
             envs += [env]
 
-        self.estimator = BayesMazeEstimator(maze_type=maze_type)
+        if not learnable_bf:
+            self.estimator = BayesMazeEstimator(maze_type=maze_type)
+        else:
+            self.estimator = LearnableMazeBF(maze_type=maze_type)
+
         self.env_sampler = DiscreteEnvSampler(envs)
         super(ExplicitBayesMazeEnv, self).__init__(env, self.estimator)
         self.nominal_env = env
@@ -106,6 +110,7 @@ class ExplicitBayesMazeEnv(ExplicitBayesEnv, utils.EzPickle):
         reward += ent_reward * self.entropy_weight
         info['entropy'] = entropy
         info['bel'] = bel
+        info['label'] = self.env.target
         self.color_belief(bel)
         return {'obs':obs, 'zbel':bel}, reward, done, info
 

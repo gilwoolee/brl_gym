@@ -78,6 +78,66 @@ class BayesMazeContinuousEnv(ExplicitBayesEnv, utils.EzPickle):
         return {'obs':obs, 'zbel':bel}
 
 
+class UPMLEMazeContEnv(ExplicitBayesEnv, utils.EzPickle):
+    def __init__(self, reward_entropy=True, reset_params=True,
+        entropy_weight=1.0):
+
+        self.estimator = EKFMazeGoalEstimator()
+        env = MazeContinuous()
+        super(UPMLEMazeContEnv, self).__init__(env, self.estimator)
+
+        self.nominal_env = env
+
+        self.observation_space = Dict(
+            {"obs": env.observation_space, "zparam": self.estimator.param_space})
+        self.internal_observation_space = env.observation_space
+        self.env = env
+        self.reset_params = reset_params
+        self.reward_entropy = reward_entropy
+        if reward_entropy:
+            self.entropy_weight = entropy_weight
+        else:
+            self.entropy_weight = 0.0
+        utils.EzPickle.__init__(self)
+
+    def _update_belief(self,
+                             action,
+                             obs,
+                             **kwargs):
+        # Estimate
+        self.estimator.estimate(
+                action, obs, **kwargs)
+        belief = self.estimator.get_belief()
+        return belief, kwargs
+
+    def step(self, action):
+        prev_state = self.env.get_state().copy()
+        obs, reward, done, info = self.env.step(action)
+        info['prev_state'] = prev_state
+        info['curr_state'] = self.env.get_state()
+
+        bel, info = self._update_belief(
+                                        action,
+                                        obs,
+                                        **info)
+
+        entropy = bel[-1]
+        ent_reward = -(entropy - self.prev_entropy)
+        self.prev_entropy = entropy
+        reward += ent_reward * self.entropy_weight
+        param = self.estimator.get_mle()
+        return {'obs':obs, 'zparam':param}, reward, done, info
+
+    def reset(self):
+        obs = self.env.reset()
+        self.estimator.reset()
+        bel, _ = self._update_belief(action=None, obs=obs)
+        self.last_obs = (obs, bel)
+        self.prev_entropy = bel[-1]
+        param = self.estimator.get_mle()
+        return {'obs':obs, 'zparam':param}
+
+
 def get_closest_point(waypoints, position):
     if waypoints is None or waypoints is False:
         raise RuntimeError

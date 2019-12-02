@@ -400,6 +400,24 @@ register(
     reward_threshold=500
 )
 
+register(
+    id='MazeCont-upmle-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEMazeContEnv',
+    kwargs={"entropy_weight":1.0,
+        "reward_entropy":True},
+    max_episode_steps=750,
+    reward_threshold=500
+)
+
+
+register(
+    id='MazeCont-upmle-noent-v0',
+    entry_point='brl_gym.wrapper_envs:UPMLEMazeContEnv',
+    kwargs={"entropy_weight":0.0,
+        "reward_entropy":False},
+    max_episode_steps=750,
+    reward_threshold=500
+)
 
 register(
     id='Maze-no-entropy-v0',

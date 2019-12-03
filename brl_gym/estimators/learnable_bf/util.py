@@ -7,7 +7,7 @@ import torch.optim as optim
 
 from brl_gym.estimators.learnable_bf.learnable_bf import LearnableBF, BayesFilterNet,  generate_labels
 from brl_gym.estimators.learnable_bf.bf_dataset import BayesFilterDataset
-from . import pt_util
+from brl_gym.estimators.learnable_bf import pt_util
 
 def repackage_hidden(h):
     """Wraps hidden states in new Tensors,
@@ -173,4 +173,4 @@ def main():
 
         return model, device
 
-# final_model, device = main()
+final_model, device = main()

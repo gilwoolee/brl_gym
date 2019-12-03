@@ -114,7 +114,7 @@ def main_LearnableMazeBF():
     labels = []
     inputs = []
     T = 120
-    for _ in tqdm.tqdm(range(1000)):
+    for _ in tqdm.tqdm(range(100)):
         o = env.reset()
         estimator.reset()
 
@@ -153,8 +153,8 @@ def main_LearnableMazeBF():
     test_data = inputs[int(len(inputs)*0.8):]
     test_label = labels[int(len(labels)*0.8):]
 
-    data_train = BayesFilterDataset(train_data, train_label, output_dim, SEQUENCE_LENGTH)
-    data_test = BayesFilterDataset(test_data, test_label, output_dim, SEQUENCE_LENGTH)
+    data_train = BayesFilterDataset(train_data, train_label, output_dim, SEQUENCE_LENGTH, BATCH_SIZE)
+    data_test = BayesFilterDataset(test_data, test_label, output_dim, SEQUENCE_LENGTH, BATCH_SIZE)
 
     print("train has ", len(data_train))
     use_cuda = USE_CUDA and torch.cuda.is_available()

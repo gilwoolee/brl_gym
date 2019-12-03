@@ -65,9 +65,15 @@ class LearnableBF(Estimator):
         output_dim = belief_space.shape[0]
         self.hidden_state = None
         self.belief_dim = output_dim
-        use_cuda = device or torch.cuda.is_available()
-        self.device = torch.device("cuda" if use_cuda else "cpu")
-        self.model = BayesFilterNet(input_dim, output_dim).to(self.device)
+        use_cuda = torch.cuda.is_available()
+        self.device = "cuda"
+        print("device", self.device)
+        print(input_dim, output_dim)
+        print("obs space", observation_space.shape)
+        print("actoin space", action_space)
+        self.model = BayesFilterNet(input_dim, output_dim)
+        print("model", self.model)
+        self.model = self.model.to(self.device)
         self.temperature = 1
 
     def reset(self):

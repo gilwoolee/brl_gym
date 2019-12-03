@@ -58,18 +58,20 @@ def test(model, device, test_loader):
             num_correct = correct_mask.sum().item()
             correct += num_correct
             # Comment this out to avoid printing test results
+            """
             if batch_idx % 10 == 0:
                 print('Input\t%s\nGT\t%s\npred\t%s\n\n' % (
                     np.around(data[0].detach().cpu().numpy(),2),
                     label[0],
                     pred[0]))
+            """
 
     test_loss /= len(test_loader)
     test_accuracy = 100. * correct / (len(test_loader.dataset) * test_loader.dataset.sequence_length)
 
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset) * test_loader.dataset.sequence_length,
-        100. * correct / (len(test_loader.dataset) * test_loader.dataset.sequence_length)))
+    # print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+    #    test_loss, correct, len(test_loader.dataset) * test_loader.dataset.sequence_length,
+    #    100. * correct / (len(test_loader.dataset) * test_loader.dataset.sequence_length)))
     return test_loss, test_accuracy
 
 

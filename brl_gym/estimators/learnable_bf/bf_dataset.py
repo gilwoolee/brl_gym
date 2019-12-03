@@ -23,7 +23,6 @@ class BayesFilterDataset(torch.utils.data.Dataset):
         self.data = self.data[:num_items]
         self.label = self.label[:num_items]
 
-
     def __len__(self):
         return self.data.shape[0]
 
@@ -36,6 +35,7 @@ class BayesFilterDataset(torch.utils.data.Dataset):
 
         n_chunks = data.shape[1] // sequence_length
         data = data[:, :n_chunks * sequence_length, :]
+
 
         data = data.reshape(data.shape[0], -1, sequence_length, data.shape[2])
         data = np.concatenate(data.transpose(1,0,2,3), axis=0)

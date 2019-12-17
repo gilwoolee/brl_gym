@@ -1,0 +1,174 @@
+<mujoco model="pusher_plane_cube_2d">
+    <asset>
+        <mesh file="wam1.STL"/>
+        <mesh file="wam1_collision.STL"/>
+        <mesh file="wam2.STL"/>
+        <mesh file="wam2_collision.STL"/>
+        <mesh file="wam3.STL"/>
+        <mesh file="wam3_collision.STL"/>
+        <mesh file="wam4.STL"/>
+        <mesh file="wam4_collision.STL"/>
+        <mesh file="wam5.STL"/>
+        <mesh file="wam5_collision.STL"/>
+        <mesh file="wam6.STL"/>
+        <mesh file="wam6_collision.STL"/>
+        <mesh file="wam7.STL"/>
+        <mesh file="wam7_collision.STL"/>
+        <mesh file="wam_base.STL"/>
+        <mesh file="wam_base_collision.STL"/>
+        <mesh file="finger0_0_collision.STL"/>
+        <mesh file="finger0_0.STL"/>
+        <mesh file="finger0_1_collision.STL"/>
+        <mesh file="finger0_1.STL"/>
+        <mesh file="finger0_2_collision.STL"/>
+        <mesh file="finger0_2.STL"/>
+        <mesh file="finger1_0_collision.STL"/>
+        <mesh file="finger1_0.STL"/>
+        <mesh file="finger1_1_collision.STL"/>
+        <mesh file="finger1_1.STL"/>
+        <mesh file="finger1_2_collision.STL"/>
+        <mesh file="finger1_2.STL"/>
+        <mesh file="finger2_1_collision.STL"/>
+        <mesh file="finger2_1.STL"/>
+        <mesh file="finger2_2_collision.STL"/>
+        <mesh file="finger2_2.STL"/>
+        <mesh file="hand_base_collision.STL"/>
+        <mesh file="hand_base.STL"/>
+    </asset>
+    <compiler angle="radian" inertiafromgeom="true"/>
+    <default>
+        <joint armature="1" damping="1" limited="true"/>
+        <geom contype="0" friction="0.5 0.5 0.1" rgba="0.7 0.7 0 1" solimp=".5 .5 .001" solref=".02 1"/>
+    </default>
+    <option integrator="RK4" timestep="0.01"/>
+    <worldbody>
+        <body mocap="true" name="robot0:mocap" pos="0 0 0">
+            <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.7" size="0.005 0.005 0.005" type="box"></geom>
+            <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.1" size="1 0.005 0.005" type="box"></geom>
+            <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.1" size="0.005 1 0.001" type="box"></geom>
+            <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.1" size="0.005 0.005 1" type="box"></geom>
+        </body>
+        <!-- Ground -->
+        <geom conaffinity="1" contype="1" name="ground" pos="0 0 0" rgba="0.9 0.9 0.9 1" size="1 1 10" type="plane" condim="3" friction="0.01 0.01 0.01"/>
+        <!-- Ground Center -->
+        <body name="center" pos="0. 0. 0.">
+            <geom conaffinity="0" contype="0" name="center" pos="0 0 0" rgba="0. 0. 1.0 1" size=".009" type="sphere"/>
+        </body>
+        <!-- WAM Arm-->
+        <body name='pusher' pos="-1. 0. 0.4" euler="0. 0. 0.">
+            <inertial diaginertia="1 1 1" mass="1.0" pos="0. 0 0."></inertial>
+            <body name='wam' pos="0. 0. 0." euler="0. 1.5708 3.14159">
+                <geom rgba="1 0 0 1" type="mesh" mesh="wam_base" contype="0" conaffinity="0" mass="0.001"/>
+                <geom rgba="0 0 0.5 0" type="mesh" mesh="wam_base_collision" contype="0" conaffinity="0" mass="0.001"/>
+                <body name='wam_1' pos="0.22 0.14 0.346" euler="0. 0 0.5">
+                    <joint name="wam1_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-10.3213 10.3" damping="0."/>
+                    <geom rgba="1 0 0 1" type="mesh" mesh="wam1" contype="0" conaffinity="0" mass="0.001"/>
+                    <geom rgba="0 0 0.5 0" type="mesh" mesh="wam1_collision" contype="0" conaffinity="0" mass="0.001"/>
+                    <body name='wam_2' pos="0. 0. 0." euler="-1.570796 0 -2.0">
+                        <joint name="wam2_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-10.3213 10.3" damping="0." />
+                        <geom rgba="1 0 0 1" type="mesh" mesh="wam2" contype="0" conaffinity="0" mass="0.001"/>
+                        <geom rgba="0 0 0.5 0" type="mesh" mesh="wam2_collision" contype="0" conaffinity="0" mass="0.001"/>
+                        <body name='wam_3' pos="0. 0. 0." euler="1.570796 0 0">
+                            <joint name="wam3_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-10.3213 10.3" damping="0."/>
+                            <geom rgba="1 0 0 1" type="mesh" mesh="wam3" contype="0" conaffinity="0" mass="0.001"/>
+                            <geom rgba="0 0 0.5 0" type="mesh" mesh="wam3_collision" contype="0" conaffinity="0" mass="0.001"/>
+                            <body name='wam_4' pos="0.045 0 0.55" euler="-1.570796 0 2.0">
+                                <joint name="wam4_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-10.3213 10.3" damping="0."/>
+                                <geom rgba="1 0 0 1" type="mesh" mesh="wam4" contype="0" conaffinity="0" mass="0.001"/>
+                                <geom rgba="0 0 0.5 0" type="mesh" mesh="wam4_collision" contype="0" conaffinity="0" mass="0.001"/>
+                                <body name='wam_5' pos="-0.045 0 0" euler="1.570796 0 1.070796">
+                                    <joint name="wam5_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-10.3213 10.3" damping="0."/>
+                                    <geom rgba="1 0 0 1" type="mesh" mesh="wam5" contype="0" conaffinity="0" mass="0.001"/>
+                                    <geom rgba="0 0 0.5 0" type="mesh" mesh="wam5_collision" contype="0" conaffinity="0" mass="0.001"/>
+                                    <body name='wam_6' pos="0 0 0.3" euler="-1.570796 0 0.0">
+                                        <joint name="wam6_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-10.3213 10.3" damping="0."/>
+                                        <geom rgba="1 0 0 1" type="mesh" mesh="wam6" contype="0" conaffinity="0" mass="0.001"/>
+                                        <geom rgba="0 0 0.5 0" type="mesh" mesh="wam6_collision" contype="0" conaffinity="0" mass="0.001"/>
+                                        <body name='wam_7' pos="0 0 0" euler="1.570796 0 1.570796">
+                                            <joint name="wam7_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-10.3213 10.3" damping="0."/>
+                                            <geom rgba="1 0 0 1" type="mesh" mesh="wam7" contype="0" conaffinity="0" mass="0.001"/>
+                                            <geom rgba="0 0 0.5 0" type="mesh" mesh="wam7_collision" contype="0" conaffinity="0" mass="0.001"/>
+
+                                            <!-- Barrett Hand -->
+                                            <body name='barrett_hand' pos="0. 0. 0." euler="0. 0. 0.">
+                                                <geom rgba="1 0 0 1" type="mesh" mesh="hand_base" contype="0" conaffinity="0"/>
+                                                <geom rgba="0 0 0.5 0" type="mesh" mesh="hand_base_collision" contype="1" conaffinity="1"/>
+                                                <body name='finger0_0' pos="-0.025 0 0.0754" euler="0.0 0.0 -1.5707">
+                                                   <geom rgba="1 0 0 1" type="mesh" mesh="finger0_0" contype="0" conaffinity="0"/>
+                                                   <geom rgba="0 0 0.5 0" type="mesh" mesh="finger0_0_collision" contype="1" conaffinity="1"/>
+                                                   <body name='finger0_1' pos="0.05 0.0008 0" euler="1.5707 0 0.7">
+                                                       <geom rgba="1 0 0 1" type="mesh" mesh="finger0_1" contype="0" conaffinity="0"/>
+                                                       <geom rgba="0 0 0.5 0" type="mesh" mesh="finger0_1_collision" contype="1" conaffinity="1"/>
+                                                       <body name='finger0_2' pos="0.07 0.003 0.0002" euler="0.0 0.0 0.7">
+                                                           <geom rgba="1 0 0 1" type="mesh" mesh="finger0_2" contype="0" conaffinity="0"/>
+                                                           <geom rgba="0 0 0.5 0" type="mesh" mesh="finger0_2_collision" contype="1" conaffinity="1"/>
+                                                       </body>
+                                                   </body>
+                                                </body>
+                                                <body name='finger1_0' pos="0.025 0 0.0754" euler="0.0 0.0 -1.5707">
+                                                    <geom rgba="1 0 0 1" type="mesh" mesh="finger1_0" contype="0" conaffinity="0"/>
+                                                    <geom rgba="0 0 0.5 0" type="mesh" mesh="finger1_0_collision" contype="1" conaffinity="1"/>
+                                                    <body name='finger1_1' pos="0.05 0.0008 -0.0003" euler="1.5707 0 0.7">
+                                                        <geom rgba="1 0 0 1" type="mesh" mesh="finger1_1" contype="0" conaffinity="0"/>
+                                                        <geom rgba="0 0 0.5 0" type="mesh" mesh="finger1_1_collision" contype="1" conaffinity="1"/>
+                                                        <body name='finger1_2' pos="0.07 0.003 0.0002" euler="0.0 0.0 0.7">
+                                                            <geom rgba="1 0 0 1" type="mesh" mesh="finger1_2" contype="0" conaffinity="0"/>
+                                                            <geom rgba="0 0 0.5 0" type="mesh" mesh="finger1_2_collision" contype="1" conaffinity="1"/>
+                                                        </body>
+                                                    </body>
+                                                </body>
+                                                <body name='finger2_1' pos="-0.0008 0.05 0.0754" euler="0.0 1.5707 2.2707">
+                                                    <geom rgba="1 0 0 1" type="mesh" mesh="finger2_1" contype="0" conaffinity="0"/>
+                                                    <geom rgba="0 0 0.5 0" type="mesh" mesh="finger2_1_collision" contype="1" conaffinity="1"/>
+                                                    <body name='finger2_2' pos="0.07 0.003 0.0002" euler="0.0 0.0 0.7">
+                                                        <geom rgba="1 0 0 1" type="mesh" mesh="finger2_2" contype="0" conaffinity="0"/>
+                                                        <geom rgba="0 0 0.5 0" type="mesh" mesh="finger2_2_collision" contype="1" conaffinity="1"/>
+                                                    </body>
+                                                </body>
+<!--
+                                                <joint name="push_slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="0.1"/>
+                                                <joint name="push_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="0.1"/>
+                                                <joint name="push_hinge" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.2 3.2" damping="0.1"/>
+ -->
+                                                <body name="object" pos="-0.00 0.0 0.15" euler="0. 1.5707 0.">
+                                                    <geom rgba="0 1 0 1" type="cylinder" size="0.06 0.04 0.04" contype="1" conaffinity="1"/>
+<!--
+                                                <joint name="object_slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="0.1"/>
+                                                <joint name="object_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="0.1"/>
+                                                <joint name="object_slidez" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.2 3.2" damping="0.1"/>
+ -->
+                                                </body>
+                                            </body>
+                                        </body>
+                                    </body>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+
+        <camera euler="0 0 0" fovy="50" name="top_cam" pos="0 0 2.0"></camera>
+    </worldbody>
+    <!-- <equality>
+        <weld body1="robot0:mocap" body2="barrett_hand" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+    </equality> -->
+    <actuator>
+<!--         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidex"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidey"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidez"/> -->
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam1_joint"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam2_joint"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam3_joint"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam4_joint"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam5_joint"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam6_joint"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam7_joint"/>
+<!--
+
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="push_slidex"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="push_slidey"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="push_hinge"/> -->
+    </actuator>
+</mujoco>

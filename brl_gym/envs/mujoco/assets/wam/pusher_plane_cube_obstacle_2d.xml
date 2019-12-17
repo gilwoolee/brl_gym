@@ -151,13 +151,13 @@
 
         <camera euler="0 0 0" fovy="50" name="top_cam" pos="0 0 2.0"></camera>
     </worldbody>
-    <!-- <equality>
-        <weld body1="robot0:mocap" body2="barrett_hand" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
-    </equality> -->
+    <equality>
+      <weld body1="robot0:mocap" body2="barrett_hand" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+    </equality>
     <actuator>
 <!--         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidex"/>
         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidey"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidez"/> -->
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidez"/>
         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam1_joint"/>
         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam2_joint"/>
         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam3_joint"/>
@@ -165,7 +165,6 @@
         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam5_joint"/>
         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam6_joint"/>
         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam7_joint"/>
-<!--
 
         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="push_slidex"/>
         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="push_slidey"/>

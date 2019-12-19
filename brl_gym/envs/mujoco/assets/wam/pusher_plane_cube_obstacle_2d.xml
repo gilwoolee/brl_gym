@@ -41,6 +41,13 @@
         <geom contype="0" friction="0.5 0.5 0.1" rgba="0.7 0.7 0 1" solimp=".5 .5 .001" solref=".02 1"/>
     </default>
     <option integrator="RK4" timestep="0.01"/>
+
+
+    <sensor>
+        <force name="grip_force_sensor" site="robot0:grip"></force>
+        <torque name="grip_torque_sensor" site="robot0:grip"></torque>
+    </sensor>
+
     <worldbody>
         <body mocap="true" name="robot0:mocap" pos="0 0 0">
             <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.7" size="0.005 0.005 0.005" type="box"></geom>
@@ -91,6 +98,7 @@
 
                                             <!-- Barrett Hand -->
                                             <body name='barrett_hand' pos="0. 0. 0." euler="0. 0. 0.">
+
                                                 <geom rgba="1 0 0 1" type="mesh" mesh="hand_base" contype="0" conaffinity="0"/>
                                                 <geom rgba="0 0 0.5 0" type="mesh" mesh="hand_base_collision" contype="1" conaffinity="1"/>
                                                 <body name='finger0_0' pos="-0.025 0 0.0754" euler="0.0 0.0 -1.5707">
@@ -125,19 +133,12 @@
                                                         <geom rgba="0 0 0.5 0" type="mesh" mesh="finger2_2_collision" contype="1" conaffinity="1"/>
                                                     </body>
                                                 </body>
-<!--
-                                                <joint name="push_slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="0.1"/>
-                                                <joint name="push_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="0.1"/>
-                                                <joint name="push_hinge" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.2 3.2" damping="0.1"/>
- -->
-                                                <body name="object" pos="-0.00 0.0 0.15" euler="0. 1.5707 0.">
+                                                <site name="robot0:grip" pos="0.0 0.0 0.15" euler="0. 1.5707 0." rgba="0 0 0 0" size="0.02 0.02 0.02" type="box"></site>
+
+                                                <body name="object" pos="0.0 0.0 0.15" euler="0. 1.5707 0.">
                                                     <geom rgba="0 1 0 1" type="cylinder" size="0.06 0.04 0.04" contype="1" conaffinity="1"/>
-<!--
-                                                <joint name="object_slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="0.1"/>
-                                                <joint name="object_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="0.1"/>
-                                                <joint name="object_slidez" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.2 3.2" damping="0.1"/>
- -->
                                                 </body>
+
                                             </body>
                                         </body>
                                     </body>
@@ -155,19 +156,6 @@
       <weld body1="robot0:mocap" body2="barrett_hand" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
     </equality>
     <actuator>
-<!--         <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidex"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidey"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="object_slidez"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam1_joint"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam2_joint"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam3_joint"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam4_joint"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam5_joint"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam6_joint"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="wam7_joint"/>
 
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="push_slidex"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="push_slidey"/>
-        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="5.0" joint="push_hinge"/> -->
     </actuator>
 </mujoco>

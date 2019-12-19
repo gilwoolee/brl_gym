@@ -6,6 +6,7 @@ import gym
 from gym import error, spaces
 from gym.utils import seeding
 from gym import utils
+from gym.envs.mujoco import mujoco_env
 
 try:
     import mujoco_py
@@ -15,7 +16,7 @@ except ImportError as e:
 DEFAULT_SIZE = 500
 
 class RobotEnv(mujoco_env.MujocoEnv, utils.EzPickle):
-    def __init__(self, model_path, initial_qpos, n_actions, n_substeps):
+    def __init__(self, model_path, initial_qpos, n_substeps):
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -37,10 +38,9 @@ class RobotEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self._env_setup(initial_qpos=initial_qpos)
         self.initial_state = copy.deepcopy(self.sim.get_state())
 
-        self.goal = self._sample_goal()
+        # self.goal = self._sample_goal()
         obs = self._get_obs()
-        self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
-        self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32')
+        self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs.shape, dtype='float32')
 
     @property
     def dt(self):
@@ -54,7 +54,6 @@ class RobotEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         return [seed]
 
     def step(self, action):
-        action = np.clip(action, self.action_space.low, self.action_space.high)
         self._set_action(action)
         self.sim.step()
         self._step_callback()
@@ -62,9 +61,9 @@ class RobotEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         done = False
         info = {
-            'is_success': self._is_success(obs['achieved_goal'], self.goal),
+            'is_success': self._is_success(),
         }
-        reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
+        reward = self.compute_reward()
         return obs, reward, done, info
 
     def reset(self):
@@ -73,11 +72,11 @@ class RobotEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
         # In this case, we just keep randomizing until we eventually achieve a valid initial
         # configuration.
-        super(RobotEnv, self).reset()
+        # super(RobotEnv, self).reset()
         did_reset_sim = False
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
-        self.goal = self._sample_goal().copy()
+        # self.goal = self._sample_goal().copy()
         obs = self._get_obs()
         return obs
 
@@ -132,10 +131,10 @@ class RobotEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         """
         raise NotImplementedError()
 
-    def _is_success(self, achieved_goal, desired_goal):
-        """Indicates whether or not the achieved goal successfully achieved the desired goal.
-        """
-        raise NotImplementedError()
+    # def _is_success(self, achieved_goal, desired_goal):
+    #     """Indicates whether or not the achieved goal successfully achieved the desired goal.
+    #     """
+    #     raise NotImplementedError()
 
     def _sample_goal(self):
         """Samples a new goal and returns it.

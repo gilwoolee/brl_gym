@@ -1,0 +1,190 @@
+<mujoco model="pusher_plane_cube_2d">
+    <asset>
+        <mesh file="wam1.STL"/>
+        <mesh file="wam1_collision.STL"/>
+        <mesh file="wam2.STL"/>
+        <mesh file="wam2_collision.STL"/>
+        <mesh file="wam3.STL"/>
+        <mesh file="wam3_collision.STL"/>
+        <mesh file="wam4.STL"/>
+        <mesh file="wam4_collision.STL"/>
+        <mesh file="wam5.STL"/>
+        <mesh file="wam5_collision.STL"/>
+        <mesh file="wam6.STL"/>
+        <mesh file="wam6_collision.STL"/>
+        <mesh file="wam7.STL"/>
+        <mesh file="wam7_collision.STL"/>
+        <mesh file="wam_base.STL"/>
+        <mesh file="wam_base_collision.STL"/>
+        <mesh file="finger0_0_collision.STL"/>
+        <mesh file="finger0_0.STL"/>
+        <mesh file="finger0_1_collision.STL"/>
+        <mesh file="finger0_1.STL"/>
+        <mesh file="finger0_2_collision.STL"/>
+        <mesh file="finger0_2.STL"/>
+        <mesh file="finger1_0_collision.STL"/>
+        <mesh file="finger1_0.STL"/>
+        <mesh file="finger1_1_collision.STL"/>
+        <mesh file="finger1_1.STL"/>
+        <mesh file="finger1_2_collision.STL"/>
+        <mesh file="finger1_2.STL"/>
+        <mesh file="finger2_1_collision.STL"/>
+        <mesh file="finger2_1.STL"/>
+        <mesh file="finger2_2_collision.STL"/>
+        <mesh file="finger2_2.STL"/>
+        <mesh file="hand_base_collision.STL"/>
+        <mesh file="hand_base.STL"/>
+    </asset>
+    <compiler angle="radian" inertiafromgeom="true"/>
+    <default>
+        <joint armature="1" damping="1" limited="true"/>
+        <geom contype="0" friction="0.5 0.5 0.1" rgba="0.7 0.7 0 1" solimp=".5 .5 .001" solref=".02 1"/>
+    </default>
+    <option integrator="RK4" timestep="0.01"/>
+
+
+    <sensor>
+        <force name="grip_force_sensor" site="robot0:grip"></force>
+        <torque name="grip_torque_sensor" site="robot0:grip"></torque>
+    </sensor>
+
+    <worldbody>
+        <body mocap="true" name="robot0:mocap" pos="0 0 0">
+            <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.7" size="0.005 0.005 0.005" type="box"></geom>
+            <geom conaffinity="0" contype="0" pos="0 0 0" rgba="1 0 0 0.1" size="1 0.005 0.005" type="box"></geom>
+            <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 1 0 0.1" size="0.005 1 0.001" type="box"></geom>
+            <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0 1 0.1" size="0.005 0.005 1" type="box"></geom>
+        </body>
+
+        <!-- WAM Arm-->
+        <body name='pusher' pos="-1. 0. 0.4" euler="0. 0. 0.">
+            <inertial pos="0 0 0" fullinertia="0.10916849 0.18294303 0.11760385 0.00640270 0.02557874 0.00161433" mass="9.97059584"/>
+            <body name='wam' pos="0. 0. 0." euler="0. 1.5708 3.14159">  <!-- euler="0. 1.5708 3.14159"> -->
+                <geom rgba="1 0 0 1" type="mesh" mesh="wam_base" contype="0" conaffinity="0" mass="0.001"/>
+                <geom rgba="0 0 0.5 0" type="mesh" mesh="wam_base_collision" contype="1" conaffinity="1" mass="0.001"/>
+                <body name='wam_1' pos="0.22 0.14 0.346" > <!--euler="0. 0 1.570796 ">-->
+                    <inertial pos="-0.004434 -0.000665 -0.121890" quat=" 0.70710678 -0.70710678 0. 0." mass="10.76768767" fullinertia="0.13488033 0.11328369 0.09046330 -0.00213041 -0.00012485 0.00068555" />
+                    <joint name="wam1_joint" type="hinge" pos="0. 0 0" axis="0 0 1" range="0.54159265359 5.74159265359" damping="0."/>
+                    <geom rgba="0 1 0 1" type="mesh" mesh="wam1" contype="0" conaffinity="0" mass="0.001"/>
+                    <!-- <geom rgba="0 0 0.5 0" type="mesh" mesh="wam1_collision" contype="1" conaffinity="1" mass="0.001"/> -->
+                    <body name='wam_2' pos="0. 0. 0." euler="-1.5708 0 0">
+                        <inertial pos="-0.002370 -0.015421 0.031056" mass="3.87493756" fullinertia="0.02140958 0.01377875 0.01558906 0.00027172 0.00002461 -0.00181920" />
+                        <joint name="wam2_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-2 2" damping="0." />
+                        <geom rgba="1 0 0 1" type="mesh" mesh="wam2" contype="0" conaffinity="0" mass="0.001"/>
+                        <geom rgba="0 0 0.5 0" type="mesh" mesh="wam2_collision" contype="1" conaffinity="1" mass="0.001"/>
+
+                        <body name='wam_3' pos="0. 0. 0." euler="1.5708 0 0">
+                            <inertial pos="0 0 0" mass="1.80228141" fullinertia="0.05911077 0.00324550 0.05927043 -0.00249612 0.00000738 -0.00001767" />
+                            <joint name="wam3_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-2.8 2.8" damping="0."/>
+                            <geom rgba="0 1 0 1" type="mesh" mesh="wam3" contype="0" conaffinity="0" mass="0.001"/>
+                            <!-- <geom rgba="0 0 0.5 0" type="mesh" mesh="wam3_collision" contype="1" conaffinity="1" mass="0.001"/> -->
+                            <body name='wam_4' pos="0.045 0 0.55" euler="-1.5708 0 0">
+                                <inertial pos="0 0 0" mass="2.40016804" fullinertia="0.01491672 0.01482922 0.00294463 0.00001741 -0.00150604 -0.00002109" />
+                                <joint name="wam4_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-0.9 3.1" damping="0."/>
+                                <geom rgba="1 0 0 1" type="mesh" mesh="wam4" contype="0" conaffinity="0" mass="0.001"/>
+                                <geom rgba="0 0 0.5 0" type="mesh" mesh="wam4_collision" contype="1" conaffinity="1" mass="0.001"/>
+
+                                <body name='wam_5' pos="-0.045 0 0" euler="1.570796 0 0">
+                                    <inertial pos="0 0 0" mass="0.12376019" fullinertia="0.00005029 0.00007582 0.00006270 0.00000020 -0.00000005 -0.00000359" />
+                                    <joint name="wam5_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-4.76 1.24" damping="0."/>
+                                    <geom rgba="1 1 0 1" type="mesh" mesh="wam5" contype="0" conaffinity="0" mass="0.001"/>
+                                    <!-- <geom rgba="0 0 0.5 0" type="mesh" mesh="wam5_collision" contype="1" conaffinity="1" mass="0.001"/> -->
+                                    <body name='wam_6' pos="0 0 0.3" euler="-1.5708 0 0.0">
+                                        <joint name="wam6_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-1.6 1.6" damping="0."/>
+                                        <inertial pos="0 0 0" mass="0.41797364" fullinertia="0.00055516 0.00024367 0.00045358 0.00000061 -0.00000074 -0.00004590" />
+                                        <geom rgba="1 0 0 1" type="mesh" mesh="wam6" contype="0" conaffinity="0" mass="0.001"/>
+                                        <geom rgba="0 0 0.5 0" type="mesh" mesh="wam6_collision" contype="1" conaffinity="1" mass="0.001"/>
+                                        <body name='wam_7' pos="0 0 0" euler="1.570796 0 0">
+                                            <inertial pos="0 0 0" mass="0.06864753"
+                                                fullinertia="0.00003773 0.00003806 0.00007408 -0.00000019 0.00000000 0.00000000" />
+                                            <joint name="wam7_joint" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.0 3.0" damping="0."/>
+                                            <geom rgba="1 0 0 1" type="mesh" mesh="wam7" contype="0" conaffinity="0" mass="0.001"/>
+                                            <geom rgba="0 0 0.5 0" type="mesh" mesh="wam7_collision" contype="1" conaffinity="1" mass="0.001"/>
+
+                                            <!-- Barrett Hand -->
+                                            <body name='barrett_hand' pos="0. 0. 0." euler="0. 0. 0.">
+                                                <inertial pos="5.0019e-005 -0.0044561 0.037268" mass="0.60858" fullinertia="0.0006986 0.00050354 0.00062253 2.7577e-007 -7.8138e-007 -6.44e-005"/>
+                                                <geom rgba="1 0 0 1" type="mesh" mesh="hand_base" contype="0" conaffinity="0"/>
+                                                <!-- <geom rgba="0 0 0.5 0" type="mesh" mesh="hand_base_collision" contype="1" conaffinity="1"/> -->
+                                                <!-- <body name='finger0_0' pos="-0.025 0 0.0754" euler="0.0 0.0 -1.0"> -->
+                                                <body name='finger0_0' pos="-0.025 0 0.0754" euler="0.0 0.0 -1.5707">
+
+                                                    <inertial pos="0.030616 -7.3219e-005 -0.011201" mass="0.14109" fullinertia="2.0672e-005 7.4105e-005 6.8207e-005 2.6024e-007 6.3481e-006 1.7118e-008"/>
+                                                   <geom rgba="1 0 0 1" type="mesh" mesh="finger0_0" contype="0" conaffinity="0"/>
+                                                   <geom rgba="0 0 0.5 0" type="mesh" mesh="finger0_0_collision" contype="1" conaffinity="1"/>
+                                                   <!-- <body name='finger0_1' pos="0.05 0.0008 0" euler="1.5707 0 0.7"> -->
+                                                   <body name='finger0_1' pos="0.05 0.0008 0" euler="1.5707 0 1.2">
+                                                       <inertial pos="0.023133 0.00078642 0.00052792" mass="0.062139" fullinertia="4.8162e-006 4.3317e-005 4.4441e-005 5.7981e-007 -7.2483e-007 -2.6653e-009"/>
+                                                       <geom rgba="1 0 0 1" type="mesh" mesh="finger0_1" contype="0" conaffinity="0"/>
+                                                       <geom rgba="0 0 0.5 0" type="mesh" mesh="finger0_1_collision" contype="1" conaffinity="1"/>
+                                                       <body name='finger0_2' pos="0.07 0.003 0.0002" euler="0.0 0.0 0.8">
+                                                           <inertial pos="0.02295 0.0010739 0.00041752" mass="0.04166" fullinertia="3.1199e-006 1.6948e-005 1.5809e-005 4.5115e-007 -2.9813e-007 -1.8635e-008"/>
+                                                           <geom rgba="1 0 0 1" type="mesh" mesh="finger0_2" contype="0" conaffinity="0"/>
+                                                           <geom rgba="0 0 0.5 0" type="mesh" mesh="finger0_2_collision" contype="1" conaffinity="1"/>
+                                                       </body>
+                                                   </body>
+                                                </body>
+                                                <body name='finger1_0' pos="0.025 0 0.0754" euler="0.0 0.0 -1.5707">
+
+                                                    <inertial pos="0.030616 -7.3219e-005 -0.011201" mass="0.14109" fullinertia="2.0672e-005 7.4105e-005 6.8207e-005 2.6024e-007 6.3481e-006 1.7118e-008"/>
+                                                    <geom rgba="1 0 0 1" type="mesh" mesh="finger1_0" contype="0" conaffinity="0"/>
+                                                    <geom rgba="0 0 0.5 0" type="mesh" mesh="finger1_0_collision" contype="1" conaffinity="1"/>
+                                                    <body name='finger1_1' pos="0.05 0.0008 -0.0003" euler="1.5707 0 1.2">
+                                                        <inertial pos="0.023133 0.00078642 0.00052792" mass="0.062139" fullinertia="4.8162e-006 4.3317e-005 4.4441e-005 5.7981e-007 -7.2483e-007 -2.6653e-009"/>
+                                                        <geom rgba="1 0 0 1" type="mesh" mesh="finger1_1" contype="0" conaffinity="0"/>
+                                                        <geom rgba="0 0 0.5 0" type="mesh" mesh="finger1_1_collision" contype="1" conaffinity="1"/>
+                                                        <body name='finger1_2' pos="0.07 0.003 0.0002" euler="0.0 0.0 0.8">
+                                                            <geom rgba="1 0 0 1" type="mesh" mesh="finger1_2" contype="0" conaffinity="0"/>
+                                                            <geom rgba="0 0 0.5 0" type="mesh" mesh="finger1_2_collision" contype="1" conaffinity="1"/>
+                                                        </body>
+                                                    </body>
+                                                </body>
+                                                <!-- <body name='finger2_1' pos="-0.0008 0.05 0.0754" euler="0.0 1.5707 2.2707"> -->
+                                                <body name='finger2_1' pos="-0.0008 0.05 0.0754" euler="0.0 1.5707 2.807">
+                                                    <inertial pos="0.023133 0.00078642 0.00052792" mass="0.062139" fullinertia="4.8162e-006 4.3317e-005 4.4441e-005 5.7981e-007 -7.2483e-007 -2.6653e-009"/>
+                                                    <geom rgba="1 0 0 1" type="mesh" mesh="finger2_1" contype="0" conaffinity="0"/>
+                                                    <geom rgba="0 0 0.5 0" type="mesh" mesh="finger2_1_collision" contype="1" conaffinity="1"/>
+                                                    <body name='finger2_2' pos="0.07 0.003 0.0002" euler="0.0 0.0 0.8">
+                                                        <geom rgba="1 0 0 1" type="mesh" mesh="finger2_2" contype="0" conaffinity="0"/>
+                                                        <geom rgba="0 0 0.5 0" type="mesh" mesh="finger2_2_collision" contype="1" conaffinity="1"/>
+                                                    </body>
+                                                </body>
+                                                <site name="robot0:grip" pos="0.0 0.0 0.15" euler="0. 0 0." rgba="0 1.0 0 1" size="0.02 0.02 0.02" type="box"></site>
+                                                <body name='robot0:grip' pos="0.0 0.0 0.15" euler="0. 0 0." />
+
+                                                <!-- <geom conaffinity="0" contype="0" name="robot0:grip_center" pos="0 0 0.15" euler="0. 1.5707 0." rgba="1.0 0. 0. 1" size=".009" type="sphere"/> -->
+        <!-- <body name="object" pos="0.0 0.0 0.15" euler="0. 1.5707 0.">
+            <geom rgba="0 1 0 1" type="cylinder" size="0.06 0.04 0.04" contype="1" conaffinity="1"/>
+        </body> -->
+
+        <!-- <body name="object0" pos="-0.2 0.1 0.15"> -->
+        <body name="object0" pos="0 0 0.15" euler="0 1.57 0">
+            <!-- <joint name="object0:joint" type="free" damping="100.0" limited="false"></joint> -->
+            <geom rgba="0 1 0 1" type="cylinder" size="0.08 0.02 0.03" pos="0 0 0.09" contype="1" conaffinity="1" mass="2" condim="1" name="object0-bottom"/>
+            <geom rgba="0 1 1 1" type="cylinder" size="0.08 0.02 0.03" pos="0 0 -0.09" contype="1" conaffinity="1" mass="2" condim="1" name="object0-top"/>
+            <geom rgba="0 1 0 1" type="cylinder" size="0.05 0.10 0.04" contype="1" conaffinity="1" mass="2" condim="1" name="object0"/>
+            <!-- <site name="object0" pos="0 0 0" size="0.025 0.05 0.02" rgba="1 0 0 1" type="sphere"></site> -->
+        </body>
+
+                                            </body>
+                                        </body>
+                                    </body>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+
+        <camera euler="0 0 0" fovy="50" name="top_cam" pos="0 0 2.0"></camera>
+    </worldbody>
+    <equality>
+      <!-- <weld body1="robot0:mocap" body2="barrett_hand" solimp="0.9 0.95 0.001" solref="0.02 1"></weld> -->
+      <weld body1="robot0:mocap" body2="robot0:grip" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+    </equality>
+    <actuator>
+
+    </actuator>
+</mujoco>
+

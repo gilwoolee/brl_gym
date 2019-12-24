@@ -15,11 +15,15 @@
 	<!-- <include file="shared.xml"></include> -->
 
 	<include file="wam.xml"></include>
-		
+
 	<worldbody>
 
+		<!-- <body pos="0 0 -0.195" name="table0"> -->
+		<geom pos="0 0 -0.2" size="1 1 0.2" type="box" name="table" conaffinity="1" contype="1" condim="3" mass="2000" ></geom>
+		<!-- </body> -->
+
         <!-- Ground -->
-        <geom conaffinity="1" contype="1" name="ground" pos="0 0 0" rgba="0.9 0.9 0.9 1" size="1 1 10" type="plane" condim="3" friction="0.01 0.01 0.01"/>
+        <!-- <geom conaffinity="1" contype="1" name="ground" pos="0 0 0" rgba="0.9 0.9 0.9 1" size="1 1 10" type="plane" condim="3" friction="0.01 0.01 0.01"/> -->
         <!-- Ground Center -->
         <body name="center" pos="0. 0. 0.">
             <geom conaffinity="0" contype="0" name="center" pos="0 0 0" rgba="0. 0. 1.0 1" size=".009" type="sphere"/>
@@ -27,6 +31,6 @@
 
 		<light directional="true" ambient="0.2 0.2 0.2" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3" castshadow="false" pos="0 0 4" dir="0 0 -1" name="light0"></light>
 	</worldbody>
-	
+
 	<actuator></actuator>
 </mujoco>

@@ -59,12 +59,15 @@ class RobotEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self._step_callback()
         obs = self._get_obs()
 
-        done = False
+        done = self._terminate()
         info = {
             'is_success': self._is_success(),
         }
         reward = self.compute_reward()
         return obs, reward, done, info
+
+    def _terminate(self):
+        raise NotImplementedError
 
     def reset(self):
         # Attempt to reset the simulator. Since we randomize initial conditions, it

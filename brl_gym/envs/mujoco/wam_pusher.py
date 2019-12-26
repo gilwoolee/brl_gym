@@ -11,11 +11,10 @@ from transforms3d import quaternions
 from mujoco_py import cymj
 
 # Taken from herb_description/assests/wam.urdf
-JOINT_EFFORT_LIMITS = np.array([1.8, 1.8, 1.8, 1.6, 0.6, 0.6, 0.174]) * 2
+JOINT_EFFORT_LIMITS = np.array([77.3, 160.6, 95.6, 29.4, 11.6, 11.6, 2.7])
 
 class WamEnv(robot_env.RobotEnv):
     def __init__(self):
-
         self.frame_skip = 1
 
         # Get asset dir
@@ -36,25 +35,19 @@ class WamEnv(robot_env.RobotEnv):
         grip_velp = self.sim.data.get_site_xvelp('robot0:grip') * dt
         robot_qpos, robot_qvel = utils.robot_get_obs(self.sim)
 
-        gripper_state = robot_qpos[-2:]
-        gripper_vel = robot_qvel[-2:] * dt  # change to a scalar if the gripper is made symmetric
-
-
-        cymj._mj_inverse(self.sim.model, self.sim.data)
-
         obj_pos = self.sim.data.get_body_xpos('object0')
 
         # Assuming quasistatic. TODO: is this correct? (i.e. would self.sim.data.sensordata contain what we need after sim.forward?)
-        self.sim.data.qvel[:] = 0
-        self.sim.data.qacc[:] = 0
-        self.sim.forward()
+        # self.sim.data.qvel[:] = 0
+        # self.sim.data.qacc[:] = 0
+        # self.sim.forward()
+        # cymj._mj_inverse(self.sim.model, self.sim.data)
 
         joint_effort = self.sim.data.qfrc_inverse
         print('-----------')
-
-        # print(self.sim.data.qpos)
-        print('obj pos', obj_pos)
+        print('joint bias    ', np.around(self.sim.data.qfrc_bias, 1))
         print('actuator force', np.around(self.sim.data.qfrc_inverse,2))
+        print("joint         ", np.around(self.sim.data.qpos, 2))
         print('sensor force', np.around(self.sim.data.sensordata[:3],2))
         print('sensor torque', np.around(self.sim.data.sensordata[3:],2))
 
@@ -84,16 +77,21 @@ class WamEnv(robot_env.RobotEnv):
         self.object_in_contact = object_in_contact
         self.joint_effort = joint_effort
         self.limit_satisfied = np.all(JOINT_EFFORT_LIMITS - np.abs(joint_effort) >= 0)
+
+        # if force < 0:
+        #     import IPython; IPython.embed(); import sys; sys.exit(0)
         return obs
 
     def _terminate(self):
         if not self.limit_satisfied:
             print("limit not satisfied")
             return True
+
         if self.obj_pos[2] > 0.2:
             return True
         else:
             return False
+        # return False
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = -1
@@ -111,7 +109,6 @@ class WamEnv(robot_env.RobotEnv):
         self.sim.set_state(state)
         self.sim.forward()
 
-
     def _env_setup(self, initial_qpos):
         for name, value in initial_qpos.items():
             self.sim.data.set_joint_qpos(name, value)
@@ -121,7 +118,6 @@ class WamEnv(robot_env.RobotEnv):
         self.sim.step()
 
         # # Move end effector into position.
-        print('grip',self.sim.data.get_site_xpos('robot0:grip'))
         gripper_target = np.array([0, 0.0, -0.02]) + self.sim.data.get_site_xpos('robot0:grip')
         gripper_rotation = np.array([1., 0., 1., 0.])
         for _ in range(1000):
@@ -142,10 +138,12 @@ class WamEnv(robot_env.RobotEnv):
         return self.limit_satisfied and self.obj_pos[2] > 0.2
 
     def _set_action(self, action):
+        # self.sim.data.qvel[:] = 0
+        # self.sim.data.qacc[:] = 0
+        # To do grav comp
+        # self.sim.data.qfrc_applied[:] = self.sim.data.qfrc_bias
 
         obj_pos = self.sim.data.get_body_xpos('object0')
-        # print(self.sim.data.qpos)
-        # print('obj pos', obj_pos)
 
         action = action[0]
         action, lift = action[0], action[1]
@@ -199,8 +197,8 @@ if __name__ == "__main__":
         print("info", info)
         print("rew", r)
 
-        if d:
-            import IPython; IPython.embed(); import sys; sys.exit(0)
+        # if d:
+        #     import IPython; IPython.embed(); import sys; sys.exit(0)
 
 
         env.render()

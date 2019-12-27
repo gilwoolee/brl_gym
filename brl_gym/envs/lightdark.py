@@ -175,7 +175,6 @@ class LightDark(gym.Env, utils.EzPickle):
 
         if show:
             plt.show()
-        return ax
 
 
 if __name__ == "__main__":

@@ -1,0 +1,1 @@
+OPENAI_LOGDIR=~/models/wam/bpo_noent OPENAI_LOG_FORMAT=tensorboard python -m brl_baselines.run --alg=ppo2 --env=wam-v0 --num_timesteps=5e8 --save_path=~/models/complete/wam_bpo --num_env=20 --save_interval=50  --gamma=1 --value_network=copy  --nminibatches=20

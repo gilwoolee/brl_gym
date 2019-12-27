@@ -17,6 +17,7 @@ class EKFLightDarkEstimator(Estimator):
         self.param_low = self.x_min
         self.param_high = self.x_max
 
+        self.belief_space = Box(self.belief_low, self.belief_high, dtype='float32')
         self.reset()
 
     def reset(self):

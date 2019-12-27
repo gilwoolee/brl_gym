@@ -11,7 +11,8 @@ from transforms3d import quaternions
 from mujoco_py import cymj
 
 # Taken from herb_description/assests/wam.urdf
-JOINT_EFFORT_LIMITS = np.array([77.3, 160.6, 95.6, 29.4, 11.6, 11.6, 2.7])
+JOINT_EFFORT_LIMITS = np.array([77.3, 160.6, 95.6, 29.4, 11.6, 11.6, 2.7]) * 1.5
+LIFT_HEIGHT = 0.15
 
 class WamEnv(robot_env.RobotEnv):
     def __init__(self):
@@ -21,12 +22,12 @@ class WamEnv(robot_env.RobotEnv):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         model_path = osp.join(dir_path, "assets/wam/wam_pusher.xml")
 
-        self.action_space = Tuple([Box(-1., 1., shape=(3,), dtype='float32'), Discrete(2)])
+        #self.action_space = Tuple([Box(-1., 1., shape=(3,), dtype='float32'), Discrete(2)])
+        self.action_space = Box(-1., 1., shape=(4,), dtype='float32')
 
         robot_env.RobotEnv.__init__(self, model_path=model_path, n_substeps=self.frame_skip,
             initial_qpos={})
 
-        self.angle = 0.0
 
     def _get_obs(self):
         # positions
@@ -43,59 +44,72 @@ class WamEnv(robot_env.RobotEnv):
         # self.sim.forward()
         # cymj._mj_inverse(self.sim.model, self.sim.data)
 
-        joint_effort = self.sim.data.qfrc_inverse
-        print('-----------')
-        print('joint bias    ', np.around(self.sim.data.qfrc_bias, 1))
-        print('actuator force', np.around(self.sim.data.qfrc_inverse,2))
-        print("joint         ", np.around(self.sim.data.qpos, 2))
-        print('sensor force', np.around(self.sim.data.sensordata[:3],2))
-        print('sensor torque', np.around(self.sim.data.sensordata[3:],2))
+        joint_effort = self.sim.data.qfrc_bias
+        # print('-----------')
+        # print('joint bias    ', np.around(self.sim.data.qfrc_bias, 1))
+        # print('actuator force', np.around(self.sim.data.qfrc_inverse,2))
+        # print("joint         ", np.around(self.sim.data.qpos, 2))
+        # print('sensor force', np.around(self.sim.data.sensordata[:3],2))
+        # print('sensor torque', np.around(self.sim.data.sensordata[3:],2))
 
         num_contacts = 0
         for i, c in enumerate(self.sim.data.contact):
             name1 = self.sim.model.geom_id2name(c.geom1)
             name2 = self.sim.model.geom_id2name(c.geom2)
-            # print (i, name1, name2, c.dist, c.pos)
             if name1 is None or name2 is None:
                 continue
             if 'object0-bottom' in name2 or 'object0-bottom' in name1:
-                # if c.dist < -1e-5:
                 num_contacts += 1
-                print (i, name1, name2, c.dist, c.pos)
 
         force = self.sim.data.sensordata[0] # Normal force from table
         object_in_contact = num_contacts >= 1 and force > 0
 
-        if (not object_in_contact or force < 0):
-            print("Limits", np.abs(joint_effort) <= JOINT_EFFORT_LIMITS)
-
         obs = np.concatenate([
-            grip_pos, [int(object_in_contact)], [force], JOINT_EFFORT_LIMITS - np.abs(joint_effort)
+            grip_pos, [int(object_in_contact)], [force / 100.0], joint_effort / JOINT_EFFORT_LIMITS,
+            self.sim.data.qpos, self.body_mass_obs
         ])
 
         self.obj_pos = obj_pos
         self.object_in_contact = object_in_contact
         self.joint_effort = joint_effort
-        self.limit_satisfied = np.all(JOINT_EFFORT_LIMITS - np.abs(joint_effort) >= 0)
+        self.ctrl_force = joint_effort
 
-        # if force < 0:
-        #     import IPython; IPython.embed(); import sys; sys.exit(0)
+        return obs
+
+    def reset(self):
+        # Attempt to reset the simulator. Since we randomize initial conditions, it
+        # is possible to get into a state with numerical issues (e.g. due to penetration or
+        # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
+        # In this case, we just keep randomizing until we eventually achieve a valid initial
+        # configuration.
+        # super(RobotEnv, self).reset()
+        did_reset_sim = False
+        while not did_reset_sim:
+            did_reset_sim = self._reset_sim()
+        # self.goal = self._sample_goal().copy()
+        self._env_setup({})
+
+        obs = self._get_obs()
+
         return obs
 
     def _terminate(self):
-        if not self.limit_satisfied:
-            print("limit not satisfied")
+        if not self.limit_satisfied():
+            # print("terminate w/ limit")
             return True
-
-        if self.obj_pos[2] > 0.2:
+        if self.obj_pos[2] > LIFT_HEIGHT:
+            # print("terminate w/ height")
             return True
         else:
             return False
-        # return False
 
-    def viewer_setup(self):
+    def _viewer_setup(self):
         self.viewer.cam.trackbodyid = -1
-        self.viewer.cam.distance = 4.0
+        # self.viewer.cam.distance = 4.0
+        self.viewer.cam.distance = self.sim.model.stat.extent * 1.0
+        # self.viewer.cam.lookat[2] +=  .8
+        self.viewer.cam.elevation = -20.0
+        self.viewer.cam.azimuth = -180
 
     def get_state(self):
         return self._get_obs()
@@ -110,6 +124,16 @@ class WamEnv(robot_env.RobotEnv):
         self.sim.forward()
 
     def _env_setup(self, initial_qpos):
+        self.angle = -np.pi/4.0
+        self.lift_on = False
+
+        # change the weight of the object
+        body_id = self.sim.model.body_name2id('object0')
+        mass = np.random.choice(10)
+        self.sim.model.body_mass[body_id] = mass + 1.0
+        self.body_mass_obs = np.zeros(10, dtype=np.float32)
+        self.body_mass_obs[mass] = 1.0
+        # print("Mass", mass + 1.0)
         for name, value in initial_qpos.items():
             self.sim.data.set_joint_qpos(name, value)
         self.sim.data.qpos[:] = np.array([5.65, -1.76, -0.26,  1.96, -1.15 , 0.87, -1.43])
@@ -118,55 +142,51 @@ class WamEnv(robot_env.RobotEnv):
         self.sim.step()
 
         # # Move end effector into position.
-        gripper_target = np.array([0, 0.0, -0.02]) + self.sim.data.get_site_xpos('robot0:grip')
+        target_xy = np.clip(np.random.normal(size=2), -0.1, 0.1)
+        gripper_target = np.array([target_xy[0], target_xy[1], -0.02]) + self.sim.data.get_site_xpos('robot0:grip')
         gripper_rotation = np.array([1., 0., 1., 0.])
+        gripper_rotation /= np.linalg.norm(gripper_rotation)
+        quat_delta = quaternions.axangle2quat([1, 0, .0], self.angle)
+        gripper_rotation = quaternions.qmult(gripper_rotation, quat_delta)
         for _ in range(1000):
             self.sim.data.set_mocap_pos('robot0:mocap', gripper_target)
             self.sim.data.set_mocap_quat('robot0:mocap', gripper_rotation)
-
             self.sim.step()
 
         utils.reset_mocap2body_xpos(self.sim)
-        print('grip', self.sim.data.get_site_xpos('robot0:grip'))
-        print(self.sim.data.qpos)
         for _ in range(1000):
             self.sim.step()
-        print(self.sim.data.qpos)
+            # print(self.sim.data.qfrc_bias)
+        obj_pos = self.sim.data.get_body_xpos('object0')
 
+    def limit_satisfied(self):
+        joint_effort = self.sim.data.qfrc_bias
+        return np.all(JOINT_EFFORT_LIMITS - np.abs(joint_effort) >= 0)
 
     def _is_success(self):
-        return self.limit_satisfied and self.obj_pos[2] > 0.2
+        return self.limit_satisfied and self.obj_pos[2] > LIFT_HEIGHT
 
     def _set_action(self, action):
         # self.sim.data.qvel[:] = 0
         # self.sim.data.qacc[:] = 0
         # To do grav comp
         # self.sim.data.qfrc_applied[:] = self.sim.data.qfrc_bias
-
         obj_pos = self.sim.data.get_body_xpos('object0')
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+        action, lift = action[:3], action[3]
+        action = action.copy()
 
-        action = action[0]
-        action, lift = action[0], action[1]
-
-        action = np.clip(action, self.action_space[0].low, self.action_space[0].high)
-
-        lift = 0
-        if lift == 1:
-            pos_ctrl = np.array([0,0,0.05])
-            rot_ctrl = quaternions.axangle2quat([1, 0, .0], 0)
+        limit_satisfied = self.limit_satisfied()
+        if lift > 0 and limit_satisfied:
+            pos_ctrl = np.array([0,0,0.01])
+            rot_ctrl = quaternions.axangle2quat([1, 0, .0], self.angle)
             action = np.concatenate([pos_ctrl, rot_ctrl])
-
         else:
-            action = action.copy()  # ensure that we don't change the action outside of this scope
-
             pos_ctrl, rot_ctrl = action[:2], action[2]
-
             pos_ctrl *= 0.001  # limit maximum change in position
             rot_ctrl *= 0.05   # limit maximum change in rotation
 
             pos_ctrl = np.hstack([pos_ctrl, [-0.001]])
-            pos_ctrl[0] = 0.005
-            pos_ctrl[1] = 0.005
             self.angle += rot_ctrl
             rot_ctrl = quaternions.axangle2quat([1, 0, .0], self.angle)
             action = np.concatenate([pos_ctrl, rot_ctrl])
@@ -174,16 +194,12 @@ class WamEnv(robot_env.RobotEnv):
         utils.mocap_set_action(self.sim, action)
 
     def compute_reward(self):
-        if not self.object_in_contact and self.limit_satisfied:
-            return 100
+        if not self.object_in_contact:
+            height = self.obj_pos[2] - 0.11
+            ctrl = np.linalg.norm(self.ctrl_force / JOINT_EFFORT_LIMITS)
+            return  height - ctrl
         if self.object_in_contact:
-            return 0
-        if self.limit_satisfied:
-            # Use as little effort as possible
-            return np.sum(JOINT_EFFORT_LIMITS - np.abs(self.joint_effort)) * -0.1
-        else:
-            # Penalize for violating joint effort limit
-            return -10
+            return 0.0
 
 if __name__ == "__main__":
     env = WamEnv()
@@ -192,10 +208,10 @@ if __name__ == "__main__":
 
     while True:
         action = env.action_space.sample()
-        o, r, d, info = env.step([action])
-        print("done", d)
-        print("info", info)
-        print("rew", r)
+        o, r, d, info = env.step(action)
+        # print("done", d)
+        # print("info", info)
+        # print("rew", r)
 
         # if d:
         #     import IPython; IPython.embed(); import sys; sys.exit(0)

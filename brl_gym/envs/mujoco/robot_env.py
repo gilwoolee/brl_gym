@@ -154,6 +154,7 @@ class RobotEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         """Initial configuration of the viewer. Can be used to set the camera position,
         for example.
         """
+        print("viewer")
         pass
 
     def _render_callback(self):

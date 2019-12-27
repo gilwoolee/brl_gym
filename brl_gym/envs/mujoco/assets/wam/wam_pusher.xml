@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mujoco>
-
-	<!-- <compiler angle="radian" coordinate="local" meshdir="../stls/fetch" texturedir="../textures"></compiler> -->
+<!--
 	<option timestep="0.002">
 		<flag warmstart="enable"></flag>
-	</option>
+	</option> -->
 	<default>
         <joint armature="1" damping="1" limited="true"/>
         <geom contype="0" friction="0.5 0.5 0.1" rgba="0.7 0.7 0 1" solimp=".5 .5 .001" solref=".02 1"/>
@@ -18,18 +17,18 @@
 
 	<worldbody>
 
-		
+
 		<!-- <geom pos="0 0 -0.2" size="1 1 0.2" type="box" name="table" conaffinity="1" contype="1" condim="3" mass="2000" ></geom> -->
-		
+
 
         <!-- Ground -->
-        <geom conaffinity="1" contype="1" name="ground" pos="0 0 0" rgba="0.9 0.9 0.9 1" size="1 1 10" type="plane" condim="3" friction="0.01 0.01 0.01"/>
+        <geom conaffinity="1" contype="1" name="ground" pos="0 0 0" rgba="0.5 0.5 0.5 1.0" size="1 1 10" type="plane" condim="3" friction="0.01 0.01 0.01"/>
         <!-- Ground Center -->
-        <body name="center" pos="0. 0. 0.">
+<!--         <body name="center" pos="0. 0. 0.">
             <geom conaffinity="0" contype="0" name="center" pos="0 0 0" rgba="0. 0. 1.0 1" size=".009" type="sphere"/>
         </body>
-
-		<light directional="true" ambient="0.2 0.2 0.2" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3" castshadow="false" pos="0 0 4" dir="0 0 -1" name="light0"></light>
+ -->
+		<light directional="true" ambient="0.1 0.1 0.1" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2" castshadow="true" pos="0 0 4" dir="0 0 -1" name="light0"></light>
 	</worldbody>
 
 	<actuator></actuator>

@@ -1,5 +1,5 @@
 import numpy as np
-from brl_gym.estimators.bayes_doors_estimator import BayesDoorsEstimator, LearnableDoorsBF
+from brl_gym.estimators.bayes_doors_estimator import BayesDoorsEstimator #, LearnableDoorsBF
 from brl_gym.envs.mujoco.doors import DoorsEnv
 from brl_gym.envs.mujoco.doors_slow import DoorsSlowEnv
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
@@ -78,7 +78,7 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         # reward += ent_reward * self.entropy_weight
         info['entropy'] = entropy
         # self.color_belief()
-        info['label'] = env.open_doors.astype(np.int)
+        info['label'] = self.nominal_env.open_doors.astype(np.int)
 
         return {'obs':obs, 'zbel':bel}, reward, done, info
 

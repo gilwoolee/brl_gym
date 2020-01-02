@@ -18,11 +18,10 @@ from brl_gym.wrapper_envs.wrapper_maze import (ExplicitBayesMazeEnv,
 											   # BayesMazeHiddenEntropyEnv,
 											   UPMLEMazeEnv,
 											   UPMLEMazeEnvNoEntropyReward)
-from brl_gym.wrapper_envs.wrapper_doors import (ExplicitBayesDoorsEnv,
-												ExplicitBayesDoorsEnvNoEntropyReward,
-												UPMLEDoorsEnvNoEntropyReward,
-												UPMLEDoorsEnv,
-												BayesDoorsEntropyEnv)
+from brl_gym.wrapper_envs.wrapper_doors import (ExplicitBayesDoorsEnv,												ExplicitBayesDoorsEnvNoEntropyReward)
+#												UPMLEDoorsEnvNoEntropyReward,
+#												UPMLEDoorsEnv,
+#												BayesDoorsEntropyEnv)
 												# BayesDoorsHiddenEntropyEnv)
 from brl_gym.wrapper_envs.wrapper_maze_continuous import BayesMazeContinuousEnv, UPMLEMazeContEnv
 

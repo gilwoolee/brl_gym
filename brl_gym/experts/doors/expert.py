@@ -1,5 +1,5 @@
 import numpy as np
-from brl_gym.estimators.bayes_doors_estimator import BayesDoorsEstimator, LearnableDoorsBF
+from brl_gym.estimators.bayes_doors_estimator import BayesDoorsEstimator #, LearnableDoorsBF
 from brl_gym.envs.mujoco.doors import DoorsEnv
 from brl_gym.envs.mujoco.doors_slow import DoorsSlowEnv
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
@@ -178,3 +178,5 @@ class DoorsExpert:
         actions += np.random.normal(size=3)*0.1
         return actions
 
+    def __call__(self, inputs, infos=[]):
+        return self.action(inputs)

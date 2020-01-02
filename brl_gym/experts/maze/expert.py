@@ -21,6 +21,7 @@ from brl_gym.wrapper_envs.util import discount
 from brl_gym.envs.mujoco.motion_planner.maze import MotionPlanner
 from brl_gym.envs.mujoco.motion_planner.VectorFieldGenerator import VectorField
 
+from brl_gym.experts.expert import Expert
 
 OBS_DIM = dict()
 GOAL_POSE = dict()

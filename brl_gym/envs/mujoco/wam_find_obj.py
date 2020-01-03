@@ -239,7 +239,7 @@ class WamFindObjEnv(robot_env.RobotEnv):
         body_id = self.sim.model.body_name2id('object0')
         # Move x/y randomly
         xy = np.random.normal(size=2)*np.array([0.1, 0.2])
-        xy = np.clip(xy, np.array([-0.06, -0.2]), np.array([0.15, 0.2]))
+        xy = np.clip(xy, np.array([-0.06, -0.2]), np.array([0.13, 0.2]))
 
         # xy = np.array([0.15, -0.2])
         # print(xy)

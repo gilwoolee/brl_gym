@@ -23,7 +23,6 @@ class WamEnv(robot_env.RobotEnv):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         model_path = osp.join(dir_path, "assets/wam/wam_pusher.xml")
 
-        #self.action_space = Tuple([Box(-1., 1., shape=(3,), dtype='float32'), Discrete(2)])
         self.action_space = Box(-1., 1., shape=(4,), dtype='float32')
 
         robot_env.RobotEnv.__init__(self, model_path=model_path, n_substeps=self.frame_skip,
@@ -105,10 +104,10 @@ class WamEnv(robot_env.RobotEnv):
 
     def _terminate(self):
         if not self.object_in_contact and not self.limit_satisfied():
-            print(self.mass, "BAD limit", np.around(self.joint_effort,1))
+            #print(self.mass, "BAD limit", np.around(self.joint_effort,1))
             return True
         if self.obj_pos[2] > LIFT_HEIGHT:
-            print(self.mass, 'GOOD height')
+            #print(self.mass, 'GOOD height')
             return True
         else:
             return False
@@ -134,15 +133,16 @@ class WamEnv(robot_env.RobotEnv):
         self.sim.forward()
 
     def _env_setup(self, initial_qpos):
+        print("-------------------- ENV SETUP -------------------------")
+
         self.angle = -np.pi/4.0 + np.clip(np.random.normal(), -0.3, 0.3)
         # change the weight of the object
         body_id = self.sim.model.body_name2id('object0')
-        mass = np.random.choice(10)
-        mass = 9
-        self.sim.model.body_mass[body_id] = mass + 1.0
-        self.body_mass_obs = np.zeros(10, dtype=np.float32)
+        mass = np.random.choice(8) # mass is from 4 to 12
+        self.sim.model.body_mass[body_id] = mass + 4.0
+        self.body_mass_obs = np.zeros(8, dtype=np.float32)
         self.body_mass_obs[mass] = 1.0
-        self.mass = mass + 1.0
+        self.mass = mass + 4.0
 
         for name, value in initial_qpos.items():
             self.sim.data.set_joint_qpos(name, value)
@@ -165,13 +165,6 @@ class WamEnv(robot_env.RobotEnv):
             self.sim.step()
 
         utils.reset_mocap2body_xpos(self.sim)
-        # for _ in range(100):
-        #     self.sim.step()
-        #     print(self.sim.data.get_body_xpos('robot0:grip'))
-        #     print(self.sim.data.get_body_xquat('robot0:grip'))
-        # import IPython; IPython.embed(); import sys; sys.exit(0)
-
-        obj_quat = self.sim.data.get_body_xquat('robot0:grip')
 
         self.initial_qpos = self.sim.data.qpos.copy()
 
@@ -212,7 +205,10 @@ class WamEnv(robot_env.RobotEnv):
             pos_ctrl *= 0.05  # limit maximum change in position
             rot_ctrl *= 0.05   # limit maximum change in rotation
 
-            pos_ctrl = np.hstack([pos_ctrl, [-0.001]])
+            if lift <= 0:
+                pos_ctrl = np.hstack([pos_ctrl, [-0.001]])
+            else:
+                pos_ctrl = np.hstack([pos_ctrl, [0.01]])
             self.angle += rot_ctrl
             rot_ctrl = quaternions.axangle2quat([1, 0, .0], self.angle)
             action = np.concatenate([pos_ctrl, rot_ctrl])

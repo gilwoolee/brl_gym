@@ -1,53 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mujoco>
-<!--
-    <option timestep="0.002">
-        <flag warmstart="enable"></flag>
-    </option> -->
     <default>
-        <joint armature="1" damping="1" limited="true"/>
-        <geom contype="0" friction="0.5 0.5 0.1" rgba="0.7 0.7 0 1" solimp=".5 .5 .001" solref=".02 1"/>
+        <joint armature="0" damping="0" limited="true"/>
+        <geom contype="0" friction="1.0 1.0  1.0" rgba="0.7 0.7 0 1" solimp=".5 .5 .001" solref=".02 1" condim="1"/>
     </default>
-    <option integrator="RK4" timestep="0.001" gravity="0 0 -1.0"/>
-
+    <option integrator="RK4" timestep="0.001" gravity="0 0 0.0"/>
+    <size nconmax="1000" njmax="5000"/>
     <asset>
         <mesh file="../furniture/bookcase.stl" name="bookcase"/>
     </asset>
-    <!-- <include file="shared.xml"></include> -->
 
     <include file="wam.xml"></include>
 
     <worldbody>
 
 
-        <!-- <geom pos="-0.5 0.3 -0.15" rgba="1 1 1 1" size="0.5 0.3 0.35" type="box" name="table" conaffinity="1" contype="1" condim="3" mass="2000" ></geom> -->
-
-
-       <body name="bookcase" pos="0.0 0.0 -0.5" euler="0 0 4.7124">
-            <geom conaffinity="0" contype="0" condim="3" name="center" pos="0 0 0" rgba="0. 0. 1.0 1" size=".009" type="sphere"/>
-            <geom rgba="0.82 0.5 0.34 1" type="mesh" mesh="bookcase" contype="1" conaffinity="1"/>
-            <site name="bookcase:pos0" pos="0.2 0.2 0.9" euler="0 0 0." rgba="1 0 0 1" size="0.01" type="sphere"></site>
-            <site name="bookcase:pos1" pos="0.55 0.2 0.9" euler="0 0 0." rgba="1 0 0 1" size="0.01" type="sphere"></site>
-            <site name="bookcase:pos2" pos="0.2 0.2 1.25" euler="0 0 0." rgba="1 0 0 1" size="0.01" type="sphere"></site>
-            <site name="bookcase:pos3" pos="0.55 0.20 1.25" euler="0 0 0." rgba="1 0 0 1" size="0.01" type="sphere"></site>
+        <body name="table" pos="-0.5 0.3 -0.35">
+        <geom pos="0 0 0" rgba="1 1 1 1.0" size="0.5 0.3 0.35" type="box" name="table" conaffinity="0" contype="0" condim="1" mass="2000" ></geom>
+        <geom conaffinity="1" contype="1" name="table-top" pos="0 0 0.35" rgba="0.5 0.5 0.5 0.0" size="0.5 0.3 0.001" type="plane" condim="3" friction="0.1 0.1 0.1"/>
         </body>
 
 
+       <body name="bookcase" pos="-0.1 0.0 -0.7" euler="0 0 4.7124">
+            <geom conaffinity="0" contype="0" condim="3" name="center" pos="0 0 0" rgba="0. 0. 1.0 1" size=".009" type="sphere"/>
+            <!-- <geom rgba="0.82 0.5 0.34 1" name="bc:mesh" type="mesh" mesh="bookcase" contype="0" conaffinity="0"/> -->
 
-        <!-- Ground (Table) -->
+            <!-- <site name="bookcase:pos0" pos="0.2 0.1 0.9" euler="0 0 0." rgba="1 1 0 1" size="0.01" type="sphere"></site> -->
+            <!-- <site name="bookcase:pos1" pos="0.55 0.1 0.9" euler="0 0 0." rgba="1 1 0 1" size="0.01" type="sphere"></site> -->
 
-<!--  -->
-        <!-- <body name="center" pos="0. 0. 0."> -->
+            <!-- <site name="bookcase:pos2" pos="0.2 0.2 1.25" euler="0 0 0." rgba="1 1 0 1" size="0.01" type="sphere"></site> -->
+            <!-- <site name="bookcase:pos3" pos="0.55 0.20 1.25" euler="0 0 0." rgba="1 1 0 1" size="0.01" type="sphere"></site> -->
 
-        <!-- </body> -->
+            <site name="bookcase:pos0" pos="0.375 0.1 0.9" euler="0 0 0." rgba="1 1 0 0.0" size="0.01" type="sphere"></site>
 
-        <!-- <body name="object0" pos="0.2 -0.2  0.75" euler="0 0 0"> -->
-        <!-- <body name="object0" pos="0.0 0 0" euler="0 0 0"> -->
-            <!-- <joint name="object0:joint" type="free" damping="0.1" limited="false"></joint> -->
-            <!-- <geom conaffinity="1" contype="1" condim="3" pos="0 0 0" rgba="1 0 0 1.0" size="0.03 0.05 0.03" type="cylinder" mass="1.0"></geom> -->
-            <!-- <geom conaffinity="0" contype="0" condim="1" pos="0 0 0" rgba="1 0 0 1.0" size="0.03 0.05 0.03" type="cylinder" mass="1.0"></geom> -->
+            <site name="bookcase:pos1" pos="0.375 0.1 1.25" euler="0 0 0." rgba="1 1 0 0.0" size="0.01" type="sphere"></site>
 
-        <!-- </body> -->
+
+            <geom conaffinity="1" contype="1" name="shelf_bottom_1" pos="0.38 0.2 0.75" rgba="1.0 0.5 0.5 0.8" size="0.35 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+            <geom conaffinity="1" contype="1" name="shelf_bottom_2" pos="0.38 0.2 1.1" rgba="0.5 0.5 0.5 0.0" size="0.33 0.15 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+
+            <geom conaffinity="0" contype="0" name="shelf_bottom_1_viz" pos="0.38 0.2 0.75" rgba="1.0 0.5 0.5 1.0" size="0.35 0.2 0.001" type="box"/>
+            <geom conaffinity="0" contype="0" name="shelf_bottom_2_viz" pos="0.38 0.2 1.1" rgba="1.0 0.5 0.5 1.0" size="0.33 0.15 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+
+            <!-- <geom conaffinity="0" contype="0" name="shelf_bottom_3" pos="0.38 0.2 1.43" rgba="0.5 0.5 0.5 0.0" size="0.35 0.2 0.1" type="plane" condim="3" friction="0.01 0.01 0.01"/> -->
+
+            <geom conaffinity="1" contype="1" name="shelf_left_1" pos="0.73 0.2 1.10" euler="0 1.5708 0" rgba="0.5 0.5 0.5 0.0" size="0.35 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+
+            <geom conaffinity="1" contype="1" name="shelf_left_3" pos="0.03 0.2 1.10" euler="0 1.5708 0" rgba="0.5 0.5 0.5 0.0" size="0.35 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+
+            <geom conaffinity="0" contype="0" name="shelf_left_1_viz" pos="0.73 0.2 1.10" euler="0 1.5708 0" rgba="1.0 0.5 0.5 1.0" size="0.35 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+
+            <geom conaffinity="0" contype="0" name="shelf_left_3_viz" pos="0.03 0.2 1.10" euler="0 1.5708 0" rgba="1.0 0.5 0.5 1.0" size="0.35 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+
+            <geom conaffinity="1" contype="1" name="shelf_back" pos="0.4 0.3 0.9" euler="1.5708 0 0" rgba="0.5 0.5 0.5 0.3" size="0.32 0.13 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+
+            <geom conaffinity="1" contype="1" name="shelf_back2" pos="0.4 0.3 1.25" euler="1.5708 0 0" rgba="0.5 0.5 0.5 0.3" size="0.32 0.13 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+        </body>
+
+
+        <body name="object0" pos="0 0 0" euler="0 0 0">
+            <joint name="object0:joint" type="free" damping="0.5" limited="false"></joint>
+            <geom name="object0" conaffinity="0" contype="0" condim="3" pos="0 0 0" rgba="1 0 0 1.0" friction="1.0 1.0 1.0" size="0.03 0.05 0.03" type="cylinder" mass="1.0"></geom>
+        </body>
 
         <light directional="true" ambient="0.1 0.1 0.1" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2" castshadow="true" pos="0 0 4" dir="0 0 -1" name="light0"></light>
     </worldbody>

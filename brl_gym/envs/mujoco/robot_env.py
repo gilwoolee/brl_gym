@@ -71,7 +71,6 @@ class RobotEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         raise NotImplementedError
 
     def reset(self):
-        print("reset")
         # Attempt to reset the simulator. Since we randomize initial conditions, it
         # is possible to get into a state with numerical issues (e.g. due to penetration or
         # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).

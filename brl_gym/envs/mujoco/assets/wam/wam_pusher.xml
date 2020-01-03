@@ -13,7 +13,7 @@
 
 	<!-- <include file="shared.xml"></include> -->
 
-	<include file="wam.xml"></include>
+	<include file="wam_with_object.xml"></include>
 
 	<worldbody>
 

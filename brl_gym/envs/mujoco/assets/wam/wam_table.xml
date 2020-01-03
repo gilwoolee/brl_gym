@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+<!--
+    <option timestep="0.002">
+        <flag warmstart="enable"></flag>
+    </option> -->
+    <default>
+        <joint armature="1" damping="1" limited="true"/>
+        <geom contype="0" friction="0.5 0.5 0.1" rgba="0.7 0.7 0 1" solimp=".5 .5 .001" solref=".02 1"/>
+    </default>
+    <option integrator="RK4" timestep="0.001" gravity="0 0 -1.0"/>
+
+    <asset>
+        <mesh file="../furniture/bookcase.stl" name="bookcase"/>
+    </asset>
+    <!-- <include file="shared.xml"></include> -->
+
+    <include file="wam.xml"></include>
+
+    <worldbody>
+
+
+        <!-- <geom pos="-0.5 0.3 -0.15" rgba="1 1 1 1" size="0.5 0.3 0.35" type="box" name="table" conaffinity="1" contype="1" condim="3" mass="2000" ></geom> -->
+
+
+       <body name="bookcase" pos="0.0 0.0 -0.5" euler="0 0 4.7124">
+            <geom conaffinity="0" contype="0" condim="3" name="center" pos="0 0 0" rgba="0. 0. 1.0 1" size=".009" type="sphere"/>
+            <geom rgba="0.82 0.5 0.34 1" type="mesh" mesh="bookcase" contype="1" conaffinity="1"/>
+            <site name="bookcase:pos0" pos="0.2 0.2 0.9" euler="0 0 0." rgba="1 0 0 1" size="0.01" type="sphere"></site>
+            <site name="bookcase:pos1" pos="0.55 0.2 0.9" euler="0 0 0." rgba="1 0 0 1" size="0.01" type="sphere"></site>
+            <site name="bookcase:pos2" pos="0.2 0.2 1.25" euler="0 0 0." rgba="1 0 0 1" size="0.01" type="sphere"></site>
+            <site name="bookcase:pos3" pos="0.55 0.20 1.25" euler="0 0 0." rgba="1 0 0 1" size="0.01" type="sphere"></site>
+        </body>
+
+
+
+        <!-- Ground (Table) -->
+
+<!--  -->
+        <!-- <body name="center" pos="0. 0. 0."> -->
+
+        <!-- </body> -->
+
+        <!-- <body name="object0" pos="0.2 -0.2  0.75" euler="0 0 0"> -->
+        <!-- <body name="object0" pos="0.0 0 0" euler="0 0 0"> -->
+            <!-- <joint name="object0:joint" type="free" damping="0.1" limited="false"></joint> -->
+            <!-- <geom conaffinity="1" contype="1" condim="3" pos="0 0 0" rgba="1 0 0 1.0" size="0.03 0.05 0.03" type="cylinder" mass="1.0"></geom> -->
+            <!-- <geom conaffinity="0" contype="0" condim="1" pos="0 0 0" rgba="1 0 0 1.0" size="0.03 0.05 0.03" type="cylinder" mass="1.0"></geom> -->
+
+        <!-- </body> -->
+
+        <light directional="true" ambient="0.1 0.1 0.1" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2" castshadow="true" pos="0 0 4" dir="0 0 -1" name="light0"></light>
+    </worldbody>
+
+    <actuator></actuator>
+</mujoco>

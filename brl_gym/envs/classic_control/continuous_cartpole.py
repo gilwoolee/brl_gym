@@ -78,7 +78,9 @@ class ContinuousCartPoleEnv(gym.Env):
         'video.frames_per_second' : 50
     }
 
-    def __init__(self, random_initial_state=False):
+    def __init__(self, ctrl_noise_scale=0.1, random_initial_state=False):
+        self.ctrl_noise_scale = ctrl_noise_scale
+
         self.gravity = 9.8
         self.masscart = 1.0
         self.masspole = 0.1
@@ -121,6 +123,11 @@ class ContinuousCartPoleEnv(gym.Env):
         return [seed]
 
     def step(self, action):
+        if self.ctrl_noise_scale > 0:
+            ctrl_noise = np.random.normal(scale=self.ctrl_noise_scale, size=1)
+        else:
+            ctrl_noise = 0
+        action = action.copy() + ctrl_noise
         state = self.state
         x, x_dot, theta, theta_dot = state
         force = action * 10.0

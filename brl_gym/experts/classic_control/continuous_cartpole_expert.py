@@ -22,11 +22,12 @@ class ContinuousCartPoleExpert(Expert):
         act = np.zeros((inputs.shape[0], 1), dtype=np.float32)
         bels[bels < self.belief_threshold] = 0
         bels /= np.sum(bels, axis=1).reshape(-1, 1)
-        for i, (obs, bel) in enumerate(zip(obss, bels)):
-            for b in bel:
+        for i in np.arange(obss.shape[0]):
+            obs, bel = obss[i], bels[i]
+            for j, b in enumerate(bel):
                 if b == 0:
                     continue
-                act[i] += self.experts[i].lqr_control(obs)[0] * b
+                act[i] += self.experts[j].lqr_control(obs)[0] * b
 
         return act
 

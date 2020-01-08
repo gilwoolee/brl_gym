@@ -195,7 +195,7 @@ class ContinuousCartPoleEnv(gym.Env):
         self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
         self.steps_beyond_done = None
         if self.random_param:
-            self.length = np.random.choice(np.linspace(0.5, 1.5, 11))
+            self.length = np.random.choice(np.linspace(0.5, 1.5, 5))
         #     # self.masspole = 0.2 + self.np_random.uniform(low=-0.1, high=0.1)
         #     self.length = 0.5 + self.np_random.uniform(low=-0.125, high=0.125)
             self.polemass_length = self.masspole * self.length
@@ -288,6 +288,17 @@ class LQRControlCartPole:
         self.I = env.polemass_length
         self.total_mass = env.total_mass
 
+        self.H = lambda theta: np.array([
+            [total_mass, m * l * np.cos(theta)],
+            [m * l * np.cos(theta), m * (l) **2]
+            ])
+        self.C = lambda theta, theta_dot: np.array([
+            [0, -m * l * theta_dot * np.sin(theta)],
+            [0, 0]])
+        self.G = lambda theta: np.array([[0], [m*g*l*np.sin(theta)]])
+        self.B = np.array([[1], [0]])
+
+
 
     def lqr_control(self, state):
         m, M, l, g, I, total_mass = self.m, self.M, self.l, self.g, self.I, self.total_mass
@@ -305,17 +316,14 @@ class LQRControlCartPole:
             x = x[0,0]
         if isinstance(theta, np.ndarray):
             theta = theta[0,0]
+
         theta = pi - theta
         theta_dot = -theta_dot
-        H = np.array([
-            [total_mass, m * l * np.cos(theta)],
-            [m * l * np.cos(theta), m * (l) **2]
-            ])
-        C = np.array([
-            [0, -m * l * theta_dot * np.sin(theta)],
-            [0, 0]])
-        G = np.array([[0], [m*g*l*np.sin(theta)]])
-        B = np.array([[1], [0]])
+
+        H = self.H(theta)
+        C = self.C(theta)
+        G = self.G(theta)
+        B = self.B
 
         dGdq = np.array([[0, 0],
             [0, m * g * l * np.cos(theta)]])

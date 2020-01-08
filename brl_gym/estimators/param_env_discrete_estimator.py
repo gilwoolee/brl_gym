@@ -10,7 +10,8 @@ class ParamEnvDiscreteEstimator(Estimator):
     Estimates parameter distribution
     """
     def __init__(self, env,
-                 belief_cutoff=0.7,
+                 belief_cutoff_high=0.95,
+                 belief_cutoff_low=0.05,
                  noise_std=0.5,
                  discretization=5):
         """
@@ -49,8 +50,8 @@ class ParamEnvDiscreteEstimator(Estimator):
 
         num_params = len(param_space.keys())
         self.param_space = param_space
-        self.noise_var = noise_std**2
-        self.log_belief_cutoff = np.log(belief_cutoff)
+        self.noise_std = noise_std
+        self.log_belief_cutoff = np.log(np.array([belief_cutoff_low, belief_cutoff_high]))
         self.belief_low = np.zeros(discretization ** num_params, dtype=np.float32)
         self.belief_high = np.ones(discretization ** num_params, dtype=np.float32)
         self.belief_space = Box(self.belief_low, self.belief_high, dtype=np.float32)
@@ -58,10 +59,9 @@ class ParamEnvDiscreteEstimator(Estimator):
         self.param_values = param_values
         self.envs = envs
 
-        self.reset()
-
     def reset(self):
         self.log_belief = np.log(np.ones(self.discretization) / self.discretization)
+        return np.exp(self.log_belief)
 
     def get_best_env(self):
         """
@@ -83,35 +83,34 @@ class ParamEnvDiscreteEstimator(Estimator):
         return params_copy
 
     def estimate(self, action, observation, **kwargs):
-        # import IPython; IPython.embed(); import sys; sys.exit(0)
         if 'prev_state' not in kwargs or 'curr_state' not in kwargs:
-            self.reset()
-            return self.log_belief
+            return self.reset()
 
         prev_state = kwargs['prev_state']
         curr_state = kwargs['curr_state']
 
         if prev_state is None:
-            self.reset()
-            return self.log_belief
+            return self.reset()
 
-        if np.max(self.log_belief) >= self.log_belief_cutoff:
-            return self.log_belief
+        if np.max(self.log_belief) >= self.log_belief_cutoff[1]:
+            return np.exp(self.log_belief)
 
-        log_probabilities = []
-        for b, env in zip(self.log_belief, self.envs):
+        self.log_belief[self.log_belief <= self.log_belief_cutoff[0]] = 0
+        self.log_belief -= logsumexp(self.log_belief)
+        lp = np.zeros(len(self.log_belief))
+        for i, (lb, env) in enumerate(zip(self.log_belief, self.envs)):
+            if lb == 0:
+                continue
             log_probability = self._estimate(env,
                                              prev_state,
                                              action,
                                              curr_state)
-            log_probability += b
-            log_probabilities += [log_probability]
+            lp[i] += [log_probability + lb]
 
-        log_probabiliites = np.array(log_probabilities)
-        log_probabilities -= logsumexp(log_probabilities)
+        lp -= logsumexp(lp)
 
-        self.log_belief = log_probabilities
-        return log_probabiliites
+        self.log_belief = lp
+        return np.exp(lp)
 
 
     def _estimate(self, env, prev_state, action, curr_state):
@@ -124,7 +123,7 @@ class ParamEnvDiscreteEstimator(Estimator):
 
         # Assume N(0,noise_var)
         log_probability = -0.5*np.sum(np.linalg.norm(
-            curr_state - visited_states)**2) / self.noise_var
+            curr_state - visited_states)**2) / self.noise_std**2
         return log_probability
 
     def get_belief(self):

@@ -118,7 +118,8 @@ class ContinuousCartPoleEnv(gym.Env):
         self.random_param = random_param
         self.param_space = dict(
             # length=spaces.Box(np.array([0.5]),np.array([1.0]), dtype=np.float32))
-            length=spaces.Box(np.array([0.4]),np.array([0.7]), dtype=np.float32))
+            length=spaces.Box(np.array([0.5]),np.array([2.0]), dtype=np.float32),
+            masscart=spaces.Box(np.array([0.5]), np.array([2.0]), dtype=np.float32))
 
 
     def seed(self, seed=None):
@@ -195,18 +196,22 @@ class ContinuousCartPoleEnv(gym.Env):
         self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
         self.steps_beyond_done = None
         if self.random_param:
-        #    self.length = np.random.choice(np.linspace(0.5, 1.5, 5))
-            self.length = np.random.uniform(low=0.5, high=2.0)
-        #     # self.masspole = 0.2 + self.np_random.uniform(low=-0.1, high=0.1)
-        #     self.length = 0.5 + self.np_random.uniform(low=-0.125, high=0.125)
+            length_range = self.param_space['length']
+            masscart_range = self.param_space['masscart']
+            self.length = np.random.uniform(low=length_range.low[0],
+                    high=length_range.high[0])
+            self.masscart = np.random.uniform(low=masscart_range.low[0],
+                    high=masscart_range.high[0])
             self.polemass_length = self.masspole * self.length
         return np.array(self.state)
 
     def set_params(self, params):
         self.length = params['length']
+        self.masscart = params['masscart']
         if isinstance(self.length, np.ndarray):
             self.length = self.length[0]
-        # self.masspole = params['masspole']
+        if isinstance(self.masscart, np.ndarray):
+            self.masscart = self.masscart[0]
         self.polemass_length = self.masspole * self.length
         self.random_param = False
 
@@ -367,7 +372,6 @@ class LQRControlCartPole:
 
 if __name__ == "__main__":
     env = ContinuousCartPoleEnv(ctrl_noise_scale=1.0)
-    env.set_params(dict(length=1.5))
 
     expert = LQRControlCartPole(env)
 
@@ -383,11 +387,9 @@ if __name__ == "__main__":
         _, r, done, _ = env.step(a)
         rewards += [r]
         values += [v]
-        env.render()
+        #env.render()
         print(r)
         t += 1
         #if t > 1000:
         #    break
-
-    import IPython; IPython.embed()
-    print(rewards)
+    print(t)

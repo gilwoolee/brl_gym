@@ -5,8 +5,8 @@ from scipy.stats import norm
 import numpy as np
 
 class BayesContinuousCartpoleEstimator(Estimator):
-    def __init__(self):
-        self.param_range = np.linspace(0.5, 1.5, 5)
+    def __init__(self, param_range=np.linspace(0.5, 2.0, 3)):
+        self.param_range = param_range
 
         self.envs = [ContinuousCartPoleEnv(ctrl_noise_scale=0.0, random_param=False)
                      for _ in range(len(self.param_range))]
@@ -17,7 +17,7 @@ class BayesContinuousCartpoleEstimator(Estimator):
         self.belief_high = np.ones(len(self.param_range), dtype=np.float32)
 
         self.belief_space = Box(self.belief_low, self.belief_high, dtype=np.float32)
-        self.param_space = Box(np.array([0.5]), np.array([1.5]))
+        self.param_space = Box(np.array([param_range[0]]), np.array([param_range[1]]))
 
         env = self.envs[0]
         super(BayesContinuousCartpoleEstimator, self).__init__(

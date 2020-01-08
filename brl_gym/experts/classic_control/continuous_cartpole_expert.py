@@ -17,12 +17,11 @@ class ContinuousCartPoleExpert(Expert):
     def action(self, inputs, infos=None):
         if len(inputs.shape) == 1:
             inputs = inputs.reshape(1, -1)
-        print(inputs.shape)
         obss, bels = inputs[:, :4], inputs[:, 4:]
 
         act = np.zeros((inputs.shape[0], 1), dtype=np.float32)
         bels[bels < self.belief_threshold] = 0
-        bels /= np.sum(bels, axis=1)
+        bels /= np.sum(bels, axis=1).reshape(-1, 1)
         for i, (obs, bel) in enumerate(zip(obss, bels)):
             for b in bel:
                 if b == 0:

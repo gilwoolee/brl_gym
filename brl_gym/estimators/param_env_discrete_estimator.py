@@ -3,7 +3,7 @@ import numpy as np
 from gym.spaces import Box
 
 from brl_gym.estimators.estimator import Estimator
-from scipy.misc import logsumexp
+from scipy.special import logsumexp
 
 class ParamEnvDiscreteEstimator(Estimator):
     """

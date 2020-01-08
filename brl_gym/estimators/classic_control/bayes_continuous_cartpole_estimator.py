@@ -39,7 +39,9 @@ class BayesContinuousCartpoleEstimator(Estimator):
         probs = np.zeros(len(self.param_range))
         for i, env in enumerate(self.envs):
             env.set_state(self.prev_state)
-            state, _, _, _ = env.step(action)
+            state, _, d, _ = env.step(action)
+            if d:
+                env.reset()
             probs[i] = np.exp(np.sum(norm.logpdf(observation - state, scale=self.noise_scale)))
         probs *= self.belief
         self.belief = probs / np.sum(probs)

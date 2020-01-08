@@ -193,6 +193,19 @@ register(
 )
 
 register(
+    id='Maze-LearnableBF-noent-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
+    max_episode_steps=500,
+    reward_threshold=500,
+    kwargs={
+    "entropy_weight":0.0,
+    "reward_entropy":False,
+    "maze_type":4,
+    "learnable_bf":True
+    },
+)
+
+register(
     id='Maze-slow-v0',
     entry_point='brl_gym.wrapper_envs:ExplicitBayesMazeEnv',
     kwargs={"maze_slow":True},
@@ -523,6 +536,19 @@ register(
     max_episode_steps=300,
     reward_threshold=100,
 )
+
+register(
+    id='Door-LearnableBF-noent-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
+    max_episode_steps=300,
+    reward_threshold=100,
+    kwargs={
+    "entropy_weight":0.0,
+    "reward_entropy":False,
+    "learnable_bf":True
+    },
+)
+
 
 register(
     id='Doorslow-v0',

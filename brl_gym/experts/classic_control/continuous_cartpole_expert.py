@@ -28,6 +28,7 @@ class ContinuousCartPoleExpert(Expert):
                 if b == 0:
                     continue
                 act[i] += self.experts[i].lqr_control(obs)[0] * b
+
         return act
 
 
@@ -36,10 +37,14 @@ if __name__ == "__main__":
     expert = ContinuousCartPoleExpert()
 
     obs = env.reset()
-    for _ in range(100):
+    for t in range(100):
         action = expert.action(obs)
         print(action)
-        env.step(action)
-        env.render()
+        obs, _, d, _ = env.step(action[0])
+        print(np.around(obs[4:],2))
+        if d:
+            print(t)
+            break
+        #env.render()
 
 

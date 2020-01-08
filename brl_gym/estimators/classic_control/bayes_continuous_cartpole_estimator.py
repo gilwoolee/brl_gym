@@ -6,8 +6,7 @@ import numpy as np
 
 class BayesContinuousCartpoleEstimator(Estimator):
     def __init__(self):
-        # Length of the pole, range [0.5, 0.6, ... 1.5]
-        self.param_range = np.linspace(0.5, 1.5, 11)
+        self.param_range = np.linspace(0.5, 1.5, 5)
 
         self.envs = [ContinuousCartPoleEnv(ctrl_noise_scale=0.0, random_param=False)
                      for _ in range(len(self.param_range))]

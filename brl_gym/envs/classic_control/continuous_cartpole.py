@@ -195,7 +195,7 @@ class ContinuousCartPoleEnv(gym.Env):
         self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
         self.steps_beyond_done = None
         if self.random_param:
-            self.length = np.random.choice(np.linspace(0.5, 1.5, 11))
+            self.length = np.random.choice(np.linspace(0.5, 1.5, 5))
         #     # self.masspole = 0.2 + self.np_random.uniform(low=-0.1, high=0.1)
         #     self.length = 0.5 + self.np_random.uniform(low=-0.125, high=0.125)
             self.polemass_length = self.masspole * self.length

@@ -290,13 +290,13 @@ class LQRControlCartPole:
         self.total_mass = env.total_mass
 
         self.H = lambda theta: np.array([
-            [total_mass, m * l * np.cos(theta)],
-            [m * l * np.cos(theta), m * (l) **2]
+            [self.total_mass, self.m * self.l * np.cos(theta)],
+            [self.m * self.l * np.cos(theta), self.m * (self.l) **2]
             ])
         self.C = lambda theta, theta_dot: np.array([
-            [0, -m * l * theta_dot * np.sin(theta)],
+            [0, -self.m * self.l * theta_dot * np.sin(theta)],
             [0, 0]])
-        self.G = lambda theta: np.array([[0], [m*g*l*np.sin(theta)]])
+        self.G = lambda theta: np.array([[0], [self.m*self.g*self.l*np.sin(theta)]])
         self.B = np.array([[1], [0]])
 
 
@@ -322,7 +322,7 @@ class LQRControlCartPole:
         theta_dot = -theta_dot
 
         H = self.H(theta)
-        C = self.C(theta)
+        C = self.C(theta, theta_dot)
         G = self.G(theta)
         B = self.B
 

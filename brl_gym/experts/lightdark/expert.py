@@ -1,12 +1,12 @@
 from brl_gym.experts.expert import Expert
 from brl_gym.wrapper_envs.wrapper_lightdark import BayesLightDark
 
-class LightDarKExpert(Expert):
+class LightDarkExpert(Expert):
     def __init__(self):
         env = BayesLightDark()
         obs_dim = env.env.observation_space.low.shape[0]
         bel_dim = env.estimator.belief_space.low.shape[0]
-        super(LightDarKExpert, self).__init__(obs_dim, bel_dim)
+        super(LightDarkExpert, self).__init__(obs_dim, bel_dim)
 
     def action(self, inputs, infos=None):
         if len(inputs.shape) == 1:

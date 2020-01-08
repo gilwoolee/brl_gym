@@ -78,7 +78,10 @@ class ContinuousCartPoleEnv(gym.Env):
         'video.frames_per_second' : 50
     }
 
-    def __init__(self, ctrl_noise_scale=0.1, random_initial_state=False):
+    def __init__(self, ctrl_noise_scale=1.0, random_param=True):
+        """
+        ctrl_noise_scale: Normal(0, scale) is added to action and multiplied by 10
+        """
         self.ctrl_noise_scale = ctrl_noise_scale
 
         self.gravity = 9.8
@@ -112,7 +115,7 @@ class ContinuousCartPoleEnv(gym.Env):
 
         self.steps_beyond_done = None
 
-        self.random_initial_state = random_initial_state
+        self.random_param = random_param
         self.param_space = dict(
             # length=spaces.Box(np.array([0.5]),np.array([1.0]), dtype=np.float32))
             length=spaces.Box(np.array([0.4]),np.array([0.7]), dtype=np.float32))
@@ -191,10 +194,11 @@ class ContinuousCartPoleEnv(gym.Env):
     def reset(self):
         self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
         self.steps_beyond_done = None
-        # if self.random_initial_state:
+        if self.random_param:
+            self.length = np.random.choice(np.linspace(0.5, 1.5, 11))
         #     # self.masspole = 0.2 + self.np_random.uniform(low=-0.1, high=0.1)
         #     self.length = 0.5 + self.np_random.uniform(low=-0.125, high=0.125)
-        #     self.polemass_length = self.masspole * self.length
+            self.polemass_length = self.masspole * self.length
         return np.array(self.state)
 
     def set_params(self, params):
@@ -203,7 +207,7 @@ class ContinuousCartPoleEnv(gym.Env):
             self.length = self.length[0]
         # self.masspole = params['masspole']
         self.polemass_length = self.masspole * self.length
-        self.random_initial_state = False
+        self.random_param = False
 
     def get_params(self):
         return dict(
@@ -277,16 +281,16 @@ class ContinuousCartPoleEnv(gym.Env):
 
 class LQRControlCartPole:
     def __init__(self, env):
-        self.env = env
+        self.m = env.masspole
+        self.M = env.masscart
+        self.l = env.length * 2
+        self.g = env.gravity
+        self.I = env.polemass_length
+        self.total_mass = env.total_mass
+
 
     def lqr_control(self, state):
-
-        m = self.env.masspole
-        M = self.env.masscart
-        l = self.env.length * 2
-        g = self.env.gravity
-        I = self.env.polemass_length
-        total_mass = self.env.total_mass
+        m, M, l, g, I, total_mass = self.m, self.M, self.l, self.g, self.I, self.total_mass
         pi = np.pi
 
         Q = np.diag([100,500,1, 1])
@@ -353,8 +357,8 @@ class LQRControlCartPole:
 
 
 if __name__ == "__main__":
-    env = ContinuousCartPoleEnv()
-    env.set_params(dict(length=0.5))
+    env = ContinuousCartPoleEnv(ctrl_noise_scale=1.0)
+    env.set_params(dict(length=1.5))
 
     expert = LQRControlCartPole(env)
 
@@ -366,15 +370,15 @@ if __name__ == "__main__":
     while not done:
         state = env.state
         a, v = expert.lqr_control(state)
-        print (a, v)
+        print ("expert", a)
         _, r, done, _ = env.step(a)
         rewards += [r]
         values += [v]
         env.render()
         print(r)
         t += 1
-        if t > 100:
-            break
+        #if t > 1000:
+        #    break
 
     import IPython; IPython.embed()
     print(rewards)

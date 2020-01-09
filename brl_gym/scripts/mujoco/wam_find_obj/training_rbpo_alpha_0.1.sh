@@ -1,0 +1,1 @@
+OPENAI_LOGDIR=~/models/wam_find_obj_cont/rbpo_alpha_0.1 OPENAI_LOG_FORMAT=tensorboard python -m brl_baselines.run --alg=bppo2_expert --env=bayes-WamFindObj-v0 --num_timesteps=5e8 --save_path=~/models/complete/wam_find_obj_rbpo --num_env=10 --save_interval=50  --gamma=1 --value_network=copy  --nminibatches=10 --residual_weight=0.1

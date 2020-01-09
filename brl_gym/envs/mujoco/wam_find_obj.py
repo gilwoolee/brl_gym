@@ -126,7 +126,9 @@ class WamFindObjEnv(robot_env.RobotEnv):
 
     def _set_action(self, action):
         # return
-        # Get closer to target
+
+        """
+        # Expert action: Get closer to target
         obj_pos = self.sim.data.get_body_xpos("object0")
         hand_pos = self.sim.data.get_body_xpos('robot0:grip')
 
@@ -135,6 +137,10 @@ class WamFindObjEnv(robot_env.RobotEnv):
         pos_ctrl *= 0.01
         rot = np.array([1,0,0,0], dtype=np.float32)
         action = np.concatenate([pos_ctrl, rot])
+        """
+
+        rot = np.array([1,0,0,0], dtype=np.float32)
+        action = np.concatenate([action*0.01, rot])
         utils.mocap_set_action(self.sim, action)
 
     def compute_reward(self):
@@ -147,7 +153,6 @@ class WamFindObjEnv(robot_env.RobotEnv):
         if dist < 0.08:
             return 1.0
 
-        print("dist", dist)
         reward = -dist
 
         # Penalize on collision with shelf

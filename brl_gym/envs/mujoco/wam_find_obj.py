@@ -11,8 +11,9 @@ from transforms3d import quaternions
 from mujoco_py import cymj
 
 class WamFindObjEnv(robot_env.RobotEnv):
-    def __init__(self):
-        self.frame_skip = 1
+    def __init__(self, noise_scale=0.1):
+        self.frame_skip = 50
+        self.noise_scale = noise_scale
 
         # Get asset dir
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -31,7 +32,7 @@ class WamFindObjEnv(robot_env.RobotEnv):
         robot_qpos, robot_qvel = utils.robot_get_obs(self.sim)
 
         obj_pos = self.sim.data.get_body_xpos("object0")
-        dist = grip_pos - obj_pos
+        dist = obj_pos - grip_pos
 
         num_contacts_with_obj = 0
         num_contacts_with_shelf = 0
@@ -52,47 +53,16 @@ class WamFindObjEnv(robot_env.RobotEnv):
         self.num_contacts_with_shelf = num_contacts_with_shelf
         self.num_contacts_with_obj = num_contacts_with_obj
 
-        obs = np.concatenate([grip_pos, obj_pos, dist, [num_contacts_with_shelf], [num_contacts_with_obj], self.sim.data.qpos])
+        # make dist noisy
+        dist += np.random.normal(size=3, scale=self.noise_scale)
 
-        # print("num c", num_contacts)
-        return robot_qpos
-        # force = self.sim.data.sensordata[0] # Normal force from table
-        # object_in_contact = num_contacts >= 1 #and force > 0
-
-        # print(num_contacts, force)
-        obs = np.concatenate([
-            grip_pos, [int(object_in_contact)], [num_contacts / 3.0], [force / 300.0],
-            self.sim.data.qpos
-        ])
-
+        obs = np.concatenate([grip_pos, dist,
+            [num_contacts_with_shelf], [num_contacts_with_obj],
+            self.sim.data.qpos,
+            [self.noise_scale]])
         self.obj_pos = obj_pos
-        self.object_in_contact = object_in_contact
-
-
-    # def reset(self):
-    #     print("----- reset ------")
-    #     # Attempt to reset the simulator. Since we randomize initial conditions, it
-    #     # is possible to get into a state with numerical issues (e.g. due to penetration or
-    #     # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
-    #     # In this case, we just keep randomizing until we eventually achieve a valid initial
-    #     # configuration.
-    #     # super(RobotEnv, self).reset()
-
-    #     did_reset_sim = False
-    #     while not did_reset_sim:
-    #         try:
-    #             self._env_setup({})
-    #             did_reset_sim = True
-    #         except :
-    #             continue
-    #     #     did_reset_sim = self._reset_sim()
-    #     # self.goal = self._sample_goal().copy()
-
-    #     # self.sim.data.qpos[:] = self.initial_qpos
-
-    #     obs = self._get_obs()
-
-    #     return obs
+        self.grip_pos = grip_pos
+        return obs
 
     def _terminate(self):
         return False
@@ -140,10 +110,18 @@ class WamFindObjEnv(robot_env.RobotEnv):
         obj_quat = self.sim.data.get_body_xquat('robot0:grip')
 
         self.site_poses = [self.sim.data.get_site_xpos('bookcase:pos{}'.format(x)) for x in range(2)]
-        print([np.around(x,2) for x in self.site_poses])
         self.initial_qpos = self.sim.data.qpos.copy()
 
     def _is_success(self):
+        obj_pos = self.sim.data.get_body_xpos("object0")
+        hand_pos = self.sim.data.get_body_xpos('robot0:grip')
+
+        # Reward if distance to the target is small (the item is within the hand)
+        dist = np.linalg.norm(hand_pos - obj_pos)
+
+        if dist < 0.08:
+            return True
+
         return False
 
     def _set_action(self, action):
@@ -164,8 +142,13 @@ class WamFindObjEnv(robot_env.RobotEnv):
         hand_pos = self.sim.data.get_body_xpos('robot0:grip')
 
         # Reward if distance to the target is small (the item is within the hand)
-        dist = hand_pos - obj_pos
-        reward = -np.linalg.norm(dist)
+        dist = np.linalg.norm(hand_pos - obj_pos)
+
+        if dist < 0.08:
+            return 1.0
+
+        print("dist", dist)
+        reward = -dist
 
         # Penalize on collision with shelf
         reward -= self.num_contacts_with_shelf * 0.1 + self.num_contacts_with_obj * 0.5
@@ -198,7 +181,6 @@ class WamFindObjEnv(robot_env.RobotEnv):
         self.sim.set_state(self.initial_state)
         self.sim.data.qpos[7:10] = site_pos
         self.sim.forward()
-        print("object0", np.around(self.sim.data.get_body_xpos('object0'),1))
 
         return True
 
@@ -206,17 +188,21 @@ if __name__ == "__main__":
     env = WamFindObjEnv()
 
     o = env.reset()
-
+    t = 0
     while True:
+        t += 1
         action = env.action_space.sample()
         # action[3] = 0
         o, r, d, info = env.step(action)
         # print("done", d)
         # print("info", info)
-        # print("rew", r)
+        print("rew", r)
+        if r == 1:
+            print(t)
+            break
 
         # if d:
         #     import IPython; IPython.embed(); import sys; sys.exit(0)
 
 
-        env.render()
+        #env.render()

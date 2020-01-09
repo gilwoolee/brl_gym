@@ -171,12 +171,18 @@ register(
 )
 
 register(
+    id='bayes-WamFindObj-v0',
+    entry_point='brl_gym.wrapper_envs:BayesWamFindObj',
+    max_episode_steps=500,
+    reward_threshold=10.0
+)
+
+register(
     id='ContinuousCartPole-v0',
     entry_point='brl_gym.envs:ContinuousCartPoleEnv',
     max_episode_steps=500,
     reward_threshold=500.0,
 )
-
 
 register(
     id='ExplicitPusher-v0',

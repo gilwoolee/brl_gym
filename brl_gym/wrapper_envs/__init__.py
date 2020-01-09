@@ -27,3 +27,4 @@ from brl_gym.wrapper_envs.wrapper_maze_continuous import BayesMazeContinuousEnv,
 # from gym.classic_control.cartpole import CartPoleEnv as ExplicitBayesCartPoleEnv
 
 from brl_gym.wrapper_envs.wrapper_lightdark import BayesLightDark, MLELightDark
+from brl_gym.wrapper_envs.mujoco.wrapper_continuous_cartpole importg BayesContinuousCartPoleEnv

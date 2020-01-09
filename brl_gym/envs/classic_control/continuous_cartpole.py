@@ -78,7 +78,7 @@ class ContinuousCartPoleEnv(gym.Env):
         'video.frames_per_second' : 50
     }
 
-    def __init__(self, ctrl_noise_scale=5.0, random_param=True):
+    def __init__(self, ctrl_noise_scale=3.0, random_param=True):
         """
         ctrl_noise_scale: Normal(0, scale) is added to action and multiplied by 10
         """
@@ -326,7 +326,7 @@ class LQRControlCartPole:
         theta = pi - theta
         theta_dot = -theta_dot
 
-        H = self.H(theta)
+        invH = np.linalg.inv(self.H(theta))
         C = self.C(theta, theta_dot)
         G = self.G(theta)
         B = self.B
@@ -336,15 +336,14 @@ class LQRControlCartPole:
 
         A = np.concatenate([
            np.hstack([np.zeros((2,2)), np.eye(2)]),
-           np.hstack([-np.dot(np.linalg.inv(H), dGdq), -np.dot(np.linalg.inv(H), C)])])
+           np.hstack([-np.dot(invH, dGdq), -np.dot(invH, C)])])
 
-        b = np.vstack([np.zeros((2,1)), np.dot(np.linalg.inv(H), B)])
+        b = np.vstack([np.zeros((2,1)), np.dot(invH, B)])
 
         K, S, _ = lqr(A, b, Q, R)
         q = np.matrix([x, theta, x_dot, theta_dot]) - np.matrix([0, pi, 0, 0])
         q = q.T
         action = - np.dot(K, q) * 0.1
-
 
         value = -q.T * S * q
         # value = - (q.T * Q * q  + action.T * R * action)

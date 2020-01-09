@@ -30,23 +30,30 @@ class WamFindObjEnv(robot_env.RobotEnv):
         grip_velp = self.sim.data.get_site_xvelp('robot0:grip') * dt
         robot_qpos, robot_qvel = utils.robot_get_obs(self.sim)
 
-        # body_id = self.sim.model.body_name2id('object0')
-        # print("body", self.sim.model.body_pos[body_id])
-        # print("q   ", np.around(self.sim.data.qpos[7:],2))
+        obj_pos = self.sim.data.get_body_xpos("object0")
+        dist = grip_pos - obj_pos
 
-        # return robot_qpos
-        # obj_pos = self.sim.data.get_body_xpos('object0')
-        num_contacts = 0
-        for i, c in enumerate(self.sim.data.contact):
+        num_contacts_with_obj = 0
+        num_contacts_with_shelf = 0
+
+        # print(self.sim.data.con)
+        for i in range(self.sim.data.ncon):
+            c = self.sim.data.contact[i]
             name1 = self.sim.model.geom_id2name(c.geom1)
             name2 = self.sim.model.geom_id2name(c.geom2)
-            # print(i, name1, name2)
             if name1 is None or name2 is None:
                 # print(i, name1, name2)
                 continue
-            if 'object0' in name2 or 'object0' in name1:
-                # print(i, name1, name2)
-                num_contacts += 1
+            if ('object0' in name2 or 'object0' in name1) and ('finger' in name1 or 'finger' in name2 or 'hand' in name1 or 'hand' in name2):
+                num_contacts_with_obj += 1
+            if 'shelf' in name2 or 'shelf' in name1 and ('finger' in name1 or 'finger' in name2 or 'hand' in name1 or 'hand' in name2):
+                num_contacts_with_shelf += 1
+
+        self.num_contacts_with_shelf = num_contacts_with_shelf
+        self.num_contacts_with_obj = num_contacts_with_obj
+
+        obs = np.concatenate([grip_pos, obj_pos, dist, [num_contacts_with_shelf], [num_contacts_with_obj], self.sim.data.qpos])
+
         # print("num c", num_contacts)
         return robot_qpos
         # force = self.sim.data.sensordata[0] # Normal force from table
@@ -61,9 +68,6 @@ class WamFindObjEnv(robot_env.RobotEnv):
         self.obj_pos = obj_pos
         self.object_in_contact = object_in_contact
 
-        # print(np.around(self.joint_effort,1))
-        # print("grip", grip_pos)
-        return obs
 
     # def reset(self):
     #     print("----- reset ------")
@@ -91,13 +95,6 @@ class WamFindObjEnv(robot_env.RobotEnv):
     #     return obs
 
     def _terminate(self):
-        # if not self.object_in_contact and not self.limit_satisfied():
-        #     print(self.mass, "BAD limit", np.around(self.joint_effort,1))
-        #     return True
-        # if self.obj_pos[2] > LIFT_HEIGHT:
-        #     print(self.mass, 'GOOD height')
-        #     return True
-        # else:
         return False
 
     def _viewer_setup(self):
@@ -148,7 +145,6 @@ class WamFindObjEnv(robot_env.RobotEnv):
 
     def _is_success(self):
         return False
-        # return self.limit_satisfied() and self.obj_pos[2] > LIFT_HEIGHT
 
     def _set_action(self, action):
         # return
@@ -162,53 +158,17 @@ class WamFindObjEnv(robot_env.RobotEnv):
         rot = np.array([1,0,0,0], dtype=np.float32)
         action = np.concatenate([pos_ctrl, rot])
         utils.mocap_set_action(self.sim, action)
-        # Current hand pose
-
-
-        # self.sim.data.qpos[:7] = np.array([5.65, -1.76, -0.26,  1.96, -1.15 , 0.87, -1.43])
-
-        # site_poses = [self.sim.data.get_site_xpos('bookcase:pos{}'.format(x)) for x in range(4)]
-
-        # utils.mocap_set_action(self.sim, np.array([0.3,-0.2,0,1,0,0,0]))
-
-        return
-        # obj_pos = self.sim.data.get_body_xpos('robot0:grip')
-        # obj_quat = self.sim.data.get_body_xquat('robot0:grip')
-
-        # action = np.clip(action, self.action_space.low, self.action_space.high)
-        # action, lift = action[:3], action[3]
-        # action = action.copy()
-
-        # rot_ctrl = quaternions.axangle2quat([1, 0, .0], self.angle)
-
-        # if not self.object_in_contact:
-        #     # Once lifted you can only lift or hold
-        #     if lift <=0:
-        #         pos_ctrl = np.zeros(3)
-        #         action = np.concatenate([pos_ctrl, rot_ctrl])
-        #     else:
-        #         pos_ctrl = np.array([0,0,0.01])
-        #         action = np.concatenate([pos_ctrl, rot_ctrl])
-        # else:
-        #     pos_ctrl, rot_ctrl = action[:2], action[2]
-        #     pos_ctrl *= 0.05  # limit maximum change in position
-        #     rot_ctrl *= 0.05   # limit maximum change in rotation
-
-        #     pos_ctrl = np.hstack([pos_ctrl, [-0.001]])
-        #     self.angle += rot_ctrl
-        #     rot_ctrl = quaternions.axangle2quat([1, 0, .0], self.angle)
-        #     action = np.concatenate([pos_ctrl, rot_ctrl])
-
-        # # print("action", action)
-        # utils.mocap_set_action(self.sim, action)
 
     def compute_reward(self):
+        obj_pos = self.sim.data.get_body_xpos("object0")
+        hand_pos = self.sim.data.get_body_xpos('robot0:grip')
+
         # Reward if distance to the target is small (the item is within the hand)
-        dist = self.hand_pos - self.obj_pos
+        dist = hand_pos - obj_pos
         reward = -np.linalg.norm(dist)
 
         # Penalize on collision with shelf
-        reward -= self.num_shelf_wam_collision * 0.1
+        reward -= self.num_contacts_with_shelf * 0.1 + self.num_contacts_with_obj * 0.5
 
         return reward
 
@@ -222,15 +182,10 @@ class WamFindObjEnv(robot_env.RobotEnv):
         xy = np.random.normal(size=2)*np.array([0.1, 0.2])
         xy = np.clip(xy, np.array([-0.06, -0.2]), np.array([0.13, 0.2]))
 
-        # xy = np.array([0.15, -0.2])
-        # print(xy)
-
-        # print("body pos", self.sim.model.body_pos[body_id])
         site_pos[:2] += xy
         site_pos[-1] -= 0.095
 
         # self.sim.model.body_pos[body_id] = site_pos
-        print("site pos", np.around(site_pos,2))
         # print("body pos", self.sim.model.body_pos[body_id])
         self.sim.data.qpos[7:10] = site_pos
 

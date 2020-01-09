@@ -121,23 +121,17 @@ class WamFindObjEnv(robot_env.RobotEnv):
         self.sim.forward()
 
     def _env_setup(self, initial_qpos):
-        print("-------------------- ENV SETUP -------------------------")
-        # self.sim.forward()
-        self.angle = -np.pi/4.0 #+ np.clip(np.random.normal(), -0.3, 0.3)
+        self.angle = -np.pi/4.0 + np.clip(np.random.normal(), -0.3, 0.3)
 
         body_id = self.sim.model.body_name2id('object0')
 
-        # self.sim.model.body_pos[body_id] = np.array([0.2, -0.2, 0.4])
         self.sim.data.qpos[7:10] = np.array([0.2, -0.2, 0.4])
         self.sim.data.qpos[:7] = np.array([5.65, -1.76, -0.26,  1.96, -1.15 , 0.87, -1.43])
         utils.reset_mocap_welds(self.sim)
 
         # Move end effector into position.
         target_xy = (np.random.uniform(size=2) - 0.5)*0.5
-        # gripper_target = np.array([target_xy[0], target_xy[1] - 0.4, -0.02]) + self.sim.data.get_site_xpos('robot0:grip')
-        # gripper_target = np.array([target_xy[0], target_xy[1], -0.02]) + self.sim.data.get_site_xpos('robot0:grip')
         gripper_target = self.sim.data.get_site_xpos('robot0:grip').copy()
-        # gripper_rotation = self.sim.data.get_body_xquat('robot0:grip').copy()
         gripper_rotation = np.array([1., 0., 1., 0.])
 
         for _ in range(100):
@@ -209,35 +203,22 @@ class WamFindObjEnv(robot_env.RobotEnv):
         # utils.mocap_set_action(self.sim, action)
 
     def compute_reward(self):
-        return 0
-        # ctrl = np.linalg.norm(self.ctrl_force / JOINT_EFFORT_LIMITS)**2
+        # Reward if distance to the target is small (the item is within the hand)
+        dist = self.hand_pos - self.obj_pos
+        reward = -np.linalg.norm(dist)
 
-        # if self.object_in_contact:
-        #     return 0.01
+        # Penalize on collision with shelf
+        reward -= self.num_shelf_wam_collision * 0.1
 
-        # if not self.limit_satisfied():
-        #     return -ctrl * 50
-
-        # height = self.obj_pos[2] - 0.11
-
-        # if self.obj_pos[2] >= LIFT_HEIGHT:
-        #     # print("good", 1.0 - 0.1*ctrl)
-        #     return 0.1 + 10 - 0.1*ctrl
-
-        # print("up", height - 0.1*ctrl)
-        return  0.1 + height - 0.1*ctrl
-
+        return reward
 
     def _reset_sim(self):
-        print("--------- reset sim ------ ")
-        # Randomly choose a site
+        # Randomly choose a site (shelf)
         choice = np.random.choice(2)
-        # choice = 0
-        print("choice", choice)
         site_pos = self.site_poses[choice].copy()
-        # Change the pose of the object
+
+        # Move the object to that shelf, randomizing it
         body_id = self.sim.model.body_name2id('object0')
-        # Move x/y randomly
         xy = np.random.normal(size=2)*np.array([0.1, 0.2])
         xy = np.clip(xy, np.array([-0.06, -0.2]), np.array([0.13, 0.2]))
 

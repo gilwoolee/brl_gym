@@ -10,6 +10,33 @@ from brl_gym.envs.mujoco import robot_env
 from transforms3d import quaternions
 from mujoco_py import cymj
 
+
+def mocap_set_action(sim, action):
+    """The action controls the robot using mocaps. Specifically, bodies
+    on the robot (for example the gripper wrist) is controlled with
+    mocap bodies. In this case the action is the desired difference
+    in position and orientation (quaternion), in world coordinates,
+    of the of the target body. The mocap is positioned relative to
+    the target body according to the delta, and the MuJoCo equality
+    constraint optimizer tries to center the welded body on the mocap.
+    """
+    if sim.model.nmocap > 0:
+        action, _ = np.split(action, (sim.model.nmocap * 7, ))
+        action = action.reshape(sim.model.nmocap, 7)
+
+        pos_delta = action[:, :3].ravel()
+        quat_delta = action[:, 3:].ravel()
+
+        utils.reset_mocap2body_xpos(sim)
+
+        sim.data.mocap_pos[:] = sim.data.mocap_pos + pos_delta
+
+        # upright
+        default = np.array([1,0,1,0.0])
+        default /= np.linalg.norm(default)
+        sim.data.mocap_quat[:] = default
+
+
 class WamFindObjEnv(robot_env.RobotEnv):
     def __init__(self, noise_scale=0.1):
         self.frame_skip = 50
@@ -125,8 +152,6 @@ class WamFindObjEnv(robot_env.RobotEnv):
         return False
 
     def _set_action(self, action):
-        # return
-
         """
         # Expert action: Get closer to target
         obj_pos = self.sim.data.get_body_xpos("object0")
@@ -138,10 +163,10 @@ class WamFindObjEnv(robot_env.RobotEnv):
         rot = np.array([1,0,0,0], dtype=np.float32)
         action = np.concatenate([pos_ctrl, rot])
         """
-
         rot = np.array([1,0,0,0], dtype=np.float32)
         action = np.concatenate([action*0.01, rot])
-        utils.mocap_set_action(self.sim, action)
+        mocap_set_action(self.sim, action)
+
 
     def compute_reward(self):
         obj_pos = self.sim.data.get_body_xpos("object0")
@@ -202,12 +227,12 @@ if __name__ == "__main__":
         # print("done", d)
         # print("info", info)
         print("rew", r)
-        if r == 1:
-            print(t)
-            break
+        #if r == 1:
+        #    print(t)
+        #    break
 
         # if d:
         #     import IPython; IPython.embed(); import sys; sys.exit(0)
 
 
-        #env.render()
+        env.render()

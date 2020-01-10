@@ -172,7 +172,7 @@ register(
 
 register(
     id='bayes-WamFindObj-v0',
-    entry_point='brl_gym.wrapper_envs:BayesWamFindObj',
+    entry_point='brl_gym.wrapper_envs.mujoco.wrapper_wam_find_obj:BayesWamFindObj',
     max_episode_steps=500,
     reward_threshold=10.0
 )

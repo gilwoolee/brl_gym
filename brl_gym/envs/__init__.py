@@ -4,4 +4,4 @@
 # from brl_gym.envs.rocksample import RockSample
 from brl_gym.envs.classic_control.cartpole import CartPoleEnv
 from brl_gym.envs.classic_control.continuous_cartpole import ContinuousCartPoleEnv
-from brl_gym.envs.mujoco.wam_pusher import WamEnv
+#from brl_gym.envs.mujoco.wam_pusher import WamEnv

@@ -11,20 +11,20 @@ from brl_gym.wrapper_envs.classic_control.wrapper_cartpole import BayesCartPoleE
 from brl_gym.wrapper_envs.classic_control.wrapper_continuous_cartpole import BayesContinuousCartPoleEnv, ExplicitBayesContinuousCartPoleEnv
 # from brl_gym.wrapper_envs.wrapper_pusher import ExplicitPusherEnv
 
-from brl_gym.wrapper_envs.wrapper_maze import (ExplicitBayesMazeEnv,
-											   ExplicitBayesMazeEnvNoEntropyReward,
-											   BayesMazeEntropyEnv,
+#from brl_gym.wrapper_envs.wrapper_maze import (ExplicitBayesMazeEnv,
+#											   ExplicitBayesMazeEnvNoEntropyReward,
+#											   BayesMazeEntropyEnv,
 											   # BayesMazeHiddenEntropyEnv,
-											   UPMLEMazeEnv,
-											   UPMLEMazeEnvNoEntropyReward)
-from brl_gym.wrapper_envs.wrapper_doors import (ExplicitBayesDoorsEnv,												ExplicitBayesDoorsEnvNoEntropyReward)
+#											   UPMLEMazeEnv,
+#											   UPMLEMazeEnvNoEntropyReward)
+#from brl_gym.wrapper_envs.wrapper_doors import (ExplicitBayesDoorsEnv,												ExplicitBayesDoorsEnvNoEntropyReward)
 #												UPMLEDoorsEnvNoEntropyReward,
 #												UPMLEDoorsEnv,
 #												BayesDoorsEntropyEnv)
 												# BayesDoorsHiddenEntropyEnv)
-from brl_gym.wrapper_envs.wrapper_maze_continuous import BayesMazeContinuousEnv, UPMLEMazeContEnv
+#from brl_gym.wrapper_envs.wrapper_maze_continuous import BayesMazeContinuousEnv, UPMLEMazeContEnv
 
 # from gym.classic_control.cartpole import CartPoleEnv as ExplicitBayesCartPoleEnv
 
 from brl_gym.wrapper_envs.wrapper_lightdark import BayesLightDark, MLELightDark
-from brl_gym.wrapper_envs.mujoco.wrapper_wam_find_obj import BayesWamFindObj
+#from brl_gym.wrapper_envs.mujoco.wrapper_wam_find_obj import BayesWamFindObj

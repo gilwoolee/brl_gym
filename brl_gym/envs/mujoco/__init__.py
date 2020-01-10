@@ -1,9 +1,5 @@
 from gym.envs.registration import register
 
-# ----------------------------------------
-# drl_hw1 environments
-# ----------------------------------------
-
 # register(
 #     id='mujoco_point_mass-v0',
 #     entry_point='brl_gym.envs.mujoco:PointMassEnv',
@@ -28,7 +24,7 @@ from gym.envs.registration import register
 #     max_episode_steps=500,
 # )
 
-from brl_gym.envs.mujoco.mujoco_env import MujocoEnv
+#from brl_gym.envs.mujoco.mujoco_env import MujocoEnv
 # # ^^^^^ so that user gets the correct error
 # # message if mujoco is not installed correctly
 # from brl_gym.envs.mujoco.point_mass import PointMassEnv

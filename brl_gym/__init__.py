@@ -45,7 +45,7 @@ register(
 
 register(
     id='wam-v0',
-    entry_point='brl_gym.envs:WamEnv',
+    entry_point='brl_gym.envs.mujoco.wam_env:WamEnv',
     max_episode_steps=200,
     reward_threshold=1.0,
     nondeterministic=True)

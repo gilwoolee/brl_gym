@@ -38,7 +38,7 @@ def mocap_set_action(sim, action):
 
 
 class WamFindObjEnv(robot_env.RobotEnv):
-    def __init__(self, noise_scale=0.1):
+    def __init__(self, noise_scale=0.5):
         self.frame_skip = 50
         self.noise_scale = noise_scale
 

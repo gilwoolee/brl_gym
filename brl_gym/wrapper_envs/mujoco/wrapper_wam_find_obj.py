@@ -13,6 +13,8 @@ class BayesWamFindObj(WrapperEnv):
         env = WamFindObjEnv()
         estimator = EKFWamFindObjEstimator(env.action_space)
         super(BayesWamFindObj, self).__init__(env, estimator)
+        obs_space = env.observation_space
+
         self.observation_space = Box(self.estimator.belief_low,
                                      self.estimator.belief_high, dtype=np.float32)
         self.viewer = None

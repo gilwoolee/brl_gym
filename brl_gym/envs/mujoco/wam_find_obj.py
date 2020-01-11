@@ -70,13 +70,16 @@ class WamFindObjEnv(robot_env.RobotEnv):
             name1 = self.sim.model.geom_id2name(c.geom1)
             name2 = self.sim.model.geom_id2name(c.geom2)
             if name1 is None or name2 is None:
-                # print(i, name1, name2)
                 continue
+            # print(name1, name2)
             if ('object0' in name2 or 'object0' in name1) and ('finger' in name1 or 'finger' in name2 or 'hand' in name1 or 'hand' in name2):
                 num_contacts_with_obj += 1
             if 'shelf' in name2 or 'shelf' in name1 and ('finger' in name1 or 'finger' in name2 or 'hand' in name1 or 'hand' in name2):
                 num_contacts_with_shelf += 1
-
+                # print(name1, name2)
+            if 'shelf' in name2 or 'shelf' in name1 and ('wam' in name1 or 'wam' in name2):
+                num_contacts_with_shelf += 1
+                # print(name1, name2)
         self.num_contacts_with_shelf = num_contacts_with_shelf
         self.num_contacts_with_obj = num_contacts_with_obj
 
@@ -167,7 +170,6 @@ class WamFindObjEnv(robot_env.RobotEnv):
         action = np.concatenate([action*0.01, rot])
         mocap_set_action(self.sim, action)
 
-
     def compute_reward(self):
         obj_pos = self.sim.data.get_body_xpos("object0")
         hand_pos = self.sim.data.get_body_xpos('robot0:grip')
@@ -180,8 +182,25 @@ class WamFindObjEnv(robot_env.RobotEnv):
 
         reward = -dist
 
+        # See if object is in hand
+        finger_left = self.sim.data.get_body_xpos('finger2_1')
+        finger_right = self.sim.data.get_body_xpos('finger0_1')
+
+        in_hand = (finger_left[1] <= obj_pos[1]
+                    and finger_right[1] >= obj_pos[1]
+                    and finger_left[0] <= obj_pos[0]
+                    and finger_left[1] <= obj_pos[0] + 0.05)
+        in_hand = in_hand and (finger_left[2] <= obj_pos[2] + 0.02
+                               and finger_left[2] >= obj_pos[2] - 0.02)
+        # print("in hand", in_hand)
+        # print("finger left", finger_left)
+        # print("finger right", finger_right)
+        # print("obj_pos", np.around(obj_pos,2))
+
+        if in_hand:
+            reward += 1.0
         # Penalize on collision with shelf
-        reward -= self.num_contacts_with_shelf * 0.1 + self.num_contacts_with_obj * 0.5
+        reward -= self.num_contacts_with_shelf #+ self.num_contacts_with_obj * 0.5
 
         return reward
 
@@ -192,8 +211,8 @@ class WamFindObjEnv(robot_env.RobotEnv):
 
         # Move the object to that shelf, randomizing it
         body_id = self.sim.model.body_name2id('object0')
-        xy = np.random.normal(size=2)*np.array([0.1, 0.2])
-        xy = np.clip(xy, np.array([-0.06, -0.2]), np.array([0.13, 0.2]))
+        xy = np.random.normal(size=2)*np.array([0.08, 0.2]) - np.array([0.08, 0.2])
+        xy = np.clip(xy, np.array([0.0, -0.2]), np.array([0.16, 0.2]))
 
         site_pos[:2] += xy
         site_pos[-1] -= 0.095

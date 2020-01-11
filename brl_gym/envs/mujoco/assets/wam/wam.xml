@@ -90,20 +90,20 @@
                                     <joint name="wam/j5" type="hinge" pos="0 0 0" axis="0 0 1" range="-4.76 1.24" damping="0."/>
                                     <!-- <geom rgba="0.792 0.820 0.933 1" type="mesh" mesh="wam5" contype="0" conaffinity="0" mass="0.001"/> -->
                                     <geom rgba="0 0 1 1" type="mesh" mesh="wam5" contype="0" conaffinity="0" mass="0.001"/>
-                                    <geom rgba="0 1 0.5 0" type="mesh" mesh="wam5_collision" contype="0" conaffinity="0" mass="0.001"/>
+                                    <geom rgba="0 1 0.5 0" type="mesh" mesh="wam5_collision" contype="2" conaffinity="2" mass="0.001" name="wam5_collision"/>
                                     <body name='wam_6' pos="0 0 0.3" euler="-1.5708 0 0">
                                         <joint name="wam/j6" type="hinge" pos="0 0 0" axis="0 0 1" range="-1.6 1.6" damping="0."/>
                                         <inertial pos="-0.000123 -0.024683 -0.017032" mass="0.41797364" fullinertia="0.00055516 0.00024367 0.00045358 0.00000061 -0.00000074 -0.00004590" />
                                         <!-- <geom rgba="0.792 0.820 0.933 1" type="mesh" mesh="wam6" contype="0" conaffinity="0" mass="0.001"/> -->
                                         <geom rgba="0 1 0 1" type="mesh" mesh="wam6" contype="0" conaffinity="0" mass="0.001"/>
-                                        <geom rgba="1 0 1 0" type="mesh" mesh="wam6_collision" contype="0" conaffinity="0" mass="0.001"/>
+                                        <geom rgba="1 0 1 0" type="mesh" mesh="wam6_collision" contype="1" conaffinity="1" mass="0.001" name="wam6_collision"/>
                                         <body name='wam_7' pos="0 0 0" euler="1.570796 0 0">
                                             <inertial pos="-0.000080 0.000163 0.056764" mass="0.06864753"
                                                 fullinertia="0.00003773 0.00003806 0.00007408 -0.00000019 0.00000000 0.00000000" />
                                             <joint name="wam/j7" type="hinge" pos="0 0 0" axis="0 0 1" range="-3.0 3.0" damping="0."/>
                                             <!-- <geom rgba="0.792 0.820 0.933 1" type="mesh" mesh="wam7" contype="0" conaffinity="0" mass="0.001"/> -->
                                             <geom rgba="0 1 1 1" type="mesh" mesh="wam7" contype="0" conaffinity="0" mass="0.001"/>
-                                            <geom rgba="0 0 1 0" type="mesh" mesh="wam7_collision" contype="0" conaffinity="0" mass="0.001"/>
+                                            <geom rgba="0 0 1 0" type="mesh" mesh="wam7_collision" contype="2" conaffinity="2" mass="0.001" name="wam7_collision"/>
 
                                             <!-- Barrett Hand -->
                                             <body name='barrett_hand' pos="0. 0. 0.072" euler="0. 0. 1.5708">
@@ -120,7 +120,7 @@
                                                    <body name='finger0_1' pos="0.05 0.0008 0" euler="1.5707 0 1.0">
                                                    <!-- <body name='finger0_1' pos="0.05 0.0008 0" euler="1.5707 0 1.2"> -->
                                                        <inertial pos="0.023133 0.00078642 0.00052792" mass="0.062139" fullinertia="4.8162e-006 4.3317e-005 4.4441e-005 5.7981e-007 -7.2483e-007 -2.6653e-009"/>
-                                                       <geom rgba="1 0 0 1" type="mesh" mesh="finger0_1" contype="0" conaffinity="0"/>
+                                                       <geom rgba="0 1 0 1" type="mesh" mesh="finger0_1" contype="0" conaffinity="0"/>
                                                        <geom name="finger0_1" rgba="0 0 0.5 0" type="mesh" mesh="finger0_1_collision" contype="1" conaffinity="1"/>
                                                        <body name='finger0_2' pos="0.07 0.003 0.0002" euler="0.0 0.0 0.7">
 

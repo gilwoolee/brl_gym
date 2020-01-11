@@ -8,15 +8,17 @@ class EKFWamFindObjEstimator(Estimator):
     """
 
     def __init__(self, action_space, std_range=[0.1, 2.0]):
-        self.pos_min = np.array([0, -0.7, 0.05])
-        self.pos_max = np.array([0.2, 0.1, 0.5])
+        self.goal_min = np.array([0.0, -0.2, 0.1])
+        self.goal_max = np.array([0.16, 0.2, 0.5])
+        self.hand_min = np.array([-0.3, -0.5, -0.1])
+        self.hand_max = np.array([0.3, 0.5, 0.7])
         self.init_belief = np.array([0.1, 0.3, 0.2, 0.5])
 
         # Tracks object location and std
-        self.belief_low =  np.concatenate([self.pos_min, [std_range[0]]])
-        self.belief_high = np.concatenate([self.pos_max, [std_range[1]]])
+        self.belief_low =  np.concatenate([self.goal_min - self.hand_max, [std_range[0]]])
+        self.belief_high = np.concatenate([self.goal_max - self.hand_min, [std_range[1]]])
 
-        self.param_space = Box(self.pos_min, self.pos_max, dtype='float32')
+        self.param_space = Box(self.goal_min - self.hand_max, self.goal_max - self.hand_min, dtype='float32')
         self.belief_space = Box(self.belief_low, self.belief_high, dtype='float32')
 
         self.action_space = action_space
@@ -41,7 +43,7 @@ class EKFWamFindObjEstimator(Estimator):
         grip_pos, noisy_dist, noise_std = observation[:3], observation[3:6], observation[-1]
         noisy_observed_obj_pos = grip_pos + noisy_dist
 
-        prev_obj_pos, prev_std = self.belief[:self.pos_min.shape[0]], self.belief[-1]
+        prev_obj_pos, prev_std = self.belief[:self.goal_min.shape[0]], self.belief[-1]
 
         noise_std = observation[-1]
 
@@ -56,6 +58,7 @@ class EKFWamFindObjEstimator(Estimator):
         x_updated = obj_predicted + kalman_gain * y
         cov_updated = (1 - kalman_gain) * std_predicted**2
 
+        x_updated = np.clip(x_updated, self.goal_min, self.goal_max)
         self.belief = np.concatenate([x_updated, [np.sqrt(cov_updated)]])
         return self.get_belief_for_dist_to_obj(self.belief, grip_pos)
 

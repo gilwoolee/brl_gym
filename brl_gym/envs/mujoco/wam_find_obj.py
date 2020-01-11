@@ -122,7 +122,7 @@ class WamFindObjEnv(robot_env.RobotEnv):
 
         body_id = self.sim.model.body_name2id('object0')
 
-        self.sim.data.qpos[7:10] = np.array([0.2, -0.2, 0.4])
+        # self.sim.data.qpos[7:10] = np.array([0.2, -0.2, 0.4])
         self.sim.data.qpos[:7] = np.array([5.65, -1.76, -0.26,  1.96, -1.15 , 0.87, -1.43])
         utils.reset_mocap_welds(self.sim)
 
@@ -137,7 +137,6 @@ class WamFindObjEnv(robot_env.RobotEnv):
             self.sim.step()
 
         utils.reset_mocap2body_xpos(self.sim)
-        obj_quat = self.sim.data.get_body_xquat('robot0:grip')
 
         self.site_poses = [self.sim.data.get_site_xpos('bookcase:pos{}'.format(x)) for x in range(2)]
         self.initial_qpos = self.sim.data.qpos.copy()
@@ -190,8 +189,8 @@ class WamFindObjEnv(robot_env.RobotEnv):
                     and finger_right[1] >= obj_pos[1]
                     and finger_left[0] <= obj_pos[0]
                     and finger_left[1] <= obj_pos[0] + 0.05)
-        in_hand = in_hand and (finger_left[2] <= obj_pos[2] + 0.02
-                               and finger_left[2] >= obj_pos[2] - 0.02)
+        in_hand = in_hand and (finger_left[2] <= obj_pos[2] + 0.04
+                               and finger_left[2] >= obj_pos[2])
         # print("in hand", in_hand)
         # print("finger left", finger_left)
         # print("finger right", finger_right)
@@ -200,7 +199,7 @@ class WamFindObjEnv(robot_env.RobotEnv):
         if in_hand:
             reward += 1.0
         # Penalize on collision with shelf
-        reward -= self.num_contacts_with_shelf #+ self.num_contacts_with_obj * 0.5
+        reward -= self.num_contacts_with_shelf + self.num_contacts_with_obj
 
         return reward
 
@@ -217,10 +216,6 @@ class WamFindObjEnv(robot_env.RobotEnv):
         site_pos[:2] += xy
         site_pos[-1] -= 0.095
 
-        # self.sim.model.body_pos[body_id] = site_pos
-        # print("body pos", self.sim.model.body_pos[body_id])
-        self.sim.data.qpos[7:10] = site_pos
-
 
     #     """Resets a simulation and indicates whether or not it was successful.
     #     If a reset was unsuccessful (e.g. if a randomized state caused an error in the
@@ -228,7 +223,7 @@ class WamFindObjEnv(robot_env.RobotEnv):
     #     In such a case, this method will be called again to attempt a the reset again.
     #     """
         self.sim.set_state(self.initial_state)
-        self.sim.data.qpos[7:10] = site_pos
+        self.sim.model.body_pos[body_id] = site_pos
         self.sim.forward()
 
         return True

@@ -15,6 +15,10 @@ def get_expert(env_name, num_env, use_mle, **kwargs):
         from brl_gym.experts.doors.expert import DoorsExpert
         return DoorsExpert(mle=use_mle)
 
+    elif 'LightDarkHard'.lower() in env_name.lower():
+        from brl_gym.experts.lightdarkhard.expert import LightDarkHardExpert
+        return LightDarkHardExpert()
+
     elif 'LightDark'.lower() in env_name.lower():
         from brl_gym.experts.lightdark.expert import LightDarkExpert
         return LightDarkExpert()

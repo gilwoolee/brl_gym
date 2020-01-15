@@ -24,12 +24,12 @@ class EKFLightDarkHardEstimator(Estimator):
         self.belief = self.init_belief.copy()
 
     def get_belief_for_dist_to_goal(self, belief, goal):
-        dist_to_goal = belief[:2] - goal
+        dist_to_goal = goal - belief[:2]
         belief = np.concatenate([dist_to_goal, belief[-1:]])
         return belief
 
     def get_belief(self):
-        return self.belief.copy()
+        return self.get_belief_for_dist_to_goal(self.belief, self.goal)
 
     def estimate(self, action, observation, **kwargs):
         if action is None:
@@ -37,17 +37,19 @@ class EKFLightDarkHardEstimator(Estimator):
             action = np.array([0,0])
 
         x, cov = self.belief[:2], self.belief[-1]
-        goal = self.belief[2:4]
-        self.goal = goal
+        pose = self.belief[2:4]
         noise_std = observation[-1]
-        if noise_std < 0:
-            # This happens when no observation is made.
-            return self.get_belief_for_dist_to_goal(self.belief, self.goal)
+        self.goal = observation[2:4]
 
-        assert(self.action_min == -0.5)
-        action = np.clip(action, self.action_min, self.action_max)
+
+        action = np.clip(action * 0.5, self.action_min, self.action_max)
         x_predicted = np.clip(x + action, self.x_min, self.x_max)
         cov_predicted = cov # zero process noise
+
+        if noise_std < 0:
+            self.belief = np.concatenate([x_predicted, [cov]])
+            # This happens when no observation is made.
+            return self.get_belief_for_dist_to_goal(self.belief, self.goal)
 
         y = observation[:2] - x_predicted
         residual_cov = cov_predicted + noise_std ** 2
@@ -57,7 +59,7 @@ class EKFLightDarkHardEstimator(Estimator):
         cov_updated = (1 - kalman_gain) * cov_predicted
 
         self.belief = np.concatenate([x_updated, [cov_updated]])
-        return self.get_belief_for_dist_to_goal(self.belief, goal)
+        return self.get_belief_for_dist_to_goal(self.belief, self.goal)
 
     def get_mle(self):
         belief = self.get_belief_for_dist_to_goal(self.belief, self.goal)
@@ -70,13 +72,11 @@ if __name__  == "__main__":
 
     print ("initial belief", estimator.reset())
     action = np.array([0.5,0.0])
-    for _ in range(10):
+    for _ in range(50):
         print ("=======================")
         obs, reward, done, info = env.step(action)
-        print (np.around(obs,1), reward, done, info)
+        print (np.around(obs, 2))
         belief = estimator.estimate(action, obs, **info)
-        print ("env.x", env.x, 5.0 - env.x[0])
-        print ("belief", np.around(belief, 2))
-        print ("true dist-to-goal", env.x - env.goal)
-
+        print ("belief", np.around(belief,2))
+        print ("true dist-to-goal", np.around(env.goal - env.x,2))
 

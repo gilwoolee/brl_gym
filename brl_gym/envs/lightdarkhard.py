@@ -86,16 +86,17 @@ class LightDarkHard(gym.Env, utils.EzPickle):
 
     def _get_noise_std(self, x):
         noise_std = np.sqrt(((5 - x[0])**2) / 4.0) + 1e-6 # Originally division by 2.0
+        noise_std = 0.01
         return noise_std
 
     def _get_obs(self, x):
-        dist_to_light = np.abs(5.0 - x[0])
-        if np.abs(5 - x[0]) <= 0.5:
+        dist_to_light = 5.0 - x[0]
+        if np.abs(dist_to_light) <= 0.5:
             noise_std = self._get_noise_std(x)
             assert noise_std > 0, x
             noise = self.np_random.normal(0, noise_std, 2)
             obs = np.clip(x + noise, self.pos_min, self.pos_max)
-            return np.concatenate([obs, self.goal, obs - self.goal, [dist_to_light], [noise_std]])
+            return np.concatenate([obs, self.goal, self.goal - obs, [dist_to_light], [noise_std]])
         else:
             return np.concatenate([np.array([0,0]), self.goal, np.array([0,0]), [dist_to_light], [-1]])
 

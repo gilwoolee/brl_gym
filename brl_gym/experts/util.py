@@ -17,7 +17,7 @@ def get_expert(env_name, num_env, use_mle, **kwargs):
 
     elif 'LightDark'.lower() in env_name.lower():
         from brl_gym.experts.lightdark.expert import LightDarkExpert
-        return LightDarKExpert()
+        return LightDarkExpert()
 
     elif 'ContinuousCartPole'.lower() in env_name.lower():
         from brl_gym.experts.classic_control.continuous_cartpole_expert import ContinuousCartPoleExpert

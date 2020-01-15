@@ -79,6 +79,14 @@ register(
 )
 
 register(
+    id='bayes-lightdarkhard-v0',
+    entry_point='brl_gym.wrapper_envs:BayesLightDarkHard',
+    max_episode_steps=100,
+    reward_threshold=0.0,
+    nondeterministic=True
+)
+
+register(
     id='bayes-chain-v0',
     entry_point='brl_gym.wrapper_envs:BayesChain',
     max_episode_steps=100,

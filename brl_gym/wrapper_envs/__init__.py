@@ -27,4 +27,5 @@ from brl_gym.wrapper_envs.classic_control.wrapper_continuous_cartpole import Bay
 # from gym.classic_control.cartpole import CartPoleEnv as ExplicitBayesCartPoleEnv
 
 from brl_gym.wrapper_envs.wrapper_lightdark import BayesLightDark, MLELightDark
+from brl_gym.wrapper_envs.wrapper_lightdarkhard import BayesLightDarkHard
 #from brl_gym.wrapper_envs.mujoco.wrapper_wam_find_obj import BayesWamFindObj

@@ -23,11 +23,6 @@ class EKFLightDarkHardEstimator(Estimator):
     def reset(self):
         self.belief = self.init_belief.copy()
 
-    def get_belief_for_dist_to_goal(self, belief, goal):
-        dist_to_goal = goal - belief[:2]
-        belief = np.concatenate([dist_to_goal, belief[-1:]])
-        return belief
-
     def get_belief(self):
         return self.belief.copy()
 
@@ -39,16 +34,14 @@ class EKFLightDarkHardEstimator(Estimator):
         x, cov = self.belief[:2], self.belief[-1]
         pose = self.belief[2:4]
         noise_std = observation[-1]
-        self.goal = observation[2:4]
 
-
-        action = np.clip(action * 0.5, self.action_min, self.action_max)
+        action = np.clip(action, self.action_min, self.action_max)
         x_predicted = np.clip(x + action, self.x_min, self.x_max)
         cov_predicted = cov # zero process noise
 
         if noise_std < 0:
             # No observatrion is made, so update based on action
-            self.belief = np.concatenate([x_predicted, [cov]])
+            self.belief = np.concatenate([x_predicted, [cov_predicted]])
             return self.get_belief()
 
         y = observation[:2] - x_predicted

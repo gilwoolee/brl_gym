@@ -22,8 +22,9 @@ class LightDarkHardExpert(Expert):
         # Ignore obs. Bel has all the necessary information
         pos = bel[:, :2]
         dist_to_goal = goal - pos
-        dist_to_goal /= np.linalg.norm(dist_to_goal + 1e-3, axis=1).reshape(-1,1)
-        dist_to_goal *= 0.5
+        length = np.linalg.norm(dist_to_goal + 1e-3, axis=1)
+        norm_dist = dist_to_goal / length.reshape(-1,1)
+        dist_to_goal[length > 1.0] =  norm_dist[length > 1.0]
 
         # Straight to the MLE goal
         return dist_to_goal

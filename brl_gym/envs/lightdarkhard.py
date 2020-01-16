@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 # There is no observation unless the agent is within 0.5 unit from x=5
 #
 # Implementation of Rob Platt's https://dspace.mit.edu/handle/1721.1/62571
-# Room is [-1, -2] x [7, 4] (8 by 6)
+# Room is [-1, -8] x [7, 10] (8 by 18)
 # Zero process noise, x in R^2, u in R^2
 # f(x, u) = x + u
 # Observation is (0,0) if |x - 5| > 0.5
@@ -27,20 +27,16 @@ from matplotlib import pyplot as plt
 # Goal pose is randomly sampled from the grid.
 # Init_ropot_pose is sampled from N([2.5,0], 2)
 
-# Goal is either [-0.5, 3.5] or [-0.5, -1.5]
-GOALS = np.array([[-0.5, 3.5], [-0.5, 1.5]])
+# Goal is either [-0.5, 9.5] or [-0.5, -7.5]
+GOALS = np.array([[-0.5, 9.5], [-0.5, -7.5]])
 
 class LightDarkHard(gym.Env, utils.EzPickle):
 
     def __init__(self, init_robot_pose=None, goal_pose=None):
-        self.action_min = np.array([-1,-1]) * 0.5
-        self.action_max = np.array([1, 1]) * 0.5
-        self.pos_min = np.array([-1, -2])
-        self.pos_max = np.array([7, 4])
-        self.goal_min = np.array([0, -2])
-        self.goal_max = np.array([2, 4])
-        self.dist_min = np.array([-8, -6])
-        self.dist_max = np.array([8, 6])
+        self.action_min = np.array([-1,-1])
+        self.action_max = np.array([1, 1])
+        self.pos_min = np.array([-1, -8])
+        self.pos_max = np.array([7, 10])
         self.init_min = np.array([2, -2])
         self.init_max = np.array([4, 4])
 
@@ -99,7 +95,7 @@ class LightDarkHard(gym.Env, utils.EzPickle):
             return np.concatenate([np.array([0,0]), self.goal_idx, [dist_to_light], [-1]])
 
     def step(self, action, update=True):
-        action = np.clip(action * 0.5, self.action_min, self.action_max)
+        action = np.clip(action, self.action_min, self.action_max)
         x = self.x + action
         x = np.clip(x, self.pos_min, self.pos_max)
         cost = np.sum((x - self.goal)**2) * self.Q + np.sum(action**2) * self.R

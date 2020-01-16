@@ -52,8 +52,8 @@ class LightDarkHard(gym.Env, utils.EzPickle):
         self.action_space = Box(self.action_min, self.action_max,
             dtype=np.float32)
         self.observation_space = Box(
-                np.concatenate([self.pos_min, self.goal_min, self.dist_min, [0], [0]]),
-                np.concatenate([self.pos_max, self.goal_max, self.dist_max, [8], [self._get_noise_std([-1, 0])]]),
+                np.concatenate([self.pos_min, np.zeros(2), [0], [0]]),
+                np.concatenate([self.pos_max, np.ones(2),  [8], [5.0]]),
                 dtype=np.float32)
         self.seed()
         self.reset()
@@ -94,9 +94,9 @@ class LightDarkHard(gym.Env, utils.EzPickle):
             assert noise_std > 0, x
             noise = self.np_random.normal(0, noise_std, 2)
             obs = np.clip(x + noise, self.pos_min, self.pos_max)
-            return np.concatenate([obs, self.goal, self.goal_idx, [dist_to_light], [noise_std]])
+            return np.concatenate([obs, self.goal_idx, [dist_to_light], [noise_std]])
         else:
-            return np.concatenate([np.array([0,0]), self.goal_idx, np.array([0,0]), [dist_to_light], [-1]])
+            return np.concatenate([np.array([0,0]), self.goal_idx, [dist_to_light], [-1]])
 
     def step(self, action, update=True):
         action = np.clip(action * 0.5, self.action_min, self.action_max)

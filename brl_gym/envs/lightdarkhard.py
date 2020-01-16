@@ -115,7 +115,7 @@ class LightDarkHard(gym.Env, utils.EzPickle):
         dist_to_goal = np.linalg.norm(x - self.goal, ord=2)
         if dist_to_goal < 1e-1:
             done = True
-            cost = np.sum((x - self.goal)**2) * self.QT
+            cost = np.sum((x - self.goal)**2) * self.QT + 10.0
         else:
             done = False
 

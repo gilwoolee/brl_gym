@@ -82,8 +82,18 @@ register(
     id='bayes-lightdarkhard-v0',
     entry_point='brl_gym.wrapper_envs:BayesLightDarkHard',
     max_episode_steps=100,
-    reward_threshold=0.0,
-    nondeterministic=True
+    reward_threshold=10.0,
+    nondeterministic=True,
+    kwargs={'reward_entropy':False}
+)
+
+register(
+    id='bayes-lightdarkhard-ent-rew-v0',
+    entry_point='brl_gym.wrapper_envs:BayesLightDarkHard',
+    max_episode_steps=100,
+    reward_threshold=10.0,
+    nondeterministic=True,
+    kwargs={'reward_entropy':True}
 )
 
 register(

@@ -26,6 +26,10 @@ from matplotlib import pyplot as plt
 # since env is not aware of s, it only gives step rewards, -(x'Qx + u'Ru).
 # Goal pose is randomly sampled from the grid.
 # Init_ropot_pose is sampled from N([2.5,0], 2)
+
+# Goal is either [-0.5, 3.5] or [-0.5, -1.5]
+GOALS = np.array([[-0.5, 3.5], [-0.5, 1.5]])
+
 class LightDarkHard(gym.Env, utils.EzPickle):
 
     def __init__(self, init_robot_pose=None, goal_pose=None):
@@ -45,9 +49,6 @@ class LightDarkHard(gym.Env, utils.EzPickle):
         self.Q = 0.5
         self.QT = 5000
 
-        self.init_x = None
-        self.init_goal = None
-
         self.action_space = Box(self.action_min, self.action_max,
             dtype=np.float32)
         self.observation_space = Box(
@@ -63,18 +64,15 @@ class LightDarkHard(gym.Env, utils.EzPickle):
 
     # Randomize has no effect here
     def reset(self, randomize=False):
-        if self.init_x is not None:
-            self.x = self.init_x
-            self.goal = self.init_goal
-        else:
-            init_box = self.init_max - self.init_min
-            init_center = ( self.init_max + self.init_min ) / 2.0
-            self.x = self.np_random.uniform(low=-0.5, high=0.5, size=2)* init_box + init_center
-            self.x = np.clip(self.x, self.init_min, self.init_max)
-            goal_box = self.goal_max - self.goal_min
-            goal_center = ( self.goal_max + self.goal_min ) / 2.0
-            self.goal = self.np_random.uniform(low=-0.5, high=0.5, size=2) * goal_box + goal_center
-            self.goal = np.clip(self.goal, self.goal_min, self.goal_max)
+        goal = np.random.choice(2)
+        self.goal = GOALS[goal]
+        self.goal_idx = np.zeros(2)
+        self.goal_idx[goal] = 1.0
+
+        init_box = self.init_max - self.init_min
+        init_center = ( self.init_max + self.init_min ) / 2.0
+        self.x = self.np_random.uniform(low=-0.5, high=0.5, size=2)* init_box + init_center
+        self.x = np.clip(self.x, self.init_min, self.init_max)
         self.timestep = 0
         return self._get_obs(self.x)
 
@@ -91,14 +89,14 @@ class LightDarkHard(gym.Env, utils.EzPickle):
 
     def _get_obs(self, x):
         dist_to_light = 5.0 - x[0]
-        if np.abs(dist_to_light) <= 2.5:
+        if np.abs(dist_to_light) <= 0.5:
             noise_std = self._get_noise_std(x)
             assert noise_std > 0, x
             noise = self.np_random.normal(0, noise_std, 2)
             obs = np.clip(x + noise, self.pos_min, self.pos_max)
-            return np.concatenate([obs, self.goal, self.goal - obs, [dist_to_light], [noise_std]])
+            return np.concatenate([obs, self.goal, self.goal_idx, [dist_to_light], [noise_std]])
         else:
-            return np.concatenate([np.array([0,0]), self.goal, np.array([0,0]), [dist_to_light], [-1]])
+            return np.concatenate([np.array([0,0]), self.goal_idx, np.array([0,0]), [dist_to_light], [-1]])
 
     def step(self, action, update=True):
         action = np.clip(action * 0.5, self.action_min, self.action_max)

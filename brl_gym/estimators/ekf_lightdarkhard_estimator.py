@@ -29,7 +29,7 @@ class EKFLightDarkHardEstimator(Estimator):
         return belief
 
     def get_belief(self):
-        return self.get_belief_for_dist_to_goal(self.belief, self.goal)
+        return self.belief.copy()
 
     def estimate(self, action, observation, **kwargs):
         if action is None:
@@ -47,9 +47,9 @@ class EKFLightDarkHardEstimator(Estimator):
         cov_predicted = cov # zero process noise
 
         if noise_std < 0:
+            # No observatrion is made, so update based on action
             self.belief = np.concatenate([x_predicted, [cov]])
-            # This happens when no observation is made.
-            return self.get_belief_for_dist_to_goal(self.belief, self.goal)
+            return self.get_belief()
 
         y = observation[:2] - x_predicted
         residual_cov = cov_predicted + noise_std ** 2
@@ -59,11 +59,7 @@ class EKFLightDarkHardEstimator(Estimator):
         cov_updated = (1 - kalman_gain) * cov_predicted
 
         self.belief = np.concatenate([x_updated, [cov_updated]])
-        return self.get_belief_for_dist_to_goal(self.belief, self.goal)
-
-    def get_mle(self):
-        belief = self.get_belief_for_dist_to_goal(self.belief, self.goal)
-        return belief[:2]
+        return self.get_belief()
 
 if __name__  == "__main__":
     from brl_gym.envs.lightdarkhard import LightDarkHard
@@ -78,5 +74,5 @@ if __name__  == "__main__":
         print (np.around(obs, 2))
         belief = estimator.estimate(action, obs, **info)
         print ("belief", np.around(belief,2))
-        print ("true dist-to-goal", np.around(env.goal - env.x,2))
+        print ("true x", np.around(env.x,2))
 

@@ -16,13 +16,13 @@ class LightDarkHardExpert(Expert):
 
         obs, bel = self._split_inputs(inputs)
         goal = obs[:, 2:4]
-        x = (goal[:, 0] == 1.0).astype(np.float)
+        x = (goal[:, 0] == 1.0).astype(np.float).reshape(-1,1)
         goal = x * GOALS[0] + (1.0 - x) * GOALS[1]
 
         # Ignore obs. Bel has all the necessary information
         pos = bel[:, :2]
         dist_to_goal = goal - pos
-        dist_to_goal /= np.linalg.norm(dist_to_goal, axis=1).reshape(-1,1)
+        dist_to_goal /= np.linalg.norm(dist_to_goal + 1e-3, axis=1).reshape(-1,1)
         dist_to_goal *= 0.5
 
         # Straight to the MLE goal

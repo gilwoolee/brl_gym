@@ -1,18 +1,20 @@
 import numpy as np
 from gym.spaces import Box
 from brl_gym.estimators.estimator import Estimator
-
+from brl_gym.envs.lightdarkhard import LightDarkHard
 class EKFLightDarkHardEstimator(Estimator):
 
-    def __init__(self, init_belief=(2, 2, 2.25), x_min=(-1, -2), x_max=(7, 4),
-            action_min=-0.5, action_max=0.5):
+    def __init__(self, init_belief=(0, 0, 4.0)):
         self.init_belief = np.array(init_belief)
-        self.x_min = np.array(x_min)
-        self.x_max = np.array(x_max)
-        self.action_min = action_min
-        self.action_max = action_max
+        env = LightDarkHard()
+        self.x_min = env.pos_min
+        self.x_max = env.pos_max
+
+        self.action_min = env.action_space.low
+        self.action_max = env.action_space.high
+
         self.belief_low =  np.concatenate([self.x_min, [0]])
-        self.belief_high = np.concatenate([self.x_max, [5]])
+        self.belief_high = np.concatenate([self.x_max, [4.0]])
 
         self.param_low = self.x_min
         self.param_high = self.x_max
@@ -22,6 +24,7 @@ class EKFLightDarkHardEstimator(Estimator):
 
     def reset(self):
         self.belief = self.init_belief.copy()
+        return self.get_belief()
 
     def get_belief(self):
         return self.belief.copy()
@@ -31,17 +34,15 @@ class EKFLightDarkHardEstimator(Estimator):
             self.reset()
             action = np.array([0,0])
 
-        x, cov = self.belief[:2], self.belief[-1]
-        pose = self.belief[2:4]
+        x, cov = self.belief[:2], self.belief[-1] ** 2
         noise_std = observation[-1]
-
         action = np.clip(action, self.action_min, self.action_max)
         x_predicted = np.clip(x + action, self.x_min, self.x_max)
         cov_predicted = cov # zero process noise
 
         if noise_std < 0:
             # No observatrion is made, so update based on action
-            self.belief = np.concatenate([x_predicted, [cov_predicted]])
+            self.belief = np.concatenate([x_predicted, self.belief[-1:]])
             return self.get_belief()
 
         y = observation[:2] - x_predicted
@@ -50,8 +51,7 @@ class EKFLightDarkHardEstimator(Estimator):
 
         x_updated = x_predicted + kalman_gain * y
         cov_updated = (1 - kalman_gain) * cov_predicted
-
-        self.belief = np.concatenate([x_updated, [cov_updated]])
+        self.belief = np.concatenate([x_updated, [np.sqrt(cov_updated)]])
         return self.get_belief()
 
 if __name__  == "__main__":
@@ -64,7 +64,7 @@ if __name__  == "__main__":
     for _ in range(50):
         print ("=======================")
         obs, reward, done, info = env.step(action)
-        print (np.around(obs, 2))
+        print ("obs   ", np.around(obs, 2))
         belief = estimator.estimate(action, obs, **info)
         print ("belief", np.around(belief,2))
         print ("true x", np.around(env.x,2))

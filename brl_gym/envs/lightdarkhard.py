@@ -39,7 +39,7 @@ class LightDarkHard(gym.Env, utils.EzPickle):
         self.pos_max = np.array([10, 10])
         self.init_min = np.array([-2, -2])
         self.init_max = np.array([2, 2])
-        self.max_dist_to_light = 4.0
+        self.max_dist_to_light = 10.0
         # cost terms
         self.R = 0.01
         self.Q = 0.01
@@ -47,8 +47,8 @@ class LightDarkHard(gym.Env, utils.EzPickle):
         self.action_space = Box(self.action_min, self.action_max,
             dtype=np.float32)
         self.observation_space = Box(
-                np.concatenate([self.pos_min, np.zeros(2), [0], [0]]),
-                np.concatenate([self.pos_max, np.ones(2),  [20], [5.0]]),
+                np.concatenate([self.pos_min, np.zeros(2), [0], [-1]]),
+                np.concatenate([self.pos_max, np.ones(2),  [20], [self.max_dist_to_light]]),
                 dtype=np.float32)
         self.seed()
         self.reset()
@@ -78,7 +78,7 @@ class LightDarkHard(gym.Env, utils.EzPickle):
         return self.reset()
 
     def _get_noise_std(self, x):
-        noise_std = np.sqrt(((9.0 - x[0])**2) / 4.0) + 1e-6 # Originally division by 2.0
+        noise_std = np.abs(9.0 - x[0]) + 1e-6 # Originally division by 2.0
         #noise_std = 0.01
         return noise_std
 
@@ -106,9 +106,15 @@ class LightDarkHard(gym.Env, utils.EzPickle):
             self.x = x
 
         dist_to_goal = np.linalg.norm(x - self.goal, ord=2)
-        if dist_to_goal < 1e-1:
+        dist_to_others = np.linalg.norm(x - GOALS, axis=1)
+        dist_to_others[np.argmax(self.goal_idx)] = 100.0
+
+        if dist_to_goal < 0.5:
             done = True
             cost = -100.0
+        elif np.any(dist_to_others < 0.5):
+            done = True
+            cost = 100.0
         else:
             done = False
 
@@ -190,7 +196,7 @@ class LightDarkHard(gym.Env, utils.EzPickle):
 
 if __name__ == "__main__":
 
-    env = LightDark()
+    env = LightDarkHard()
 
     pos_history = []
     for i in range(5):

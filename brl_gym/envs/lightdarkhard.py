@@ -114,7 +114,7 @@ class LightDarkHard(gym.Env, utils.EzPickle):
             cost = -100.0
         elif np.any(dist_to_others < 0.5):
             done = True
-            cost = 100.0
+            cost = 1000.0
         else:
             done = False
 

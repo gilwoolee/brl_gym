@@ -14,7 +14,7 @@ class EKFLightDarkHardEstimator(Estimator):
         self.action_max = env.action_space.high
 
         self.belief_low =  np.concatenate([self.x_min, [0]])
-        self.belief_high = np.concatenate([self.x_max, [4.0]])
+        self.belief_high = np.concatenate([self.x_max, [10.0]])
 
         self.param_low = self.x_min
         self.param_high = self.x_max
@@ -40,7 +40,7 @@ class EKFLightDarkHardEstimator(Estimator):
         x_predicted = np.clip(x + action, self.x_min, self.x_max)
         cov_predicted = cov # zero process noise
 
-        if noise_std < 0:
+        if noise_std == 20.0:
             # No observatrion is made, so update based on action
             self.belief = np.concatenate([x_predicted, self.belief[-1:]])
             return self.get_belief()

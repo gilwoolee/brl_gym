@@ -1,6 +1,5 @@
 from brl_gym.experts.expert import Expert
 from brl_gym.wrapper_envs.wrapper_lightdarkhard import BayesLightDarkHard
-from brl_gym.envs.lightdarkhard import GOALS
 import numpy as np
 
 class LightDarkHardExpert(Expert):
@@ -16,15 +15,14 @@ class LightDarkHardExpert(Expert):
 
         obs, bel = self._split_inputs(inputs)
         goal = obs[:, 2:4]
-        x = (goal[:, 0] == 1.0).astype(np.float).reshape(-1,1)
-        goal = x * GOALS[0] + (1.0 - x) * GOALS[1]
 
         # Ignore obs. Bel has all the necessary information
         pos = bel[:, :2]
         dist_to_goal = goal - pos
         length = np.linalg.norm(dist_to_goal + 1e-3, axis=1)
         norm_dist = dist_to_goal / length.reshape(-1,1)
-        dist_to_goal[length > 1.0] =  norm_dist[length > 1.0]
+
+        dist_to_goal[length > 1.0] =  norm_dist[length > 1.0] * 2.0
 
         # Straight to the MLE goal
         return dist_to_goal
@@ -37,14 +35,14 @@ if __name__ == "__main__":
     env = BayesLightDarkHard()
     expert = LightDarkHardExpert()
     obs = env.reset()
-    for _ in range(100):
+    for _ in range(50):
         action = expert.action(obs)
-        print("obs", np.around(obs,2))
-        print("action", action)
-        if obs[-1] < 0.01:
+        if True:#obs[-1] < 0.01:
             print('------------------')
             obs, r, d, info = env.step(action[0])
-            print(r)
+            print("obs", np.around(obs,2))
+            print("action", action)
+            print("x", env.env.x)
         else:
             obs, r, d, info = env.step(env.action_space.sample())
 

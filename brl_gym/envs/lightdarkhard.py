@@ -28,7 +28,8 @@ from matplotlib import pyplot as plt
 # Init_ropot_pose is sampled from N([2.5,0], 2)
 
 # Goal is either [-0.5, 9.5] or [-0.5, -7.5]
-GOALS = np.array([[-9.5, 9.5], [-9.5, -9.5]])
+# GOALS = np.array([[-9.5, 0.5], [-9.5, -0.5]])
+light = np.array([0.0, 9.0])
 
 class LightDarkHard(gym.Env, utils.EzPickle):
 
@@ -39,16 +40,16 @@ class LightDarkHard(gym.Env, utils.EzPickle):
         self.pos_max = np.array([10, 10])
         self.init_min = np.array([-2, -2])
         self.init_max = np.array([2, 2])
-        self.max_dist_to_light = 10.0
+        self.max_dist_to_light = 20.0
         # cost terms
-        self.R = 0.01
-        self.Q = 0.01
+        self.R = 0.5
+        self.Q = 0.5
 
         self.action_space = Box(self.action_min, self.action_max,
             dtype=np.float32)
         self.observation_space = Box(
-                np.concatenate([self.pos_min, np.zeros(2), [0], [-1]]),
-                np.concatenate([self.pos_max, np.ones(2),  [20], [self.max_dist_to_light]]),
+                np.concatenate([self.pos_min, np.array([-10,-10]), [-1], [-1]]),
+                np.concatenate([self.pos_max, np.array([-8, 10]),  [20], [20.0]]),
                 dtype=np.float32)
         self.seed()
         self.reset()
@@ -59,11 +60,8 @@ class LightDarkHard(gym.Env, utils.EzPickle):
 
     # Randomize has no effect here
     def reset(self, randomize=False):
-        goal = np.random.choice(2)
-        self.goal = GOALS[goal]
-        self.goal_idx = np.zeros(2)
-        self.goal_idx[goal] = 1.0
-
+        self.goal = self.np_random.uniform(low=-0.5, high=0.5, size=2) \
+                    * np.array([2.0, 10.0]) + np.array([-9.0, 0.0])
         init_box = self.init_max - self.init_min
         init_center = ( self.init_max + self.init_min ) / 2.0
         self.x = self.np_random.uniform(low=-0.5, high=0.5, size=2)* init_box + init_center
@@ -78,47 +76,50 @@ class LightDarkHard(gym.Env, utils.EzPickle):
         return self.reset()
 
     def _get_noise_std(self, x):
-        noise_std = np.abs(9.0 - x[0]) + 1e-6 # Originally division by 2.0
+        dist_to_light = self._get_dist_to_light(x)
+
+        noise_std = 0.5*dist_to_light + 1e-6 # Originally division by 2.0
         #noise_std = 0.01
-        return noise_std
+        if np.abs(dist_to_light) <= self.max_dist_to_light:
+            return noise_std
+        else:
+            return self.max_dist_to_light
+
+    def _get_dist_to_light(self, x):
+        return np.abs(light[1] - x[1])
 
     def _get_obs(self, x):
-        dist_to_light = 9.0 - x[0]
+        dist_to_light = self._get_dist_to_light(x)
         if np.abs(dist_to_light) <= self.max_dist_to_light:
             noise_std = self._get_noise_std(x)
             assert noise_std > 0, x
             noise = self.np_random.normal(0, noise_std, 2)
             obs = np.clip(x + noise, self.pos_min, self.pos_max)
-            return np.concatenate([obs, self.goal_idx, [dist_to_light], [noise_std]])
+            return np.concatenate([obs, self.goal, [dist_to_light], [noise_std]])
         else:
-            return np.concatenate([np.array([0,0]), self.goal_idx, [dist_to_light], [-1]])
+            return np.concatenate([np.array([0,0]), self.goal, [dist_to_light], [20.0]])
 
     def step(self, action, update=True):
         action = np.clip(action, self.action_min, self.action_max)
-        x = self.x + action
+        x = self.x + action * 2.0
         x = np.clip(x, self.pos_min, self.pos_max)
         cost = 0.5*np.sum((x - self.goal)**2) * self.Q + 0.5*np.sum(action**2) * self.R
+        cost *= 0.5
 
         obs = self._get_obs(x)
 
-        if update:
-            self.timestep += 1
-            self.x = x
+        self.timestep += 1
+        self.x = x
 
         dist_to_goal = np.linalg.norm(x - self.goal, ord=2)
-        dist_to_others = np.linalg.norm(x - GOALS, axis=1)
-        dist_to_others[np.argmax(self.goal_idx)] = 100.0
 
         if dist_to_goal < 0.5:
             done = True
             cost = -100.0
-        elif np.any(dist_to_others < 0.5):
-            done = True
-            cost = 1000.0
         else:
             done = False
 
-        return obs, -cost, done, {}
+        return obs, -cost, done, dict(noise=self._get_noise_std(x))
 
 
     def render(self, mode='human'):
@@ -176,6 +177,7 @@ class LightDarkHard(gym.Env, utils.EzPickle):
                 plt.add_artist(circle)
 
         plt.plot(self.goal[0], self.goal[1], marker='o', color='g', label='goal')
+        plt.plot(light[0], light[1], marker='o', color='y', label='light')
 
         plt.axis('equal')
         plt.xlim((-10, 10))

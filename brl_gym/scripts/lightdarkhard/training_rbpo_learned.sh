@@ -1,0 +1,1 @@
+OPENAI_LOGDIR=~/models/lightdarkhard/rbpo OPENAI_LOG_FORMAT=tensorboard python -m brl_baselines.run --alg=bppo2_expert_learned_weight --env=bayes-lightdarkhard-ent-rew-v0 --num_timesteps=5e8 --save_path=~/models/complete/lightdarkhard/rbpo --num_env=10 --save_interval=50  --gamma=0.99--nminibatches=10  --eval_env=bayes-lightdarkhard-v0

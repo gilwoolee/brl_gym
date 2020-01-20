@@ -20,10 +20,12 @@ class BayesLightDarkHard(BayesEnv):
     def step(self, action):
         obs, rew, done, info = super().step(action)
         cov = info["belief"][-1]
-        ent_rew = (1.0 - cov / (self.cov + 1e-3)) * 1.0
+        #ent_rew = (1.0 - cov / (self.cov + 1e-3)) * 10.0
+        ent_rew = (self.cov - cov) * 10.0
         self.cov = cov
+
         if self.reward_entropy:
-            rew = rew + ent_rew
+            rew = rew + ent_rew #+ (10.0 - info["noise"])
         info['ent-rew'] = ent_rew
         return obs, rew, done, info
 

@@ -2,14 +2,23 @@ from brl_gym.experts.expert import Expert
 from brl_gym.wrapper_envs.mujoco.wrapper_wam_find_obj import BayesWamFindObj
 import numpy as np
 
-def get_action(dists_to_target):
-    # Expert action: Get closer to target
-    pos_ctrl = dists_to_target.copy()
+def get_action(hand_pos, obj_pos, top_shelf, bottom_shelf):
+    dist = obj_pos - hand_pos
+    pos_ctrl = dist.copy()
     pos_ctrl = pos_ctrl / np.linalg.norm(pos_ctrl, axis=1).reshape(-1,1)
-    pos_ctrl *= 0.01
+
+    # Avoid colliding with shelf or can
+    can_on_top = np.logical_and(obj_pos[:,2] > top_shelf[2],
+                                hand_pos[:,2] < top_shelf[2] + 0.1)
+    pos_ctrl[can_on_top, 2] += 1
+
+    can_on_bottom = np.logical_and(obj_pos[:,2] < top_shelf[2],
+                                   hand_pos[:, 2] < bottom_shelf[2])
+    pos_ctrl[can_on_bottom, 2] += 1
+    left_of_can = np.logical_and(hand_pos[:, 1] > obj_pos[:, 1] + 0.01,
+                                 dist[:, 0] < 0.15)
+    pos_ctrl[left_of_can, 0] = 0.0
     return pos_ctrl
-    #rot = np.tile(np.array([1,0,0,0], dtype=np.float32), (dists_to_target.shape[0], 1))
-    #return np.concatenate([pos_ctrl, rot], axis=1)
 
 class WamFindObjExpert(Expert):
     def __init__(self):
@@ -23,8 +32,25 @@ class WamFindObjExpert(Expert):
             inputs = inputs.reshape(1, -1)
 
         obs, bel = self._split_inputs(inputs)
-        action = get_action(obs)
+        hand, top, bottom = obs[:, :3], obs[:, 6:9], obs[:, 9:12]
+        obj = bel[:, :3]
+
+        action = get_action(hand, obj, top[0], bottom[0])
+        action = np.concatenate([action,
+                                np.random.normal(size=action.shape[0]).reshape(-1,1)], axis=1)
         return action
 
     def __call__(self, inputs):
         return self.action(inputs)
+
+if __name__ == "__main__":
+    expert = WamFindObjExpert()
+    env = BayesWamFindObj()
+    obs = env.reset()
+
+    while True:
+        action = expert.action(obs.reshape(1, -1))[0]
+        print(action)
+        obs, _, _, _ = env.step(action)
+        env.render()
+

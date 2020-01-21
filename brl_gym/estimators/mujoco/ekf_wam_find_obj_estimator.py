@@ -8,8 +8,8 @@ class EKFWamFindObjEstimator(Estimator):
     """
 
     def __init__(self, action_space, std_range=[0.1, 2.0]):
-        self.goal_min = np.array([0.0, -0.2, 0.1])
-        self.goal_max = np.array([0.16, 0.2, 0.5])
+        self.goal_min = np.array([0.0, -0.8, 0.1])
+        self.goal_max = np.array([0.16, 0.8, 0.5])
         self.hand_min = np.array([-0.3, -0.5, -0.1])
         self.hand_max = np.array([0.3, 0.5, 0.7])
         self.init_belief = np.array([0.1, 0.3, 0.2, 0.5])
@@ -27,12 +27,6 @@ class EKFWamFindObjEstimator(Estimator):
         self.belief = self.init_belief.copy()
         return self.belief.copy()
 
-    def get_belief_for_dist_to_obj(self, belief, grip_pos):
-        # Converts obj position to dist to obj
-        dist_to_obj = belief[:3] - grip_pos
-        belief = np.concatenate([dist_to_obj, belief[-1:]])
-        return belief
-
     def get_belief(self):
         return self.belief.copy()
 
@@ -40,8 +34,7 @@ class EKFWamFindObjEstimator(Estimator):
         if action is None:
             return self.reset()
 
-        grip_pos, noisy_dist, noise_std = observation[:3], observation[3:6], observation[-1]
-        noisy_observed_obj_pos = grip_pos + noisy_dist
+        grip_pos, noisy_obj_pos, noise_std = observation[:3], observation[3:6], observation[-1]
 
         prev_obj_pos, prev_std = self.belief[:self.goal_min.shape[0]], self.belief[-1]
 
@@ -51,7 +44,7 @@ class EKFWamFindObjEstimator(Estimator):
         obj_predicted = prev_obj_pos
         std_predicted = prev_std # zero process noise
 
-        y = noisy_observed_obj_pos - obj_predicted
+        y = noisy_obj_pos - obj_predicted
         residual_cov = std_predicted**2 + noise_std ** 2
         kalman_gain = std_predicted**2 / residual_cov
 
@@ -60,23 +53,21 @@ class EKFWamFindObjEstimator(Estimator):
 
         x_updated = np.clip(x_updated, self.goal_min, self.goal_max)
         self.belief = np.concatenate([x_updated, [np.sqrt(cov_updated)]])
-        return self.get_belief_for_dist_to_obj(self.belief, grip_pos)
+        return self.belief
 
 
 if __name__  == "__main__":
     from brl_gym.envs.mujoco.wam_find_obj import WamFindObjEnv
     env = WamFindObjEnv()
     estimator = EKFWamFindObjEstimator(env.action_space)
-
+    env.reset()
     print ("initial belief", estimator.reset())
     action = np.array([1.0,1.0,1.0])
     for _ in range(100):
         print ("=======================")
         obs, reward, done, info = env.step(action)
         belief = estimator.estimate(action, obs, **info)
-        print ("belief          ", np.around(belief,1))
-        print ("true dist-to-obj", env.obj_pos - env.grip_pos)
-        print ("obj pos         ", env.obj_pos)
-        print ("belief-obj      ", np.around(estimator.belief,2))
+        print ("belief          ", np.around(belief,3))
+        print ("true obj        ", np.around(env.obj_pos,3))
 
 

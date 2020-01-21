@@ -23,9 +23,7 @@ def mocap_set_action(sim, action):
     if sim.model.nmocap > 0:
         action, _ = np.split(action, (sim.model.nmocap * 7, ))
         action = action.reshape(sim.model.nmocap, 7)
-
         pos_delta = action[:, :3].ravel()
-        quat_delta = action[:, 3:].ravel()
 
         utils.reset_mocap2body_xpos(sim)
 
@@ -41,6 +39,7 @@ class WamFindObjEnv(robot_env.RobotEnv):
     def __init__(self, noise_scale=1.0):
         self.frame_skip = 50
         self.noise_scale = noise_scale
+        self._sense = 0.0
 
         # Get asset dir
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -52,6 +51,8 @@ class WamFindObjEnv(robot_env.RobotEnv):
             initial_qpos={})
 
     def _get_obs(self):
+        sense = self._sense > 0
+
         # positions
         grip_pos = self.sim.data.get_site_xpos('robot0:grip')
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
@@ -83,10 +84,26 @@ class WamFindObjEnv(robot_env.RobotEnv):
         self.num_contacts_with_shelf = num_contacts_with_shelf
         self.num_contacts_with_obj = num_contacts_with_obj
 
-        # make dist noisy
-        dist += np.random.normal(size=3, scale=self.noise_scale)
+        # dist to top shelf
+        top_shelf = self.sim.data.get_site_xpos('top-shelf-center')
+        dist_to_top = (top_shelf - grip_pos)
 
-        obs = np.concatenate([grip_pos, dist,
+        # bottom shelf
+        bottom_shelf = self.sim.data.get_site_xpos('bottom-shelf-center')
+        dist_to_bottom = (bottom_shelf - grip_pos)
+
+        if sense:
+            self.noise_scale = np.linalg.norm(dist_to_top[0])
+        else:
+            self.noise_scale = np.linalg.norm(dist_to_top[0]) * 5.0
+
+        # make dist noisy
+        obj_pos_noisy = obj_pos + np.random.normal(size=3, scale=self.noise_scale)
+
+        obs = np.concatenate([grip_pos,
+            obj_pos_noisy,
+            top_shelf,
+            bottom_shelf,
             [num_contacts_with_shelf], [num_contacts_with_obj],
             self.sim.data.qpos,
             [self.noise_scale]])
@@ -159,14 +176,33 @@ class WamFindObjEnv(robot_env.RobotEnv):
         obj_pos = self.sim.data.get_body_xpos("object0")
         hand_pos = self.sim.data.get_body_xpos('robot0:grip')
 
+        dist = obj_pos - hand_pos
         pos_ctrl = obj_pos - hand_pos
         pos_ctrl = pos_ctrl / np.linalg.norm(pos_ctrl)
         pos_ctrl *= 0.01
+
+        # dist to top shelf
+        top_shelf = self.sim.data.get_site_xpos('top-shelf-center')
+
+        # bottom shelf
+        bottom_shelf = self.sim.data.get_site_xpos('bottom-shelf-center')
+
+        # Avoid colliding with shelf or can
+        if obj_pos[2] > top_shelf[2] and hand_pos[2] < top_shelf[2] + 0.1:
+            pos_ctrl[2] += 0.01
+        elif obj_pos[2] < top_shelf[2] and hand_pos[2] < bottom_shelf[2]:
+            pos_ctrl[2] += 0.01
+        if hand_pos[1] > obj_pos[1] + 0.01 and dist[0] < 0.15:
+            pos_ctrl[0] = 0.0
+
         rot = np.array([1,0,0,0], dtype=np.float32)
         action = np.concatenate([pos_ctrl, rot])
         """
+        self._sense = action[-1]
+        action = action[:-1]
         rot = np.array([1,0,0,0], dtype=np.float32)
-        action = np.concatenate([action*0.01, rot])
+        action = np.concatenate([action * 0.01, rot])
+
         mocap_set_action(self.sim, action)
 
     def compute_reward(self):
@@ -191,16 +227,14 @@ class WamFindObjEnv(robot_env.RobotEnv):
                     and finger_left[1] <= obj_pos[0] + 0.05)
         in_hand = in_hand and (finger_left[2] <= obj_pos[2] + 0.04
                                and finger_left[2] >= obj_pos[2])
-        # print("in hand", in_hand)
-        # print("finger left", finger_left)
-        # print("finger right", finger_right)
-        # print("obj_pos", np.around(obj_pos,2))
 
         if in_hand:
             reward += 1.0
         # Penalize on collision with shelf
         reward -= self.num_contacts_with_shelf + self.num_contacts_with_obj
 
+        if self._sense > 0.0:
+            reward -= 1.0
         return reward
 
     def _reset_sim(self):
@@ -210,7 +244,7 @@ class WamFindObjEnv(robot_env.RobotEnv):
 
         # Move the object to that shelf, randomizing it
         body_id = self.sim.model.body_name2id('object0')
-        xy = np.random.normal(size=2)*np.array([0.08, 0.2]) - np.array([0.08, 0.2])
+        xy = (np.random.uniform(size=2)-0.5)*np.array([0.16, 0.4]) + np.array([0.08, 0.0])
         xy = np.clip(xy, np.array([0.0, -0.2]), np.array([0.16, 0.2]))
 
         site_pos[:2] += xy
@@ -225,7 +259,7 @@ class WamFindObjEnv(robot_env.RobotEnv):
         self.sim.set_state(self.initial_state)
         self.sim.model.body_pos[body_id] = site_pos
         self.sim.forward()
-
+        self._sense = 0.0
         return True
 
 if __name__ == "__main__":

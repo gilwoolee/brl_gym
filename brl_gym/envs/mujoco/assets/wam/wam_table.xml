@@ -36,11 +36,12 @@
             <site name="bookcase:pos1" pos="0.375 0.1 1.25" euler="0 0 0." rgba="1 1 0 0.0" size="0.01" type="sphere"></site>
 
 
-            <geom conaffinity="11" contype="11" name="shelf_bottom_1" pos="0.38 0.2 0.75" rgba="1.0 0.5 0.5 0.8" size="0.35 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
-            <geom conaffinity="11" contype="11" name="shelf_bottom_2" pos="0.38 0.2 1.1" rgba="0.5 0.5 0.5 0.0" size="0.33 0.15 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+            <geom conaffinity="11" contype="11" name="shelf_bottom_1" pos="0.38 0.2 0.75" rgba="1.0 0.5 0.5 1" size="0.35 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
 
-            <geom conaffinity="0" contype="0" name="shelf_bottom_1_viz" pos="0.38 0.2 0.75" rgba="1.0 0.5 0.5 1.0" size="0.35 0.2 0.001" type="box"/>
-            <geom conaffinity="0" contype="0" name="shelf_bottom_2_viz" pos="0.38 0.2 1.1" rgba="1.0 0.5 0.5 1.0" size="0.33 0.15 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+            <geom conaffinity="11" contype="11" name="shelf_bottom_2" pos="0.38 0.2 1.1" rgba="0.5 0.5 0.5 1" size="0.33 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+
+            <!-- <geom conaffinity="0" contype="0" name="shelf_bottom_1_viz" pos="0.38 0.2 0.75" rgba="1.0 0.5 0.5 0.2" size="0.35 0.2 0.001" type="box"/> -->
+            <geom conaffinity="0" contype="0" name="shelf_bottom_2_viz" pos="0.38 0.2 1.1" rgba="1.0 0.5 0.5 1.0" size="0.35 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
 
             <!-- <geom conaffinity="0" contype="0" name="shelf_bottom_3" pos="0.38 0.2 1.43" rgba="0.5 0.5 0.5 0.0" size="0.35 0.2 0.1" type="plane" condim="3" friction="0.01 0.01 0.01"/> -->
 
@@ -52,11 +53,13 @@
 
             <geom conaffinity="0" contype="0" name="shelf_left_3_viz" pos="0.03 0.2 1.10" euler="0 1.5708 0" rgba="1.0 0.5 0.5 1.0" size="0.35 0.2 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
 
-            <geom conaffinity="11" contype="11" name="shelf_back" pos="0.4 0.3 0.9" euler="1.5708 0 0" rgba="0.5 0.5 0.5 0.3" size="0.32 0.13 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+            <geom conaffinity="11" contype="11" name="shelf_back" pos="0.4 0.4 0.9" euler="1.5708 0 0" rgba="0.5 0.5 0.5 0.3" size="0.32 0.13 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
 
-            <geom conaffinity="11" contype="11" name="shelf_back2" pos="0.4 0.3 1.25" euler="1.5708 0 0" rgba="0.5 0.5 0.5 0.3" size="0.32 0.13 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
+            <geom conaffinity="11" contype="11" name="shelf_back2" pos="0.4 0.4 1.25" euler="1.5708 0 0" rgba="0.5 0.5 0.5 0.3" size="0.32 0.13 0.001" type="box" condim="3" friction="0.01 0.01 0.01"/>
         </body>
 
+        <site name="top-shelf-center" pos="-0.1 -0.38 0.4" euler="0 0 0." rgba="1 1 0 0" size="0.02 0.02 0.02" type="sphere"></site>
+        <site name="bottom-shelf-center" pos="-0.1 -0.38 0.05" euler="0 0 0." rgba="1 1 0 0" size="0.02 0.02 0.02" type="sphere"></site>
 
         <body name="object0" pos="0 0 0" euler="0 0 0">
             <!-- <joint name="object0:joint" type="free" damping="0.5" limited="false"></joint> -->

@@ -81,8 +81,8 @@ register(
 register(
     id='bayes-lightdarkhard-v0',
     entry_point='brl_gym.wrapper_envs:BayesLightDarkHard',
-    max_episode_steps=100,
-    reward_threshold=10.0,
+    max_episode_steps=30,
+    reward_threshold=100.0,
     nondeterministic=True,
     kwargs={'reward_entropy':False}
 )
@@ -90,8 +90,8 @@ register(
 register(
     id='bayes-lightdarkhard-ent-rew-v0',
     entry_point='brl_gym.wrapper_envs:BayesLightDarkHard',
-    max_episode_steps=100,
-    reward_threshold=10.0,
+    max_episode_steps=30,
+    reward_threshold=100.0,
     nondeterministic=True,
     kwargs={'reward_entropy':True}
 )
@@ -191,7 +191,7 @@ register(
 register(
     id='bayes-WamFindObj-v0',
     entry_point='brl_gym.wrapper_envs.mujoco.wrapper_wam_find_obj:BayesWamFindObj',
-    max_episode_steps=500,
+    max_episode_steps=200,
     reward_threshold=10.0
 )
 

@@ -50,6 +50,12 @@ register(
     reward_threshold=1.0,
     nondeterministic=True)
 
+register(
+    id='crosswalk-v0',
+    entry_point='brl_gym.envs:CrossWalkEnv',
+    max_episode_steps=30,
+    reward_threshold=0.0,
+    nondeterministic=True)
 
 
 # [GL] BPO

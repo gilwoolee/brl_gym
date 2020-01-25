@@ -27,7 +27,7 @@ GOAL_RIGHT = np.array([[9, 0], [9, 4]])
 class CrossWalkEnv(gym.Env):
     def __init__(self, use_vision=False):
         self.action_space = spaces.Box(np.array([-1.2, -1.2]), np.array([1, 1]))
-        self.car_length = 1.0
+        self.car_length = 2.0
         self.use_vision = use_vision
 
         if not use_vision:
@@ -58,6 +58,7 @@ class CrossWalkEnv(gym.Env):
         self.pedestrian_directions = self._get_pedestrian_directions()
 
         self.fig = None
+        self.car = None
         return self.get_obs()
 
     def _get_pedestrian_angles(self):
@@ -97,13 +98,13 @@ class CrossWalkEnv(gym.Env):
         if (np.any(np.linalg.norm(self.car_front - self.pedestrians, axis=1) < 0.5) or
             np.any(np.linalg.norm(self.x - self.pedestrians, axis=1) < 0.5)):
             done = True
-            reward -= (1000*self.speed**2 + 0.5)
+            reward -= (1000*(5*self.speed)**2 + 0.5)
 
         if self.car_front[0] <= 0.0 or self.car_front[0] >= 9.0 or self.car_front[1] <= -5:
             done = True
             reward += -1000.0
         elif self.x[1] >= 4.0:
-            reward += 100
+            reward += 200
             done = True
 
         if isinstance(reward, np.ndarray):
@@ -155,9 +156,11 @@ class CrossWalkEnv(gym.Env):
         # Car
         # Pose of the end of the car
         car = self.x.copy()
-        car = Rectangle((car[0], car[1]),
-                        0.1, 1.0, angle=np.rad2deg(self.angle), color='r')
-        plt.gca().add_patch(car)
+        if self.car is not None:
+            self.car.remove()
+        self.car = Rectangle((car[0], car[1]),
+                        0.1, self.car_length, angle=np.rad2deg(self.angle), color='r')
+        plt.gca().add_patch(self.car)
 
         # pedestrians
         for i in range(len(self.pedestrians)):

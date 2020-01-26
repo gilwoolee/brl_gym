@@ -13,6 +13,9 @@ class CrossWalkExpert(Expert):
 
         super(CrossWalkExpert, self).__init__(obs_dim, bel_dim)
 
+        self.dangle = (np.linspace(-1, 1, 5) * 0.1).reshape(5,1)
+        self.accels = (np.linspace(-1.2,1.2,9) * 0.1).reshape(9,1)
+
     def action(self, inputs, infos=None):
         if len(inputs.shape) == 1:
             inputs = inputs.reshape(1, -1)
@@ -28,12 +31,11 @@ class CrossWalkExpert(Expert):
         return action * 10
 
     def _forward_simulate(self, peds, ped_dirs, cars, car_fronts, car_speeds, car_angles):
-        dangle = np.linspace(-1, 1, 5) * 0.1
-        accels = np.linspace(-1.2,1.2,9) * 0.1
+        dangle, accels = self.dangle, self.accels
 
-        angles = np.tile(car_angles, (5, 1)) + dangle.reshape(5,1)
+        angles = np.tile(car_angles, (5, 1)) + dangle
         delta = np.array([-np.sin(angles), np.cos(angles)])[None,:,:,:]
-        speeds = (np.tile(car_speeds, (9, 1)) + accels.reshape(9,1))[:,None,None,:]
+        speeds = (np.tile(car_speeds, (9, 1)) + accels)[:,None,None,:]
         delta = (delta * speeds).transpose(3,1,0,2)
 
         cost = np.zeros((peds.shape[0], 9, 5)) + np.abs(angles).transpose()[:,None,:] * 5

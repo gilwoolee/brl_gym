@@ -32,8 +32,8 @@ class CrossWalkEnv(gym.Env):
         self.num_pedestrians = 6
 
         if not use_vision:
-            self.observation_space = spaces.Box(-np.ones(30)*-10.0,
-                                                high=np.ones(30)*10.0,
+            self.observation_space = spaces.Box(-np.ones(32)*-10.0,
+                                                high=np.ones(32)*10.0,
                                                 dtype=np.float32)
         else:
             self.observation_space = spaces.Dict(dict(obs=[], img=[]))

@@ -29,6 +29,7 @@ class CrossWalkEnv(gym.Env):
         self.action_space = spaces.Box(np.array([-1.2, -1.2]), np.array([1, 1]))
         self.car_length = 2.0
         self.use_vision = use_vision
+        self.num_pedestrians = 6
 
         if not use_vision:
             self.observation_space = spaces.Box(-np.ones(30)*-10.0,
@@ -39,13 +40,13 @@ class CrossWalkEnv(gym.Env):
 
     def reset(self):
         # Hidden intention of pedestrians
-        self.goals = np.vstack([[9.0, 9, 9, 0, 0, 0], [np.random.choice(3, size=6) + 0.5]]).transpose()
+        self.goals = np.vstack([[9.0, 9, 9, 0, 0, 0], [np.random.choice(3, size=self.num_pedestrians) + 0.5]]).transpose()
 
         # Initial position of pedestrians (Each row is a pedestrian)
         self.pedestrians = np.vstack([[-0.5, -0.5, -0.5, 9.5, 9.5, 9.5],
-                                        np.random.uniform(size=6)*4.0]).transpose()
+                                        np.random.uniform(size=self.num_pedestrians)*4.0]).transpose()
         # Pedestrians have fixed speed, but can change directions
-        self.pedestrian_speeds = np.clip(np.random.normal(scale=0.3, size=self.pedestrians.shape[0]) + 0.5, 0.3, 0.6)
+        self.pedestrian_speeds = np.clip(np.random.normal(scale=0.3, size=self.pedestrians.shape[0]) + 0.4, 0.1, 0.6)
         self.pedestrian_angles = self._get_pedestrian_angles()
 
 
@@ -107,8 +108,6 @@ class CrossWalkEnv(gym.Env):
             reward += 200
             done = True
 
-        if isinstance(reward, np.ndarray):
-            import IPython; IPython.embed(); import sys; sys.exit(0)
         return self.get_obs(), reward, done, dict(
                 pedestrians=self.pedestrians,
                 pedestrian_speeds = self.pedestrian_speeds,
@@ -133,12 +132,10 @@ class CrossWalkEnv(gym.Env):
         return obs
 
     def _visualize(self, show=False, filename=None, nparray=False):
-
         if self.fig is None:
             plt.ion()
             self.fig = plt.figure()
         fig = self.fig
-
 
         # Draw boundaries
         plt.plot([0, 9], [0, 0], linewidth=1, color='k')

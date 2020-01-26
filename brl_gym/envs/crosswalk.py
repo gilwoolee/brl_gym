@@ -70,6 +70,7 @@ class CrossWalkEnv(gym.Env):
         return angles
 
     def step(self, action):
+        action = np.clip(action, self.action_space.low, self.action_space.high)
         action *= 0.1
         self.speed += action[0]
         self.angle += action[1]

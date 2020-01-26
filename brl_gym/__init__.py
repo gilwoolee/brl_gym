@@ -54,7 +54,7 @@ register(
     id='crosswalk-v0',
     entry_point='brl_gym.envs:CrossWalkEnv',
     max_episode_steps=60,
-    reward_threshold=0.0,
+    reward_threshold=200.0,
     nondeterministic=True)
 
 
@@ -655,6 +655,14 @@ register(
     max_episode_steps=500,
     reward_threshold=10,
 )
+
+register(
+    id='bayes-crosswalk-v0',
+    entry_point='brl_gym.wrapper_envs:BayesCrossWalkEnv',
+    max_episode_steps=60,
+    reward_threshold=200.0,
+    nondeterministic=True)
+
 
 # [GL] MLE
 # ---------

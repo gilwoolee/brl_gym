@@ -659,7 +659,7 @@ register(
 register(
     id='bayes-crosswalk-v0',
     entry_point='brl_gym.wrapper_envs:BayesCrossWalkEnv',
-    max_episode_steps=60,
+    max_episode_steps=100,
     reward_threshold=200.0,
     nondeterministic=True)
 

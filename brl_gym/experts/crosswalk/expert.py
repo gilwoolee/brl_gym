@@ -39,7 +39,23 @@ class CrossWalkExpert(Expert):
         delta = (delta * speeds).transpose(3,1,0,2)
 
         cost = np.zeros((peds.shape[0], 9, 5)) + np.abs(angles).transpose()[:,None,:] * 5
-        cost += -speeds.squeeze().transpose()[:,:,None] * 30
+        cost += -speeds.reshape(9, -1).transpose()[:,:,None] * 30
+
+        increments = (np.arange(15) + 1.0)[None,None,None,None]
+        delta = delta[:,:,:,:,None]*increments
+        cars = cars[:,:,:,:,None] + delta
+
+        increments = (np.arange(15) + 1.0)[None,None,None]
+        ped_dirs = ped_dirs[:,:,:,None] *increments
+        peds = peds[:,:,:,None] + ped_dirs
+
+        dists = np.linalg.norm(peds[:,:,:,None,None,:] - cars[:,None,:,:,:,:], axis=2)
+
+        car_fronts = car_fronts[:,:,:,:,None] + delta
+        front_dists = np.linalg.norm(peds[:,:,:,None,None,:] - car_fronts[:,None,:,:,:,:], axis=2)
+        cost += np.sum(np.sum(1.0/dists**2  + 1.0/front_dists**2, axis=1), axis=3)
+
+        """
         for _ in range(15):
             cars = cars + delta
             peds = peds + ped_dirs
@@ -47,6 +63,7 @@ class CrossWalkExpert(Expert):
             car_fronts = car_fronts + delta
             front_dist = np.linalg.norm(peds[:,:,:,None,None] - car_fronts[:,None,:,:,:], axis=2)
             cost += np.sum(1.0/dist**2 + 1.0/front_dist**2, axis=1)
+        """
 
         params = np.array(np.meshgrid(dangle, accels)).transpose(1,2,0)
         # Choose one with smallest cost

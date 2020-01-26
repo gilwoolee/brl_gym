@@ -58,9 +58,7 @@ class CrossWalkEnv(gym.Env):
                          self.car_length * np.array([-np.sin(self.angle), np.cos(self.angle)])
         self.pedestrian_directions = self._get_pedestrian_directions()
 
-        if self.fig is not None:
-            self.fig.close()
-        #self.fig = None
+        self.fig = None
         self.car = None
         return self.get_obs()
 

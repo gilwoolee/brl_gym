@@ -37,7 +37,7 @@ class CrossWalkEnv(gym.Env):
                                                 dtype=np.float32)
         else:
             self.observation_space = spaces.Dict(dict(obs=[], img=[]))
-
+        self.fig = None
     def reset(self):
         # Hidden intention of pedestrians
         self.goals = np.vstack([[9.0, 9, 9, 0, 0, 0], [np.random.choice(3, size=self.num_pedestrians) + 0.5]]).transpose()
@@ -58,7 +58,9 @@ class CrossWalkEnv(gym.Env):
                          self.car_length * np.array([-np.sin(self.angle), np.cos(self.angle)])
         self.pedestrian_directions = self._get_pedestrian_directions()
 
-        self.fig = None
+        if self.fig is not None:
+            self.fig.close()
+        #self.fig = None
         self.car = None
         return self.get_obs()
 
@@ -99,13 +101,13 @@ class CrossWalkEnv(gym.Env):
         if (np.any(np.linalg.norm(self.car_front - self.pedestrians, axis=1) < 0.5) or
             np.any(np.linalg.norm(self.x - self.pedestrians, axis=1) < 0.5)):
             done = True
-            reward -= (1000*(5*self.speed)**2 + 0.5)
+            reward -= (100*(2*self.speed)**2 + 0.5)
 
         if self.car_front[0] <= 0.0 or self.car_front[0] >= 9.0 or self.car_front[1] <= -5:
             done = True
             reward += -1000.0
         elif self.x[1] >= 4.0:
-            reward += 200
+            reward += 250
             done = True
 
         return self.get_obs(), reward, done, dict(
@@ -125,6 +127,7 @@ class CrossWalkEnv(gym.Env):
             self.x.ravel(),
             self.car_front.ravel(),
             (self.car_front + car_direction).ravel(),
+            [self.speed, self.angle],
             self.pedestrians.ravel(),
             (self.pedestrians + self.pedestrian_directions).ravel()])
         if self.use_vision:

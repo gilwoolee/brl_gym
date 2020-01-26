@@ -38,6 +38,7 @@ class CrossWalkEnv(gym.Env):
         else:
             self.observation_space = spaces.Dict(dict(obs=[], img=[]))
         self.fig = None
+
     def reset(self):
         # Hidden intention of pedestrians
         self.goals = np.vstack([[9.0, 9, 9, 0, 0, 0], [np.random.choice(3, size=self.num_pedestrians) + 0.5]]).transpose()
@@ -46,13 +47,13 @@ class CrossWalkEnv(gym.Env):
         self.pedestrians = np.vstack([[-0.5, -0.5, -0.5, 9.5, 9.5, 9.5],
                                         np.random.uniform(size=self.num_pedestrians)*4.0]).transpose()
         # Pedestrians have fixed speed, but can change directions
-        self.pedestrian_speeds = np.clip(np.random.normal(scale=0.3, size=self.pedestrians.shape[0]) + 0.4, 0.1, 0.6)
+        self.pedestrian_speeds = np.clip(np.random.normal(size=self.pedestrians.shape[0]) + 0.3, 0.1, 0.4)
         self.pedestrian_angles = self._get_pedestrian_angles()
 
 
         # Agent's initial position, speed, angle
         self.x = np.array([4.0,-5.0])
-        self.speed = np.clip(np.random.normal(size=1) + 0.4, 0.3, 0.6)[0]
+        self.speed = np.clip(np.random.normal(size=1) + 0.2, 0.0, 0.4)[0]
         self.angle = 0.0
         self.car_front = self.x + \
                          self.car_length * np.array([-np.sin(self.angle), np.cos(self.angle)])

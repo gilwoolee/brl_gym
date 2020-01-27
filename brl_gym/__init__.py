@@ -713,3 +713,10 @@ register(
     max_episode_steps=100,
     reward_threshold=200.0,
     nondeterministic=True)
+
+register(
+    id='mle-ContinuousCartPole-v0',
+    entry_point='brl_gym.wrapper_envs:MLEContinuousCartPoleEnv',
+    max_episode_steps=500,
+    reward_threshold=500.0,
+)

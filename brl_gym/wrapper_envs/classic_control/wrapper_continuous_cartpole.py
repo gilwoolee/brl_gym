@@ -29,37 +29,38 @@ class BayesContinuousCartPoleEnv(BayesEnv):
         obs = np.concatenate([obs, belief], axis=0)
         return obs, reward, done, info
 
-
-
-class ExplicitBayesContinuousCartPoleEnv(ExplicitBayesEnv):
+class MLEContinuousCartPoleEnv(BayesEnv):
     def __init__(self):
         self.env = ContinuousCartPoleEnv(random_param=True)
         self.estimator = BayesContinuousCartpoleEstimator()
-        super(ExplicitBayesContinuousCartPoleEnv, self).__init__(self.env, self.estimator)
-
-        self.observation_space = Dict(
-            {"obs": self.env.observation_space, "zbel": self.estimator.belief_space})
+        super(MLEContinuousCartPoleEnv, self).__init__(self.env, self.estimator)
+        self.observation_space = Box(
+                np.concatenate([self.env.observation_space.low, self.env.param_space_flat.low]),
+                np.concatenate([self.env.observation_space.high, self.env.param_space_flat.high]),
+                dtype=np.float32)
         self.internal_observation_space = self.env.observation_space
+
+    def _get_obs(self, obs):
+        params = self.estimator.get_best_params()
+        obs = np.concatenate([obs, [params['length'], params['masscart']]])
+        return obs
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-
-        # Estimate
-        bel = self.estimator.estimate(action, obs, **info)
-        info['belief'] = bel
-
-        return {'obs':obs, 'zbel':bel}, reward, done, info
+        self.estimator.estimate(action, obs, **info)
+        return self._get_obs(obs), reward, done, info
 
     def reset(self):
         obs = self.env.reset()
-        bel = self.estimator.estimate(None, obs)
-        return {'obs':obs, 'zbel':bel}
+        self.estimator.estimate(None, obs)
+        return self._get_obs(obs)
+
 
 if __name__ == "__main__":
-    env = ExplicitBayesContinuousCartPoleEnv()
+    env = MLEContinuousCartPoleEnv()
     print(env.reset())
-    for _ in range(200):
+    for _ in range(10):
         obs, _, _, _ = env.step(env.action_space.sample())
-        print(np.around(obs['obs'],1), np.around(obs['zbel'], 1))
+        print(obs)
 
     import IPython; IPython.embed()

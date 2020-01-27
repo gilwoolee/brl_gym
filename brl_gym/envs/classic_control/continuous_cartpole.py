@@ -10,7 +10,7 @@ import gym
 from gym import spaces, logger
 from gym.utils import seeding
 import numpy as np
-
+from gym.spaces import Box
 
 import numpy as np
 import scipy.linalg
@@ -120,6 +120,7 @@ class ContinuousCartPoleEnv(gym.Env):
             # length=spaces.Box(np.array([0.5]),np.array([1.0]), dtype=np.float32))
             length=spaces.Box(np.array([0.5]),np.array([2.0]), dtype=np.float32),
             masscart=spaces.Box(np.array([0.5]), np.array([2.0]), dtype=np.float32))
+        self.param_space_flat = Box(np.array([0.5, 0.5]), np.array([2.0, 2.0]), dtype=np.float32)
 
 
     def seed(self, seed=None):
@@ -217,7 +218,7 @@ class ContinuousCartPoleEnv(gym.Env):
 
     def get_params(self):
         return dict(
-            # masspole=self.masspole)
+            masscart = self.masscart,
             length=self.length)
 
     def set_state(self, state):

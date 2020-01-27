@@ -42,9 +42,8 @@ class CrossWalkExpert(Expert):
         cost = np.zeros((peds.shape[0], 9, 5)) + np.abs(angles).transpose()[:,None,:] * 2
         cost += -speeds.reshape(9, -1).transpose()[:,:,None] * 30
 
-        increments = (np.arange(15) + 1.0)[None,None,None]
-        ped_dirs = ped_dirs[:,:,:,None] * increments
-        peds = peds[:,:,:,None] + ped_dirs
+        increments = (np.arange(8)*2 + 1.0)[None,None,None]
+        peds = peds[:,:,:,None] + ped_dirs[:,:,:,None] * increments
 
         delta = delta[:,:,:,:,None]*increments[:,:,:,None]
         cars = cars + delta
@@ -53,7 +52,7 @@ class CrossWalkExpert(Expert):
 
         car_fronts = car_fronts + delta
         front_dists = np.linalg.norm(peds[:,:,:,None,None,:] - car_fronts[:,None,:,:,:,:], axis=2)
-        cost += np.sum(np.sum(1.0/dists**2  + 1.0/front_dists**2, axis=1), axis=3)
+        cost += np.sum(np.sum(1.0/dists**2  + 1.0/front_dists**2, axis=4), axis=1)
 
         # Choose one with smallest cost
         bests = [np.unravel_index(np.argmin(c), c.shape) for c in cost]
@@ -62,18 +61,25 @@ class CrossWalkExpert(Expert):
         return best_params
 
 if __name__ == "__main__":
-
-    rewards = np.zeros(100)
-    for i in range(100):
+    import cProfile
+    rewards = np.zeros(1000)
+    # profile = cProfile.Profile()
+    # profile.enable()
+    for i in range(1000):
         env = BayesCrossWalkEnv()
         obs = env.reset()
         expert = CrossWalkExpert()
-        for _ in range(60):
+
+        for t in range(60):
             obs, r, done, _ = env.step(expert.action(np.array([obs,obs,obs]))[0])
             rewards[i] += r
-            env.render()
+            #env.env._visualize(filename="test{}.png".format(t))
+            # env.render()
             if done:
                 break
-        print(rewards[i])
-    import IPython; IPython.embed()
-    print(np.mean(rewards), np.std(rewards))
+
+        # print(rewards[i])
+    # profile.disable()
+    # profile.print_stats()
+    # import IPython; IPython.embed()
+    print(np.mean(rewards), np.std(rewards)/np.sqrt(len(rewards)))

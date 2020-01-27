@@ -190,12 +190,12 @@ if __name__ == "__main__":
     env = CrossWalkEnv(use_vision=False)
     obs = env.reset()
     print("obs", obs)
-
-    env._visualize(show=True)
     done = False
+
+    env._visualize(show=False, filename="test.png")
     while not done:
         obs, rew, done, info = env.step(env.action_space.sample())
-        env._visualize(show=True)
+        env._visualize(show=False, filename="test.png")
 
         print("obs", np.around(obs, 1))
         print("rew", rew)

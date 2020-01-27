@@ -50,6 +50,9 @@ class BayesCrosswalkEstimator(Estimator):
     def get_belief(self):
         return self.belief.copy()
 
+    def get_mle(self):
+        return np.around(self.belief)
+
 if __name__ == "__main__":
     env = CrossWalkEnv()
     obs = env.reset()

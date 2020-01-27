@@ -29,4 +29,4 @@ from brl_gym.wrapper_envs.classic_control.wrapper_continuous_cartpole import Bay
 from brl_gym.wrapper_envs.wrapper_lightdark import BayesLightDark, MLELightDark
 from brl_gym.wrapper_envs.wrapper_lightdarkhard import BayesLightDarkHard
 from brl_gym.wrapper_envs.mujoco.wrapper_wam_find_obj import BayesWamFindObj
-from brl_gym.wrapper_envs.wrapper_crosswalk import BayesCrossWalkEnv
+from brl_gym.wrapper_envs.wrapper_crosswalk import BayesCrossWalkEnv, MLECrossWalkEnv

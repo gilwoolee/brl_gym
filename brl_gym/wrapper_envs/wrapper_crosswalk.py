@@ -10,7 +10,6 @@ def get_pedestrian_directions(speeds, angles):
                     np.cos(angles)]).transpose()
 
 class BayesCrossWalkEnv(BayesEnv):
-    # Wrapper envs for mujoco envs
     def __init__(self):
         self.env = CrossWalkEnv()
         self.estimator = BayesCrosswalkEstimator()
@@ -37,26 +36,41 @@ class BayesCrossWalkEnv(BayesEnv):
 
         return obs
 
-
     def reset(self):
         obs = self.env.reset()
-        bel = self.estimator.estimate(None, obs)
+        bel = self.estimator.estimate(none, obs)
         obs = self._expand_belief(obs, bel)
         return obs
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
 
-        # Estimate
+        # estimate
         belief = self.estimator.estimate(action, obs, **info)
         obs = self._expand_belief(obs, belief, **info)
         return obs, reward, done, info
 
+class MLECrossWalkEnv(BayesCrossWalkEnv):
+    def reset(self):
+        obs = self.env.reset()
+        self.estimator.estimate(None, obs)
+        obs = self._expand_belief(obs, self.estimator.get_mle())
+        return obs
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+
+        # estimate
+        self.estimator.estimate(action, obs, **info)
+        obs = self._expand_belief(obs, self.estimator.get_mle(), **info)
+        return obs, reward, done, info
+
+
 
 if __name__ == "__main__":
-    env = BayesCrossWalkEnv()
+    env = MLECrossWalkEnv()
     obs = env.reset()
-    for _ in range(200):
+    for _ in range(5):
         obs, _, _, _ = env.step(env.action_space.sample())
         print(np.around(obs,1))
 

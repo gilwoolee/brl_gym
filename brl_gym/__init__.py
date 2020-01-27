@@ -706,3 +706,10 @@ register(
     reward_threshold=10.0,
     nondeterministic=True
 )
+
+register(
+    id='mle-crosswalk-v0',
+    entry_point='brl_gym.wrapper_envs:MLECrossWalkEnv',
+    max_episode_steps=100,
+    reward_threshold=200.0,
+    nondeterministic=True)

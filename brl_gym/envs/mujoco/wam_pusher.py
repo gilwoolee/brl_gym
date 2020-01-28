@@ -53,7 +53,7 @@ class WamEnv(robot_env.RobotEnv):
         # print('sensor torque', np.around(self.sim.data.sensordata[3:],2))
 
         num_contacts = 0
-        for i in enumerate(self.sim.data.ncon):
+        for i in range(self.sim.data.ncon):
             c = self.sim.data.contact[i]
             name1 = self.sim.model.geom_id2name(c.geom1)
             name2 = self.sim.model.geom_id2name(c.geom2)

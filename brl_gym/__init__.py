@@ -720,3 +720,10 @@ register(
     max_episode_steps=500,
     reward_threshold=500.0,
 )
+
+register(
+    id='mle-WamFindObj-v0',
+    entry_point='brl_gym.wrapper_envs.mujoco.wrapper_wam_find_obj:MLEWamFindObj',
+    max_episode_steps=200,
+    reward_threshold=10.0
+)

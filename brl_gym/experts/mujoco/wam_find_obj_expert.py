@@ -36,21 +36,27 @@ class WamFindObjExpert(Expert):
         obj = bel[:, :3]
 
         action = get_action(hand, obj, top[0], bottom[0])
-        action = np.concatenate([action,
-                                np.random.normal(size=action.shape[0]).reshape(-1,1)], axis=1)
+        action = np.concatenate([action, np.zeros((action.shape[0],1))], axis=1)
+                                #np.random.normal(size=action.shape[0]).reshape(-1,1)], axis=1)
         return action
 
     def __call__(self, inputs):
         return self.action(inputs)
 
 if __name__ == "__main__":
-    expert = WamFindObjExpert()
-    env = BayesWamFindObj()
-    obs = env.reset()
+    rewards = np.zeros(100);
+    for i in range(100):
+        expert = WamFindObjExpert()
+        env = BayesWamFindObj()
+        obs = env.reset()
 
-    while True:
-        action = expert.action(obs.reshape(1, -1))[0]
-        print(action)
-        obs, _, _, _ = env.step(action)
-        env.render()
+        for _ in range(200):
+            action = expert.action(obs.reshape(1, -1))[0]
+            obs, r, d, _ = env.step(action)
+            #env.render()
+            if d:
+                break
+            rewards[i] += r
+        print(i, rewards[i])
 
+    print(np.mean(rewards), np.std(rewards)/np.sqrt(len(rewards)))

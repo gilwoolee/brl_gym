@@ -1,0 +1,1 @@
+MJPL python -m brl_baselines.run --alg=ppo2 --env=wam-v0 --play --load_path=/home/gilwoo/models/wam/bpo_noent/checkpoints/01850 --num_env=1 --output=bpo_wam.txt  --render=True --num_timesteps=0 --num_trials=5

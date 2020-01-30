@@ -24,6 +24,14 @@ from brl_gym.envs.util import fig2np
 GOAL_LEFT  = np.array([[0, 0], [0, 4]])
 GOAL_RIGHT = np.array([[9, 0], [9, 4]])
 
+#colors = ['#C7980A', '#F4651F', '#82D8A7', '#CC3A05', '#575E76', '#156943']
+
+#colors = ['#88CCEE','#DDCC77','#117733','#332288','#44AA99','#661100']
+#colors = ['#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628', '#e41a1c']
+from matplotlib import cm
+tab10 = cm.get_cmap('tab10')
+colors = np.vstack([tab10.colors[:3], tab10.colors[4:6], tab10.colors[7], tab10.colors[3]])
+
 class CrossWalkEnv(gym.Env):
     def __init__(self, use_vision=False):
         self.action_space = spaces.Box(np.array([-1.2, -1.2]), np.array([1, 1]))
@@ -57,17 +65,18 @@ class CrossWalkEnv(gym.Env):
         self.angle = 0.0
         self.car_front = self.x + \
                          self.car_length * np.array([-np.sin(self.angle), np.cos(self.angle)])
-        self.pedestrian_directions = self._get_pedestrian_directions()
+        self.pedestrian_directions = self._get_pedestrian_directions(self.pedestrian_angles)
 
         self.fig = None
         self.car = None
         return self.get_obs()
 
-    def _get_pedestrian_angles(self):
+    def _get_pedestrian_angles(self, add_noise=True):
         # Angles are directed straight to the goals
         diff = self.goals - self.pedestrians
         angles = -1.0*np.arctan2(diff[:,0], diff[:,1])
-        angles += np.random.normal(size=self.pedestrians.shape[0], scale=0.5)
+        if add_noise:
+            angles += np.random.normal(size=self.pedestrians.shape[0], scale=0.5)
         return angles
 
     def step(self, action):
@@ -94,7 +103,7 @@ class CrossWalkEnv(gym.Env):
                 self.pedestrian_speeds[i] = 0.0
 
         self.pedestrian_angles = self._get_pedestrian_angles()
-        self.pedestrian_directions = self._get_pedestrian_directions()
+        self.pedestrian_directions = self._get_pedestrian_directions(self.pedestrian_angles)
         self.pedestrians += self.pedestrian_directions
 
         # Collision
@@ -115,10 +124,10 @@ class CrossWalkEnv(gym.Env):
                 pedestrian_speeds = self.pedestrian_speeds,
                 pedestrian_angles = self.pedestrian_angles)
 
-    def _get_pedestrian_directions(self):
+    def _get_pedestrian_directions(self, angles):
         return self.pedestrian_speeds.reshape(-1,1) \
-                * np.array([-np.sin(self.pedestrian_angles),
-                            np.cos(self.pedestrian_angles)]).transpose()
+                * np.array([-np.sin(angles),
+                            np.cos(angles)]).transpose()
 
     def get_obs(self):
         car_direction = self.car_front - self.x
@@ -134,71 +143,94 @@ class CrossWalkEnv(gym.Env):
             return dict(obs=obs, img=self._visualize(nparray=True))
         return obs
 
-    def _visualize(self, show=False, filename=None, nparray=False):
-        if self.fig is None:
-            plt.ion()
-            self.fig = plt.figure()
+    def _visualize(self, show=False, filename=None, nparray=False, head_only=False, transparent=True):
+        if self.fig is None or filename is None:
+                plt.ion()
+        self.fig = plt.figure()
         fig = self.fig
 
         # Draw boundaries
-        plt.plot([0, 9], [0, 0], linewidth=1, color='k')
-        plt.plot([0, 9], [4, 4], linewidth=1, color='k')
+        #plt.plot([0, 9], [0, 0], linewidth=1, color='k')
+        #plt.plot([0, 9], [4, 4], linewidth=1, color='k')
         plt.plot([0, 0], [-10, 10], linewidth=5, color='k')
         plt.plot([9, 9], [-10, 10], linewidth=5, color='k')
 
         plt.axis('square')
+        plt.axis('off')
         plt.xlim((-1, 10))
         plt.ylim((-6, 5))
-        plt.xticks(np.arange(-1, 11))
-        plt.yticks(np.arange(-6, 6))
+        #plt.xticks(np.arange(-1, 11))
+        #plt.yticks(np.arange(-6, 6))
 
-        plt.grid()
         # Car
         # Pose of the end of the car
         car = self.x.copy()
         if self.car is not None:
             self.car.remove()
-        self.car = Rectangle((car[0], car[1]),
-                        0.1, self.car_length, angle=np.rad2deg(self.angle), color='r')
+
+        if not head_only:
+            self.car = Rectangle((car[0], car[1]),
+                        0.1, self.car_length, angle=np.rad2deg(self.angle), color=colors[-1])
+        else:
+            self.car = Circle([car[0], car[1]], radius=0.1, color=colors[-1], zorder=25)
+
         plt.gca().add_patch(self.car)
 
         # pedestrians
         for i in range(len(self.pedestrians)):
-            ped = Circle(self.pedestrians[i], radius=0.25, color='b', zorder=20)
+            ped = Circle(self.pedestrians[i], radius=0.2, color=colors[i], zorder=20)
             plt.gca().add_patch(ped)
+
+            xy = self.pedestrians[i]
+            dxdy = self.pedestrian_directions[i]
+
+            rect = Rectangle((xy[0], xy[1]),
+                    0.1, 1.0, angle=np.rad2deg(self.pedestrian_angles[i]), color=colors[i])
+            plt.gca().add_patch(rect)
         """
         for i in range(2):
             goal = Circle(self.goals[i], radius=0.25, color='g', zorder=10)
             plt.gca().add_patch(goal)
         """
 
-
         if nparray:
             raise NotImplementedError
             return fig2np(fig)
 
         if filename is not None:
-            plt.savefig(filename)
+            plt.savefig(filename, bbox_inches='tight', transparent=transparent)
 
         if show:
             fig.canvas.draw()
+
+    def _visualize_history(self, states, actions):
+        pass
 
     def render(self, mode='human'):
         self._visualize(show=True)
 
 if __name__ == "__main__":
     env = CrossWalkEnv(use_vision=False)
+
+    states = []
+    actions = []
+
+
     obs = env.reset()
+    states.append(dict(x=env.x.copy(), car_front=env.car_front.copy(), ped=env.pedestrians.copy()))
+
     print("obs", obs)
     done = False
 
-    env._visualize(show=False, filename="test.png")
-    while not done:
+    env._visualize(show=False, filename="imgs/crosswalk.png", head_only=True, transparent=False)
+    for t in range(60):
         obs, rew, done, info = env.step(env.action_space.sample())
-        env._visualize(show=False, filename="test.png")
+        env._visualize(show=False, filename="imgs/crosswalk_{}.png".format(t), head_only=(not done))
+        if done:
+            break
+
 
         print("obs", np.around(obs, 1))
         print("rew", rew)
         print("done", done)
 
-    #env._visualize(filename="test.png")

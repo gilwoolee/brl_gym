@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle, Circle, Arrow
-#from matplotlib.patches import FancyArrowPatch as Arrow
+from matplotlib.patches import FancyArrowPatch, ArrowStyle
 
 from brl_gym.wrapper_envs import BayesEnv
 from brl_gym.envs.crosswalk import CrossWalkEnv, colors
@@ -89,21 +89,29 @@ class BayesCrossWalkEnv(BayesEnv):
         angles = self.expected_angles
         belief = self.belief
 
+
+
         for i in range(len(pedestrians)):
             ped = Circle(pedestrians[i], radius=0.2, color=colors[i], zorder=20)
             plt.gca().add_patch(ped)
 
+            style = ArrowStyle.Simple(head_length=1, head_width=1, tail_width=1)
 
             xy = pedestrians[i]
             for j in range(3):
                 dxdy = get_pedestrian_directions(self.pedestrian_speeds[i], angles[i, j])[0] * 5.0
                 arrow = Arrow(xy[0], xy[1], dxdy[0], dxdy[1], color=colors[i],
                         linewidth=0, width=0.3,
-                        alpha=belief[i, j])
+                        alpha=belief[i, j],
+                        fill=True)
+                # print(belief[i,j])
+                # arrow = FancyArrowPatch(posA=xy, posB=xy+dxdy, arrowstyle='simple', color=colors[i], alpha=belief[i, j], linewidth=1.0)
                 plt.gca().add_patch(arrow)
+
                 arrow = Arrow(xy[0], xy[1], dxdy[0], dxdy[1],
                         edgecolor=colors[i], width=0.3,
-                        linewidth=1, fill=False)
+                        linewidth=0.5, fill=False,
+                        )
                 plt.gca().add_patch(arrow)
 
         if filename is not None:
@@ -130,9 +138,10 @@ class MLECrossWalkEnv(BayesCrossWalkEnv):
 if __name__ == "__main__":
     env = BayesCrossWalkEnv()
     obs = env.reset()
-    env._visualize("test.png")
+
     for _ in range(5):
         obs, _, _, _ = env.step(env.action_space.sample())
+        env._visualize("test.png", transparent=False)
         print(np.around(obs,1))
 
 

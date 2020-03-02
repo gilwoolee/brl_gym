@@ -36,15 +36,17 @@ if __name__ == "__main__":
     env = BayesContinuousCartPoleEnv()
     expert = ContinuousCartPoleExpert()
 
-    obs = env.reset()
-    for t in range(100):
-        action = expert.action(obs)
-        print(action)
-        obs, _, d, _ = env.step(action[0])
-        print(np.around(obs[4:],2))
-        if d:
-            print(t)
-            break
-        #env.render()
+    rewards = np.zeros(100)
+    for i in range(100):
+        print(i, )
+        obs = env.reset()
+        for t in range(500):
+            action = expert.action(obs)
+            obs, r, d, _ = env.step(action[0])
+            rewards[i] += r
+            if d:
+                break
+        print(rewards[i])
+            #env.render()
 
-
+    print(np.mean(rewards), np.std(rewards) / np.sqrt(len(rewards)))

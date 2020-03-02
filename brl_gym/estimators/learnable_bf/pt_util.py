@@ -48,7 +48,7 @@ def restore(net, save_file):
                     net_state_dict[var_name] = restore_state_dict[var_name].data
                 try:
                     net_state_dict[var_name].copy_(restore_state_dict[var_name])
-                    print(str(var_name) + ' -> \t' + str(var_size) + ' = ' + str(int(np.prod(var_size) * 4 / 10**6)) + 'MB')
+                    # print(str(var_name) + ' -> \t' + str(var_size) + ' = ' + str(int(np.prod(var_size) * 4 / 10**6)) + 'MB')
                     restored_var_names.add(var_name)
                 except Exception as ex:
                     print('While copying the parameter named {}, whose dimensions in the model are'

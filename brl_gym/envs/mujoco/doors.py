@@ -47,18 +47,22 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         target_pos = self.data.site_xpos[self.target_sid].ravel()[:2]
         dist = np.linalg.norm(agent_pos-target_pos)
 
+        obs = self._get_obs()
+
         reward = 0 #-dist * 0.01 # reward if closer
         if len(a) == 3 and a[2] > 0:
             doors, accuracy =  self._sense()
             info = {'doors': doors, 'accuracy': accuracy}
-            reward -= 0.1
+            obs[-8:-4] = doors
+            obs[-4:] = accuracy
+            # reward -= 0.1
         else:
             info = {}
 
-        obs = self._get_obs()
+
         if np.any(obs[-8:-4] == 1.0):
             info['collision'] = np.argmax(obs[-8:-4] == 1)
-            reward = -10 # Collision
+            # reward = -10 # Collision
         if np.any(obs[-4:] == 1.0):
             info['pass_through'] = np.argmax(obs[-4:] == 1)
 
@@ -112,15 +116,18 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             self.data.qvel.ravel(),
             goal_dist.ravel(),
             collision_with_door,
-            pass_through_door
+            pass_through_door,
+            np.ones(4) * -1,
+            np.ones(4) * 0.0 # accuracy
             ])
 
     def _sense(self):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
 
         door_dist = np.linalg.norm(self.door_pos[:, :2] - agent_pos[:2], axis=1)
-        accuracy = 0.5 + np.exp(-door_dist) / 2.0
-
+        # accuracy = 0.5 + np.exp(-door_dist) / 2.0
+        accuracy = np.clip(0.7 + np.exp(-door_dist) / 2.0, 0.7, 1.0)
+        # print("a", accuracy)
         noisy_sensing = []
         for x in range(4):
             r = random.random()

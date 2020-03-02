@@ -8,7 +8,7 @@ if __name__ == "__main__":
     for _ in range(1):
         env = ExplicitBayesMazeEnv()
         o = env.reset()
-        
+
         rewards = []
         for t in range(500):
             action = expert.action(
@@ -22,6 +22,7 @@ if __name__ == "__main__":
             # print(o['zbel'])
             rewards += [r]
             if d:
+                print(t)
                 break
 
         undiscounted_sum = np.sum(rewards)

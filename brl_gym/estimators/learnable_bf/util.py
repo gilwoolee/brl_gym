@@ -17,7 +17,7 @@ def repackage_hidden(h):
     else:
         return tuple(repackage_hidden(v) for v in h)
 
-def train(model, device, optimizer, train_loader, lr, epoch, log_interval):
+def train(model, device, optimizer, train_loader, lr, epoch, log_interval, mse_loss=False):
     model.train()
     losses = []
     hidden = None
@@ -29,19 +29,21 @@ def train(model, device, optimizer, train_loader, lr, epoch, log_interval):
             hidden = repackage_hidden(hidden)
         optimizer.zero_grad()
         output, hidden = model(data)
-        pred = output.max(-1)[1]
-        loss = model.loss(output, label)
+        if mse_loss:
+            loss = model.mse_loss(output, label)
+        else:
+            loss = model.loss(output, label)
         losses.append(loss.item())
         loss.backward()
         optimizer.step()
-        if batch_idx % log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+        # if batch_idx % log_interval == 0:
+        #     print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+        #         epoch, batch_idx * len(data), len(train_loader.dataset),
+        #         100. * batch_idx / len(train_loader), loss.item()))
     return np.mean(losses)
 
 
-def test(model, device, test_loader):
+def test(model, device, test_loader, mse_loss=False):
     model.eval()
     test_loss = 0
     correct = 0
@@ -51,20 +53,27 @@ def test(model, device, test_loader):
         for batch_idx, (data, label) in enumerate(test_loader):
             data, label = data.to(device), label.to(device)
             output, hidden = model(data, hidden)
-            test_loss += model.loss(output, label, reduction='mean').item()
-
             pred = output.max(-1)[1]
-            correct_mask = pred.eq(label.view_as(pred))
+
+            if mse_loss:
+                test_loss += model.mse_loss(output, label, reduction='mean').item()
+                correct_mask = pred.eq(label.max(-1)[1])
+                label = label.max(-1)[1]
+            else:
+                test_loss += model.loss(output, label, reduction='mean').item()
+                correct_mask = pred.eq(label.view_as(pred))
+
             num_correct = correct_mask.sum().item()
             correct += num_correct
             # Comment this out to avoid printing test results
-            """
+
             if batch_idx % 10 == 0:
-                print('Input\t%s\nGT\t%s\npred\t%s\n\n' % (
-                    np.around(data[0].detach().cpu().numpy(),2),
+                # print('Input\t%s\nGT\t%s\npred\t%s\n\n' % (
+                    # np.around(data[0].detach().cpu().numpy(),2),
+                print('GT\t%s\npred\t%s\n\n' % (
                     label[0],
                     pred[0]))
-            """
+
 
     test_loss /= len(test_loader)
     test_accuracy = 100. * correct / (len(test_loader.dataset) * test_loader.dataset.sequence_length)
@@ -175,4 +184,4 @@ def main():
 
         return model, device
 
-final_model, device = main()
+# final_model, device = main()

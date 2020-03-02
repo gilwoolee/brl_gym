@@ -27,6 +27,7 @@ if __name__ == "__main__":
                 sensing += 1
 
             if d:
+                print(t)
                 break
 
         undiscounted_sum = np.sum(rewards)

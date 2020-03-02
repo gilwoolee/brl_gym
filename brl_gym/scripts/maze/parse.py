@@ -4,6 +4,7 @@ import matplotlib
 # matplotlib.use('Agg')
 import matplotlib; matplotlib.use('PDF')
 import  brl_gym.scripts.colors as colors
+import brl_gym.scripts.util as util
 
 matplotlib.rc('font', family='serif', size=25)
 matplotlib.rc('text', usetex=True)
@@ -56,32 +57,18 @@ for name in ["entropy_reward", "ent_input", "baseline"]:
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
 
-    max_step = 5000
+    max_step = 2400
 
     we = [229.42, 19.79 * 1.96]
     mle = [209.99333333333334, 22.35825375477617 * 1.96]
     # plt.fill_between([0,max_step], y1=[we[0]-we[1],we[0]-we[1]], y2=[we[0]+we[1],we[0]+we[1]],
     #     alpha=0.3, color=expert_color)
-    plt.plot([0, max_step], [we[0],we[0]], color=colors.expert_color, lw=4)
+    plt.plot([0, max_step], [we[0],we[0]], color=colors.expert_color, lw=util.line_width)
     # plt.text(5200, we[0] - 15, r'Expert', color='#597223')
 
-    maximum = 500
-    random = 500 * 0.25 + -500 * 0.75
-    plt.plot([0, max_step], [maximum, maximum], color=colors.max_color, lw=4)
-    # plt.text(5200, maximum - 10, r'Optimal$^*$', color='k')
-
     if name == "baseline":
-        plt.plot([0, max_step], [random, random], color=colors.random_color, lw=4)
-        # plt.text(5200, random - 10, r'Random', color='#878787')
         ticks = np.array([0, we[0], 500])
-        plt.yticks(np.around(ticks, 0))
-        plt.ylim(0,500)
-    else:
-        plt.yticks([0, round(we[0]), 500])
-        plt.ylim(0,500)
     plt.xlim(0, max_step)
-
-    plt.xticks([max_step])
 
     for i, pr in enumerate(algnames):
         files = glob.glob("/home/gilwoo/output/{}/{}/*.txt".format(env, pr))
@@ -111,7 +98,7 @@ for name in ["entropy_reward", "ent_input", "baseline"]:
         plt.fill_between(rewards[:max_step,0], y1=rewards[:max_step,1] - rewards[:max_step,2], y2=rewards[:max_step,1]+rewards[:max_step,2],
             alpha=0.3, color=algo_to_alg[pr][1][colors.STANDARD])
         plt.plot(rewards[:max_step,0], rewards[:max_step,1],
-            label=algo_to_alg[pr][0], lw=4,
+            label=algo_to_alg[pr][0], lw=util.line_width,
             color=algo_to_alg[pr][1][colors.EMPHASIS])
 
 
@@ -124,6 +111,9 @@ for name in ["entropy_reward", "ent_input", "baseline"]:
 
     # legend = plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.20),
     #           ncol=3, frameon=False)
+
+    plt.tick_params(axis='both', which='both', bottom=False, top=False, left=False, right=False,
+        labelbottom=False, labeltop=False, labelleft=False, labelright=False)
 
 
     plt.savefig('{}_{}.pdf'.format(env, name), bbox_inches='tight')

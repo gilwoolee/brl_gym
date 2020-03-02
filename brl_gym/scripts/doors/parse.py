@@ -5,11 +5,14 @@ from matplotlib import pyplot as plt
 import matplotlib;
 matplotlib.use('PDF')
 import brl_gym.scripts.colors as colors
+import brl_gym.scripts.util as util
+lw = util.line_width
+
 
 matplotlib.rc('font', family='serif', size=25)
 matplotlib.rc('text', usetex=True)
 
-for type_name in ["entropy_reward"]:#["entropy_reward", "ent_input", "baseline"]:
+for type_name in ["entropy_reward", "ent_input", "baseline"]:
 
     if type_name == "ent_input":
         # Ent input
@@ -52,7 +55,7 @@ for type_name in ["entropy_reward"]:#["entropy_reward", "ent_input", "baseline"]
     indices = {"reward": 1, "sensing": 3, "crashing": 5}
     index = indices[name]
 
-    max_step = 5000
+    max_step = 2500
     fig, ax = plt.subplots(figsize=(8, 6))
 
     ax.spines['right'].set_visible(False)
@@ -62,7 +65,6 @@ for type_name in ["entropy_reward"]:#["entropy_reward", "ent_input", "baseline"]
 
     we = [88.84, 2.0830669696387583 * 1.96]
     maximum = 100
-    random = 100 * 0.25 + -10 * 0.75
 
     if type_name == 'baseline':
         padding = 3
@@ -70,28 +72,9 @@ for type_name in ["entropy_reward"]:#["entropy_reward", "ent_input", "baseline"]
         padding = 1
     # we = [78.29, 3.039812] # sensing
     if name == "reward" or name == "sensing":
-        # plt.fill_between([0,max_step],
-        #     y1=[we[0]-we[1],we[0]-we[1]],
-        #     y2=[we[0]+we[1],we[0]+we[1]], alpha=0.3, color=colors.expert_color)
         plt.plot([0, max_step], [we[0],we[0]],
-            color=colors.expert_color, lw=4)
-        # plt.text(max_step + 10, we[0] - padding, r'Expert', color='#597223')
+            color=colors.expert_color, lw=lw)
 
-        # Optimal
-        plt.plot([0, max_step], [maximum, maximum],
-            color=colors.max_color, lw=4)
-        # plt.text(max_step + 10, maximum - padding, r'Optimal$^*$', color='k')
-
-        if name == 'reward' and type_name == "baseline":
-            plt.plot([0, max_step], [random, random],
-                color=colors.random_color, lw=4)
-            # plt.text(max_step + 10, random - padding, r'Random', color='#878787')
-
-            ticks = np.array([random, 0, we[0], maximum])
-        else:
-            ticks = np.array([0, we[0], maximum])
-        plt.yticks(np.around(ticks, 0))
-        plt.xticks([max_step])
     plt.xlim(0, max_step)
 
     for i, pr in enumerate(algnames):
@@ -128,7 +111,7 @@ for type_name in ["entropy_reward"]:#["entropy_reward", "ent_input", "baseline"]
             y2=rewards[:,index]+1.96*rewards[:,index+1],
             alpha=0.3, color=algo_to_alg[pr][1][colors.STANDARD])
         plt.plot(rewards[:,0], rewards[:,index],
-            label=algo_to_alg[pr][0], lw=4,
+            label=algo_to_alg[pr][0], lw=lw,
             color=algo_to_alg[pr][1][colors.EMPHASIS])
 
 
@@ -137,12 +120,14 @@ for type_name in ["entropy_reward"]:#["entropy_reward", "ent_input", "baseline"]
 
 
     # if type_name == "baseline":
-    plt.ylim([0, 100])
+    # plt.ylim([0, 100])
     # elif type_name == "ent_input":
     #     # pass
     #     plt.ylim([we[0]-we[1],100])
     # else:
     #     plt.ylim([we[0]-we[1], 100])
+    plt.tick_params(axis='both', which='both', bottom=False, top=False, left=False, right=False,
+        labelbottom=False, labeltop=False, labelleft=False, labelright=False)
     plt.savefig('doors_{}.pdf'.format(type_name),
          bbox_inches='tight')
     print('doors_{}.pdf'.format(type_name))

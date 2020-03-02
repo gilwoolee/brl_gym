@@ -44,17 +44,18 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         if dist < 0.2:
             reward = 500.0 # bonus for being very close
             done = True
-        if np.any(dist_to_others < 0.3):
-            reward = -500 # Penalty for getting close to the other target
+        # if np.any(dist_to_others < 0.3):
+            # reward = -500 # Penalty for getting close to the other target
 
-            done = True
+            # done = True
 
         obs = self._get_obs()
         if len(a) == 3:
-            if a[2] > 0:
+            # if a[2] > 0:
+            if True:
                 dist, noise_scale = self._sense()
-                reward += -1 # used to be -0.1
-                obs[-1] = dist
+                # reward += -1 # used to be -0.1
+                obs[-2:] = dist
                 info = {'goal_dist':dist, 'noise_scale':noise_scale}
             else:
                 info = {}
@@ -69,7 +70,7 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         goal_dist = GOAL_POSE - agent_pos[:2]
 
         return np.concatenate([agent_pos[:2], self.data.qvel.ravel(), goal_dist.ravel(),
-            [0]])
+            [0, 0]])
 
     def _sense(self):
         agent_pos = self.data.body_xpos[self.agent_bid].ravel()
@@ -77,13 +78,13 @@ class PointMassEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         # Noisy distance
         noise_scale = np.linalg.norm(goal_dist[self.target])  #/ (1.8*np.sqrt(2))
-        dist = np.linalg.norm(goal_dist[self.target]) + np.random.normal() * noise_scale
-
+        # dist = np.linalg.norm(goal_dist[self.target]) # + np.random.normal() * noise_scale
+        dist = goal_dist[self.target] # + np.random.normal() * noise_scale
 
         with open("maze_sensing.txt","a+") as f:
             f.write("{}\t{}\n".format(agent_pos[0], agent_pos[1]))
 
-        return dist, noise_scale
+        return dist, 0.1#noise_scale
 
 
     def reset_model(self):

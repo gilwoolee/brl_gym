@@ -2,6 +2,7 @@ import numpy as np
 from brl_gym.estimators.estimator import Estimator
 from gym.spaces import Box
 from brl_gym.envs.mujoco.doors import DoorsEnv
+from brl_gym.estimators.learnable_bf import LearnableBF
 
 def flatten_to_belief(belief_per_door, cases_np):
     belief = []
@@ -29,6 +30,8 @@ class BayesDoorsEstimator(Estimator):
 
         self.belief_low = np.zeros(self.num_cases)
         self.belief_high = np.ones(self.num_cases)
+        # self.belief_low = np.zeros(self.num_doors)
+        # self.belief_high = np.ones(self.num_doors)
         self.param_low = np.zeros(self.num_doors)
         self.param_high = np.ones(self.num_doors)
 
@@ -38,15 +41,20 @@ class BayesDoorsEstimator(Estimator):
         super(BayesDoorsEstimator, self).__init__(
                 env.observation_space, env.action_space, belief_space)
 
+        self._observaiton_space = env.observation_space
+        self._action_space = env.action_space
+
         self.reset()
 
     def reset(self):
         self.belief = np.ones(self.num_doors)*0.5
-        self.flat_belief = flatten_to_belief(self.belief, self.cases_np)
-
+        # self.flat_belief = flatten_to_belief(self.belief, self.cases_np)
+        # return self.flat_belief
+        return self.belief
 
     def estimate(self, action, observation, **kwargs):
         if not 'doors' in kwargs and 'collision' not in kwargs and 'pass_through' not in kwargs:
+            # return self.flat_belief
             return self.belief
 
         if 'doors' in kwargs:
@@ -63,7 +71,7 @@ class BayesDoorsEstimator(Estimator):
                     p_obs = prior[i] * (1 - accuracy[i]) + (1 - prior[i]) * accuracy[i]
                     p_obs_open = prior[i] * (1 - accuracy[i])
 
-                posterior[i] = p_obs_open /  p_obs
+                posterior[i] = p_obs_open /  (p_obs + 1e-10)
             self.belief = posterior
 
         if 'collision' in kwargs:
@@ -74,28 +82,58 @@ class BayesDoorsEstimator(Estimator):
             self.belief[kwargs['pass_through']] = 1.0
             # print("door ", kwargs['pass_through'], 'pass_through')
 
-        self.flat_belief = flatten_to_belief(self.belief, self.cases_np)
-        return self.flat_belief
+        # self.flat_belief = flatten_to_belief(self.belief, self.cases_np)
+        # return self.flat_belief
+        return self.belief
 
     def get_belief(self):
-        return self.flat_belief
+        # return self.flat_belief
+        return self.belief
 
     def get_mle(self):
         return np.around(self.belief)
+
+    def flatten_to_belief(self, belief):
+        return flatten_to_belief(belief, self.cases_np)
+
+    def get_flat_belief(self):
+        return self.flatten_to_belief(self.belief)
+
+
+class LearnableDoorsBF(LearnableBF, BayesDoorsEstimator):
+    def __init__(self):
+
+        self.belief_dim = 4
+        BayesDoorsEstimator.__init__(self)
+
+        self.belief_low = np.zeros(self.num_doors)
+        self.belief_high = np.ones(self.num_doors)
+        self.belief_space = Box(self.belief_low, self.belief_high, dtype=np.float32)
+
+        LearnableBF.__init__(self, self._action_space,
+            self._observaiton_space, self.belief_space, nonlinear='relu', normalize=False)
+
+    def reset(self):
+        return LearnableBF.reset(self)
+
+    def estimate(self, action, observation, **kwargs):
+        return LearnableBF.estimate(self, action, observation, **kwargs)
+
 
 
 if __name__ == "__main__":
     # from brl_gym.envs.mujoco.doors import DoorsEnv
     # env = DoorsEnv()
-    estimator = BayesDoorsEstimator()
-    # env.reset()
-    # estimator.reset()
+    estimator = LearnableDoorsBF()
+    env = DoorsEnv()
 
-    # for _ in range(10):
-    #     action = np.array([0,0,1])
-    #     o, r, d, info = env.step(action)
-    #     belief = estimator.estimate(action, o, **info)
-    #     print(info, estimator.belief)
-    print(estimator.cases_np)
-    print(estimator.cases)
-    print(flatten_to_belief(np.array([0,0,0,1.0]), estimator.cases_np))
+    o = env.reset()
+    for _ in range(100):
+        a = env.action_space.sample()
+        o, r, d, info = env.step(a)
+        info['done'] = d
+        b = estimator.estimate(a, o, **info)
+
+        print(b)
+
+    import IPython; IPython.embed()

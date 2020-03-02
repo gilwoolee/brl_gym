@@ -44,7 +44,7 @@ class PointMassSlowEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         if dist < 0.1:
             reward = 500.0 # bonus for being very close
             print("reward", reward)
-            done = False#True
+            done = True#True
             self.model.site_rgba[-1, 2] = 1.0
             self.model.site_rgba[-1, -1] = 1.0
         if np.any(dist_to_others < 0.3):

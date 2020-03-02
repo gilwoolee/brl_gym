@@ -5,7 +5,7 @@ from gym.spaces import Box
 from brl_gym.estimators.estimator import Estimator
 from brl_gym.envs.mujoco.point_mass import PointMassEnv
 from brl_gym.envs.mujoco.point_mass_slow import PointMassSlowEnv
-from brl_gym.envs.mujoco.maze10 import Maze10
+from brl_gym.envs.mujoco.maze10easy import Maze10Easy
 from brl_gym.estimators.learnable_bf import LearnableBF
 
 class BayesMazeEstimator(Estimator):
@@ -22,7 +22,7 @@ class BayesMazeEstimator(Estimator):
             env = PointMassSlowEnv()
         else:
             from brl_gym.envs.mujoco.maze10 import GOAL_POSE
-            env = Maze10()
+            env = Maze10Easy()
 
         self.GOAL_POSE = GOAL_POSE.copy()
         self.belief_high = np.ones(GOAL_POSE.shape[0])
@@ -50,7 +50,7 @@ class BayesMazeEstimator(Estimator):
 
         # obs = observation[3:5]
         if 'goal_dist' in kwargs:
-            obs_goal_dist = kwargs['goal_dist']
+            obs_goal_dist = np.linalg.norm(kwargs['goal_dist'])
             noise_scale = kwargs['noise_scale']
             dist_to_goals = np.linalg.norm(observation[4:4+self.GOAL_POSE.shape[0]*2].reshape(-1,2), axis=1)
             p_obs_given_prior = norm.pdf(dist_to_goals - obs_goal_dist, scale=noise_scale) * self.belief
@@ -69,7 +69,8 @@ class BayesMazeEstimator(Estimator):
 class LearnableMazeBF(LearnableBF, BayesMazeEstimator):
     def __init__(self, maze_type=4):
         BayesMazeEstimator.__init__(self, maze_type)
-        LearnableBF.__init__(self, self._action_space, self._observation_space, self.belief_space)
+        LearnableBF.__init__(self,
+            self._action_space, self._observation_space, self.belief_space, mse=False)
 
     def reset(self):
         return LearnableBF.reset(self)

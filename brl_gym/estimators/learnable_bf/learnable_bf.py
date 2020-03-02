@@ -10,17 +10,26 @@ from . import pt_util
 
 # This code structure is a modification of hw3
 class BayesFilterNet(nn.Module):
-    def __init__(self, input_dim, output_dim, hidden_dim=64, n_layers=2, dropout=0.2):
+    def __init__(self, input_dim, output_dim, hidden_dim=64, n_layers=2, dropout=0.0, nonlinear='relu'):
 
         super(BayesFilterNet, self).__init__()
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
         self.n_layers = n_layers
 
-        self.encoder = nn.Linear(input_dim, hidden_dim)
-        self.gru = nn.GRU(hidden_dim, hidden_dim, n_layers, batch_first=True, dropout=dropout)
-        self.fc = nn.Linear(hidden_dim, output_dim)
-        # self.relu = nn.ReLU()
+        self.nonlinear = nn.ReLU if nonlinear == 'relu' else nn.Tanh
+
+        self.encoder =  nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            self.nonlinear(),
+            nn.Linear(hidden_dim, hidden_dim))
+        self.gru = nn.GRU(hidden_dim, hidden_dim, n_layers, batch_first=True,
+            dropout=dropout)
+        self.fc = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            self.nonlinear(),
+            nn.Linear(hidden_dim, output_dim)
+            )
         self.best_accuracy = -1
 
     def forward(self, x, h=None):
@@ -37,9 +46,23 @@ class BayesFilterNet(nn.Module):
 
         return x, hidden_state
 
+    def inference_mse(self, x, hidden_state=None, normalize=True):
+        x = x.view(1, 1, -1)
+        x, hidden_state = self.forward(x, hidden_state)
+        if normalize:
+            x = x - torch.min(x)
+            x /= torch.max(x)
+
+        return x, hidden_state
+
     def loss(self, prediction, label, reduction='mean'):
         loss_val = F.cross_entropy(prediction.view(-1, self.output_dim,),
             label.view(-1), reduction=reduction)
+        return loss_val
+
+    def mse_loss(self, prediction, label, reduction='mean'):
+        loss_val = F.mse_loss(prediction.view(-1, self.output_dim,),
+            label.view(-1, self.output_dim,), reduction=reduction)
         return loss_val
 
     # Saves the current model
@@ -60,21 +83,20 @@ class BayesFilterNet(nn.Module):
 
 
 class LearnableBF(Estimator):
-    def __init__(self, action_space, observation_space, belief_space, device=None):
-        input_dim = observation_space.shape[0] + action_space.shape[0]
+    def __init__(self, action_space, observation_space, belief_space, device=None, mse=True,
+        nonlinear='relu', normalize=True):
+        input_dim = observation_space.shape[0] + action_space.shape[0] + 1
         output_dim = belief_space.shape[0]
         self.hidden_state = None
         self.belief_dim = output_dim
         use_cuda = torch.cuda.is_available()
         self.device = "cuda"
-        print("device", self.device)
-        print(input_dim, output_dim)
-        print("obs space", observation_space.shape)
-        print("actoin space", action_space)
-        self.model = BayesFilterNet(input_dim, output_dim)
-        print("model", self.model)
+        self.model = BayesFilterNet(input_dim, output_dim, nonlinear=nonlinear)
         self.model = self.model.to(self.device)
         self.temperature = 1
+        self.mse = mse
+        self.normalize = normalize
+        print(self.model)
 
     def reset(self):
         self.hidden_state = None
@@ -84,10 +106,14 @@ class LearnableBF(Estimator):
     def estimate(self, action, observation, **kwargs):
         if action is None:
             return self.reset()
-        inp = np.concatenate([action, observation], axis=0).ravel()
+        inp = np.concatenate([action, observation, [int(kwargs['done'])]], axis=0).ravel()
         inp = torch.Tensor(inp).float().to(self.device)
-        output, self.hidden_state = self.model.inference(inp, self.hidden_state, self.temperature)
+        if not self.mse:
+            output, self.hidden_state = self.model.inference(inp, self.hidden_state, self.temperature)
+        if self.mse:
+            output, self.hidden_state = self.model.inference_mse(inp, self.hidden_state, normalize=self.normalize)
         self.belief = output.detach().cpu().numpy().ravel()
+        self.belief /= np.sum(self.belief)
 
         return self.belief.copy()
 
@@ -97,7 +123,7 @@ class LearnableBF(Estimator):
     def forward(self, action, observation, **kwargs):
         if action is None:
             return self.reset()
-        inp = np.concatenate([action, observation], axis=0).ravel()
+        inp = np.concatenate([action, observation, [int(kwargs['done'])]], axis=0).ravel()
         inp = torch.Tensor(inp).float().to(self.device)
 
         inp = inp.reshape(1, 1, -1)
@@ -108,6 +134,9 @@ class LearnableBF(Estimator):
 
         self.belief = x.detach().cpu().numpy().ravel()
         return x, output, self.hidden_state
+
+    def set_bayes_filter(self, model_path):
+        self.model.load_last_model(model_path)
 
     def __call__(self, *input, **kwargs):
         return self.forward(*input, **kwargs)

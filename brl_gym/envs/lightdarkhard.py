@@ -29,7 +29,7 @@ from matplotlib import pyplot as plt
 
 # Goal is either [-0.5, 9.5] or [-0.5, -7.5]
 # GOALS = np.array([[-9.5, 0.5], [-9.5, -0.5]])
-light = np.array([0.0, 9.0])
+light = np.array([9.0, 0.0])
 
 class LightDarkHard(gym.Env, utils.EzPickle):
 
@@ -78,7 +78,7 @@ class LightDarkHard(gym.Env, utils.EzPickle):
     def _get_noise_std(self, x):
         dist_to_light = self._get_dist_to_light(x)
 
-        noise_std = 0.5*dist_to_light + 1e-6 # Originally division by 2.0
+        noise_std = 0.25*dist_to_light + 1e-6 # Originally division by 2.0
         #noise_std = 0.01
         if np.abs(dist_to_light) <= self.max_dist_to_light:
             return noise_std
@@ -86,7 +86,7 @@ class LightDarkHard(gym.Env, utils.EzPickle):
             return self.max_dist_to_light
 
     def _get_dist_to_light(self, x):
-        return np.abs(light[1] - x[1])
+        return np.abs(light[0] - x[0])
 
     def _get_obs(self, x):
         dist_to_light = self._get_dist_to_light(x)

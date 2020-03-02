@@ -9,6 +9,9 @@ matplotlib.rc('text', usetex=True)
 
 from matplotlib import pyplot as plt
 import brl_gym.scripts.colors as colors
+import brl_gym.scripts.util as util
+
+lw = util.line_width
 
 for name in ["ent", "ent_input", "baseline"]:
 
@@ -61,38 +64,16 @@ for name in ["ent", "ent_input", "baseline"]:
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
 
-    max_step = 5000
+    max_step = 1250
 
     we = [398.391, 1.96*12.22959419954]
-    random = 500 * 0.1 + -50 * 0.9
     maximum = 500
 
-    plt.plot([0, max_step], [500, 500], color=colors.max_color, lw=4)
-    # plt.text(max_step + 40, maximum - 10, r'Optimal$^*$', color='k')
-
-    # plt.fill_between([0,max_step], y1=[we[0]-we[1],we[0]-we[1]],
-    #     y2=[we[0]+we[1],we[0]+we[1]], alpha=0.3, color=colors.expert_color)
-    plt.plot([0, max_step], [we[0],we[0]],  color=colors.expert_color, lw=4)
-    # plt.text(max_step + 40, we[0] - 10, r'Expert', color='#597223')
-
-    if name == "baseline":
-        plt.ylim(0, 500)
-        plt.yticks(np.around([0, round(we[0]), round(maximum)]))
-
-        plt.plot([0, max_step], [random, random], color=colors.random_color, lw=4)
-        # plt.text(max_step + 40, random - 10, r'Random', color='#878787')
-    elif name == "ent_input":
-        plt.ylim(0, 500)
-        plt.yticks([0, round(we[0]), round(maximum)])
-        # plt.plot([0, max_step], [random, random], color=colors.random_color, lw=4)
-
-    else:
-        plt.ylim(0, 500)
-        plt.yticks([0, round(we[0]), round(maximum)])
-        # plt.ylim(0, 500)
+    plt.plot([0, max_step], [we[0],we[0]],  color=colors.expert_color, lw=lw)
 
     plt.xlim(0, max_step)
-    plt.xticks([max_step])
+    #plt.ylim(0, maximum)
+
     for i, pr in enumerate(algnames):
         files = glob.glob("/home/gilwoo/output/{}/{}/*.txt".format(env, pr))
         files.sort()
@@ -122,19 +103,20 @@ for name in ["ent", "ent_input", "baseline"]:
             color=algo_to_alg[pr][1][colors.STANDARD],
             alpha=0.3)
         plt.plot(rewards[:,0], rewards[:,1], label=algo_to_alg[pr][0],
-            lw=4, color=algo_to_alg[pr][1][colors.EMPHASIS])
+            lw=lw, color=algo_to_alg[pr][1][colors.EMPHASIS])
 
-        print (algo_to_alg[pr][1][colors.EMPHASIS], algo_to_alg[pr][1][colors.SHADE])
         if timestep < max_step:
             # extend the line
             plt.plot([rewards[-1,0], max_step], [rewards[-1,1], rewards[-1,1]],
-                '-', lw=4, color=algo_to_alg[pr][1][colors.EMPHASIS])
+                '-', lw=lw, color=algo_to_alg[pr][1][colors.EMPHASIS])
 
 
     # legend = plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.20),
     #           ncol=3, frameon=False)
 
 
+    plt.tick_params(axis='both', which='both', bottom=False, top=False, left=False, right=False,
+        labelbottom=False, labeltop=False, labelleft=False, labelright=False)
     plt.savefig('{}_{}.pdf'.format(env, name), bbox_inches='tight')
     print('{}_{}.pdf'.format(env, name))
     # plt.show()

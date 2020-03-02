@@ -44,14 +44,15 @@ class WamFindObjExpert(Expert):
         return self.action(inputs)
 
 if __name__ == "__main__":
-    rewards = np.zeros(100);
-    for i in range(100):
+    rewards = np.zeros(500)
+    for i in range(500):
         expert = WamFindObjExpert()
         env = BayesWamFindObj()
         obs = env.reset()
 
         for _ in range(200):
             action = expert.action(obs.reshape(1, -1))[0]
+            action[-1] = np.random.normal()
             obs, r, d, _ = env.step(action)
             #env.render()
             if d:

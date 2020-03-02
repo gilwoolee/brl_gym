@@ -49,7 +49,7 @@ for i, pr in enumerate(algnames):
     for f in files:
         print(f)
         data = np.genfromtxt(f, delimiter='\t', skip_header=1)
-        rewards += [(np.mean(data[:,0]), np.std(data[:,0])/np.sqrt(len(data)))]
+        rewards += [(np.mean(data[:,0]), 1.96*np.std(data[:,0])/np.sqrt(len(data)))]
 
     rewards = np.array(rewards)
     plt.fill_between(np.arange(len(rewards)), y1=rewards[:,0] - rewards[:,1],

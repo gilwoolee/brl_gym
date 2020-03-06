@@ -1,4 +1,4 @@
-#import setuptools
+import setuptools
 from distutils.core import setup
 
 setup(name='brl_gym',

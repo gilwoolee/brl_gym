@@ -373,8 +373,6 @@ class LQRControlCartPole:
 if __name__ == "__main__":
     env = ContinuousCartPoleEnv(ctrl_noise_scale=1.0)
 
-    expert = LQRControlCartPole(env)
-
     done = False
     rewards = []
     t = 0
@@ -394,41 +392,42 @@ if __name__ == "__main__":
         env.masscart = param
         env.length = param
         env.state[0] = z
+        expert = LQRControlCartPole(env)
 
-        rgb = env.render(mode="rgb_array")
-        im = Image.fromarray(rgb).convert("RGBA")
-        if i == 0:
-            output_im = im
-            continue
-        data = im.getdata()
-        new_data = []
-        for item in data:
-            if item == (255,255,255,255):
-                new_data.append((255,255,255,0))
-            else:
-                new_data.append((item[0], item[1], item[2], 255))
+        # rgb = env.render(mode="rgb_array")
+        # im = Image.fromarray(rgb).convert("RGBA")
+        # if i == 0:
+        #     output_im = im
+        #     continue
+        # data = im.getdata()
+        # new_data = []
+        # for item in data:
+        #     if item == (255,255,255,255):
+        #         new_data.append((255,255,255,0))
+        #     else:
+        #         new_data.append((item[0], item[1], item[2], 255))
 
-        im.putdata(new_data)
-        #output_im = Image.blend(im, output_im, alpha=0.5)
-        output_im = Image.alpha_composite(output_im, im)
+        # im.putdata(new_data)
+        # #output_im = Image.blend(im, output_im, alpha=0.5)
+        # output_im = Image.alpha_composite(output_im, im)
 
         #im.save('cartpole_{}_{}.png'.format(
         #    np.around(env.length,1),
         #    np.around(env.masscart, 1)))
 
-    output_im.save('cartpole.png')
+    # output_im.save('cartpole.png')
 
-    while False:
-        state = env.state
-        a, v = expert.lqr_control(state)
-        print ("expert", a)
-        _, r, done, _ = env.step(a)
-        rewards += [r]
-        values += [v]
-        rgb = env.render(mode="rgb_array")
-
-        print(r)
-        t += 1
-        #if t > 1000:
-        #    break
+        while True:
+            state = env.state
+            a, v = expert.lqr_control(state)
+            print ("expert", a)
+            _, r, done, _ = env.step(a)
+            rewards += [r]
+            values += [v]
+            # rgb = env.render(mode="rgb_array")
+            env.render()
+            print(r)
+            # t += 1
+            #if t > 1000:
+            #    break
     print(t)

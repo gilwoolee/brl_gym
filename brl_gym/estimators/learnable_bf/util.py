@@ -17,18 +17,18 @@ def repackage_hidden(h):
     else:
         return tuple(repackage_hidden(v) for v in h)
 
-def train(model, device, optimizer, train_loader, lr, epoch, log_interval, mse_loss=False):
+def train(model, device, optimizer, train_loader, lr, epoch, log_interval, batch_size, mse_loss=False):
     model.train()
     losses = []
-    hidden = None
-    for batch_idx, (data, label) in enumerate(tqdm.tqdm(train_loader)):
+    hidden = None # model.init_hidden(batch_size, device)
+    for batch_idx, (data, label) in enumerate(train_loader):
         data, label = data.to(device), label.to(device)
         # Separates the hidden state across batches.
         # Otherwise the backward would try to go all the way to the beginning every time.
         if hidden is not None:
             hidden = repackage_hidden(hidden)
         optimizer.zero_grad()
-        output, hidden = model(data)
+        output, hidden = model(data) # TODO: Pass hidden??
         if mse_loss:
             loss = model.mse_loss(output, label)
         else:

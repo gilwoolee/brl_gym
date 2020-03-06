@@ -6,3 +6,5 @@
 *.pdf
 *.csv
 *.pkl
+*.pyc
+build/

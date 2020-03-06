@@ -3,7 +3,7 @@ import torch.utils.data as data
 import numpy as np
 
 class BayesFilterDataset(data.Dataset):
-    def __init__(self, data, label, output_dim, sequence_length, batch_size, labels=None, mse=False):
+    def __init__(self, data, label, sequence_length, batch_size, labels=None, mse=False):
         # Data should be numpy B x H x F where
         # B is the number of batches (independent trajectories)
         # H is the size of history
@@ -11,7 +11,6 @@ class BayesFilterDataset(data.Dataset):
 
         super(BayesFilterDataset, self).__init__()
 
-        self.output_dim = output_dim
         self.data = data
         self.label = label
         self.sequence_length = sequence_length
@@ -46,7 +45,8 @@ class BayesFilterDataset(data.Dataset):
 
         labels_reshaped = None
 
-        # labels
+        print ("Label: ", label.shape)
+        label = np.expand_dims(label, axis=2)
         if not self.mse:
             label = np.repeat(label, n_chunks).reshape(label.shape[0], -1)
             label = np.concatenate(np.transpose(label))

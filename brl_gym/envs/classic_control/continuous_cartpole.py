@@ -122,7 +122,6 @@ class ContinuousCartPoleEnv(gym.Env):
             masscart=spaces.Box(np.array([0.5]), np.array([2.0]), dtype=np.float32))
         self.param_space_flat = Box(np.array([0.5, 0.5]), np.array([2.0, 2.0]), dtype=np.float32)
 
-
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
@@ -218,7 +217,7 @@ class ContinuousCartPoleEnv(gym.Env):
 
     def get_params(self):
         return dict(
-            masscart = self.masscart,
+            # masspole=self.masspole)
             length=self.length)
 
     def set_state(self, state):
@@ -232,12 +231,12 @@ class ContinuousCartPoleEnv(gym.Env):
         screen_width = 600
         screen_height = 400
 
-        world_width = self.x_threshold*2.5
+        world_width = self.x_threshold*2
         scale = screen_width/world_width
         carty = 100 # TOP OF CART
         polewidth = 10.0
         polelen = scale * (2 * self.length)
-        cartwidth = 50.0 * (self.masscart / 1.0) # range of cartmass
+        cartwidth = 50.0
         cartheight = 30.0
 
         if self.viewer is None:
@@ -371,8 +370,9 @@ class LQRControlCartPole:
 
 
 if __name__ == "__main__":
-    env = ContinuousCartPoleEnv(ctrl_noise_scale=1.0)
+    env = ContinuousCartPoleEnv(ctrl_noise_scale=0.0, random_param=True)
 
+    env.reset()
     expert = LQRControlCartPole(env)
 
     done = False
@@ -380,53 +380,14 @@ if __name__ == "__main__":
     t = 0
     values = []
 
-    # Save various cartpoles
-    from PIL import Image
-    output_im = None
-    params = np.linspace(0.5, 2.0, 5)
-    params = [1.25, 1.25]
-    x = np.linspace(-3.5, 3.5, 5)
-    for i, (param, z) in enumerate(zip(params, x)):
-
-        env = ContinuousCartPoleEnv(ctrl_noise_scale=1.0)
-        env.reset()
-        env.state = np.zeros(4)
-        env.masscart = param
-        env.length = param
-        env.state[0] = z
-
-        rgb = env.render(mode="rgb_array")
-        im = Image.fromarray(rgb).convert("RGBA")
-        if i == 0:
-            output_im = im
-            continue
-        data = im.getdata()
-        new_data = []
-        for item in data:
-            if item == (255,255,255,255):
-                new_data.append((255,255,255,0))
-            else:
-                new_data.append((item[0], item[1], item[2], 255))
-
-        im.putdata(new_data)
-        #output_im = Image.blend(im, output_im, alpha=0.5)
-        output_im = Image.alpha_composite(output_im, im)
-
-        #im.save('cartpole_{}_{}.png'.format(
-        #    np.around(env.length,1),
-        #    np.around(env.masscart, 1)))
-
-    output_im.save('cartpole.png')
-
-    while False:
+    while not done:
         state = env.state
         a, v = expert.lqr_control(state)
         print ("expert", a)
         _, r, done, _ = env.step(a)
         rewards += [r]
         values += [v]
-        rgb = env.render(mode="rgb_array")
-
+        env.render()
         print(r)
         t += 1
         #if t > 1000:

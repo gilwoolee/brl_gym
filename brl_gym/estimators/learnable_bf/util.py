@@ -21,6 +21,7 @@ def train(model, device, optimizer, train_loader, lr, epoch, log_interval, batch
     model.train()
     losses = []
     hidden = None # model.init_hidden(batch_size, device)
+    clipping = True
     for batch_idx, (data, label) in enumerate(train_loader):
         data, label = data.to(device), label.to(device)
         # Separates the hidden state across batches.
@@ -28,14 +29,24 @@ def train(model, device, optimizer, train_loader, lr, epoch, log_interval, batch
         if hidden is not None:
             hidden = repackage_hidden(hidden)
         optimizer.zero_grad()
-        output, hidden = model(data) # TODO: Pass hidden??
+        output, hidden = model(data)
         if mse_loss:
             loss = model.mse_loss(output, label)
         else:
-            loss = model.loss(output, label)
+            loss = model.mse_loss(output, label)
         losses.append(loss.item())
         loss.backward()
+        if clipping:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0, norm_type=2)
         optimizer.step()
+
+        # total_norm = 0.
+        # for p in model.parameters():
+        #     param_norm = p.grad.data.norm(2)
+        #     total_norm += param_norm.item() ** 2
+        # total_norm = total_norm ** (1. / 2)
+        # print ("Grad norm: ", total_norm)
+
         # if batch_idx % log_interval == 0:
         #     print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
         #         epoch, batch_idx * len(data), len(train_loader.dataset),

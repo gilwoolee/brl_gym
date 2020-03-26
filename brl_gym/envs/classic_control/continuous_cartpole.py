@@ -25,12 +25,15 @@ def lqr(A,B,Q,R):
     #ref Bertsekas, p.151
 
     #first, try to solve the ricatti equation
-    X = np.matrix(scipy.linalg.solve_continuous_are(A, B, Q, R))
+    try:
+        X = np.matrix(scipy.linalg.solve_continuous_are(A, B, Q, R))
 
-    #compute the LQR gain
-    K = np.matrix(scipy.linalg.inv(R)*(B.T*X))
+        #compute the LQR gain
+        K = np.matrix(scipy.linalg.inv(R)*(B.T*X))
 
-    eigVals, eigVecs = scipy.linalg.eig(A-B*K)
+        eigVals, eigVecs = scipy.linalg.eig(A-B*K)
+    except:
+        return None, None, None
 
     return K, X, eigVals
 
@@ -136,8 +139,10 @@ class ContinuousCartPoleEnv(gym.Env):
         state = self.state
         x, x_dot, theta, theta_dot = state
         force = action * 10.0
+
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
+
         temp = (force + self.polemass_length * theta_dot * theta_dot * sintheta) / self.total_mass
         thetaacc = (self.gravity * sintheta - costheta* temp) / (self.length * (4.0/3.0 - self.masspole * costheta * costheta / self.total_mass))
         xacc  = temp - self.polemass_length * thetaacc * costheta / self.total_mass
@@ -162,12 +167,12 @@ class ContinuousCartPoleEnv(gym.Env):
             theta = theta[0]
 
         self.state = (x,x_dot,theta,theta_dot)
-        done =  x < -self.x_threshold \
-                or x > self.x_threshold \
-                or theta < -self.theta_threshold_radians \
-                or theta > self.theta_threshold_radians
-        done = bool(done)
-        # done = False
+        # done =  x < -self.x_threshold \
+        #         or x > self.x_threshold \
+        #         or theta < -self.theta_threshold_radians \
+        #         or theta > self.theta_threshold_radians
+        # done = bool(done)
+        done = False
 
         q = np.matrix([x, theta, x_dot, theta_dot])
         Q = np.matrix(np.diag([10,100,1, 1]))
@@ -195,6 +200,7 @@ class ContinuousCartPoleEnv(gym.Env):
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
+        self.state[2] = np.random.uniform(low=-1, high=1)
         self.steps_beyond_done = None
         if self.random_param:
             length_range = self.param_space['length']
@@ -213,6 +219,7 @@ class ContinuousCartPoleEnv(gym.Env):
             self.length = self.length[0]
         if isinstance(self.masscart, np.ndarray):
             self.masscart = self.masscart[0]
+        self.total_mass = self.masscart + self.masspole
         self.polemass_length = self.masspole * self.length
         self.random_param = False
 
@@ -342,6 +349,10 @@ class LQRControlCartPole:
         b = np.vstack([np.zeros((2,1)), np.dot(invH, B)])
 
         K, S, _ = lqr(A, b, Q, R)
+        if K is None:
+            a = np.random.uniform(low=-10, high=10, size=(1,))
+            return a, a
+
         q = np.matrix([x, theta, x_dot, theta_dot]) - np.matrix([0, pi, 0, 0])
         q = q.T
         action = - np.dot(K, q) * 0.1
@@ -362,11 +373,11 @@ class LQRControlCartPole:
         for s, a in zip(state, action):
             self.env.set_state(s)
             o, r, d, _ = self.env.step(a)
-            if d:
-                self.env.reset()
-                rewards += [r]
-            else:
-                rewards += [r + gamma * self.lqr_control(self.env.state)[1]]
+            # if d:
+            #     self.env.reset()
+            #     rewards += [r]
+            # else:
+            rewards += [r + gamma * self.lqr_control(self.env.state)[1]]
         return np.array(rewards, dtype=np.float32)
 
 

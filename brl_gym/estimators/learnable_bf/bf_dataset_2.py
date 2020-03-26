@@ -11,29 +11,12 @@ class BayesFilterDataset(data.Dataset):
 
         super(BayesFilterDataset, self).__init__()
 
-        self.data = data
-        self.label = label
-        self.sequence_length = sequence_length
-        self.batch_size = batch_size
-        self.mse = mse
-
-        assert data.shape[0] == label.shape[0]
-        self.data, self.label = self.reshape(data, label)
-
-        num_items = (self.data.shape[0] // self.batch_size) * self.batch_size
-        self.data = self.data[:num_items]
-        self.data = self.data[:, :, :5]
-        self.label = self.label[:num_items]
-
-        # perm_id = np.arange(self.data.size()[0])
-        # np.random.shuffle(perm_id)
-        # self.data = self.data[perm_id, :, :]
-        # self.label = self.label[perm_id, :, :]
-        # if self.labels is not None:
-        #     self.labels = self.labels[:num_items]
+        self.data = torch.Tensor(data).float()
+        self.label = torch.Tensor(label).float()
+        # np.linspace(0.5, 2, 5)
 
     def __feature_len__(self):
-        return self.data.shape[2], self.label.shape[2]
+        return self.data.shape[-1], self.label.shape[-1]
 
     def __len__(self):
         return self.data.shape[0]
@@ -41,7 +24,7 @@ class BayesFilterDataset(data.Dataset):
     def __getitem__(self, idx):
         # print ("Dataset shape: ", self.data[idx].size())
         # return self.data[idx], self.label[idx] # (obs, action, reward)
-        return self.data[idx][:, :5], self.label[idx] # (obs)
+        return self.data[idx], self.label[idx] # (obs)
         # return np.concatenate((self.data[idx][:,:4], self.data[idx][:,5:]), axis=1) , self.label[idx] # (obs, reward)
 
     def reshape(self, data, label, labels=None):

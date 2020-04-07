@@ -121,9 +121,12 @@ class ContinuousCartPoleEnv(gym.Env):
         self.random_param = random_param
         self.param_space = dict(
             # length=spaces.Box(np.array([0.5]),np.array([1.0]), dtype=np.float32))
-            length=spaces.Box(np.array([0.5]),np.array([2.0]), dtype=np.float32),
-            masscart=spaces.Box(np.array([0.5]), np.array([2.0]), dtype=np.float32))
-        self.param_space_flat = Box(np.array([0.5, 0.5]), np.array([2.0, 2.0]), dtype=np.float32)
+            # length=spaces.Box(np.array([0.5]),np.array([2.0]), dtype=np.float32),
+            # masscart=spaces.Box(np.array([0.5]), np.array([2.0]), dtype=np.float32))
+            length=spaces.Box(np.array([0.5]),np.array([1.0]), dtype=np.float32),
+            masscart=spaces.Box(np.array([0.5]), np.array([1.0]), dtype=np.float32))
+        # self.param_space_flat = Box(np.array([0.5, 0.5]), np.array([2.0, 2.0]), dtype=np.float32)
+        self.param_space_flat = Box(np.array([0.5, 0.5]), np.array([1.0, 1.0]), dtype=np.float32)
 
 
     def seed(self, seed=None):
@@ -139,7 +142,6 @@ class ContinuousCartPoleEnv(gym.Env):
         state = self.state
         x, x_dot, theta, theta_dot = state
         force = action * 10.0
-
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
@@ -157,6 +159,15 @@ class ContinuousCartPoleEnv(gym.Env):
             theta_dot = theta_dot + self.tau * thetaacc
             theta = theta + self.tau * theta_dot
 
+        # while (theta <= -180.0):
+        #     theta += 360.0
+        # while (theta > 180.0):
+        #     theta -= 360
+        while (theta <= -math.pi):
+            theta += 2 * math.pi
+        while (theta > math.pi):
+            theta -= 2 * math.pi
+
         if isinstance(x_dot, np.ndarray):
             x_dot = x_dot[0]
         if isinstance(theta_dot, np.ndarray):
@@ -167,12 +178,12 @@ class ContinuousCartPoleEnv(gym.Env):
             theta = theta[0]
 
         self.state = (x,x_dot,theta,theta_dot)
-        # done =  x < -self.x_threshold \
-        #         or x > self.x_threshold \
-        #         or theta < -self.theta_threshold_radians \
-        #         or theta > self.theta_threshold_radians
-        # done = bool(done)
-        done = False
+        done =  x < -self.x_threshold \
+                or x > self.x_threshold \
+                or theta < -self.theta_threshold_radians \
+                or theta > self.theta_threshold_radians
+        done = bool(done)
+        # done = False
 
         q = np.matrix([x, theta, x_dot, theta_dot])
         Q = np.matrix(np.diag([10,100,1, 1]))
@@ -200,7 +211,7 @@ class ContinuousCartPoleEnv(gym.Env):
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
-        self.state[2] = np.random.uniform(low=-1, high=1)
+        self.state[2] = np.random.uniform(low=-2, high=2)
         self.steps_beyond_done = None
         if self.random_param:
             length_range = self.param_space['length']

@@ -14,7 +14,7 @@ env = bayes_env.env
 
 SEQUENCE_SIZE = 200
 n_chunks = 4
-RUNS_PER_CONFIG = 100
+RUNS_PER_CONFIG = 50
 MAX_CHUNKS = (SEQUENCE_SIZE * RUNS_PER_CONFIG) // n_chunks
 
 def collect_data_random():
@@ -85,8 +85,8 @@ def collect_data_random():
 def collect_data_linspace():
     env = ContinuousCartPoleEnv(random_param=False)
     env_for_expert = ContinuousCartPoleEnv(random_param=False)
-    param_masscart = np.linspace(0.5, 2, 5)
-    param_polelength = np.linspace(0.5, 2, 5)
+    param_masscart = np.linspace(0.5, 1, 5)
+    param_polelength = np.linspace(0.5, 1, 5)
     batch_observations = []
     batch_actions = []
     batch_rewards = []
@@ -116,6 +116,7 @@ def collect_data_linspace():
                 t = 0
                 for _ in range(SEQUENCE_SIZE):
                     a, v = expert.lqr_control(obs)
+                    a = np.clip(a, -10, 10)
                     obs, r, done, _ = env.step(a)
 
                     observations.append(obs)
@@ -141,6 +142,7 @@ def collect_data_linspace():
                 batch_params += [params]
 
     # Generate bad examples
+    print ("Generate bad examples")
     for masscart in param_masscart:
         for polelength in param_polelength:
             params = {'length':polelength, 'masscart':masscart}
@@ -151,7 +153,7 @@ def collect_data_linspace():
             env_for_expert.set_params(params_exp)
             print ("Polelength: ", env.length)
             expert = LQRControlCartPole(env_for_expert)
-            total_chunks = 0
+            # total_chunks = 0
             for i in range(RUNS_PER_CONFIG):
                 obs = env.reset()
                 observations = []
@@ -162,8 +164,8 @@ def collect_data_linspace():
                 t = 0
                 for _ in range(SEQUENCE_SIZE):
                     a, v = expert.lqr_control(obs)
+                    a = np.clip(a, -10, 10)
                     obs, r, done, _ = env.step(a)
-
                     observations.append(obs)
                     actions.append(a)
                     rewards.append(r)
@@ -199,12 +201,13 @@ def collect_data_linspace():
 
     batch_observations, batch_actions = \
         np.array(batch_observations), np.array(batch_actions)#[:,1:]
-    batch_params = np.expand_dims(np.array(batch_params), axis=2)#[:,1:,:]
+    batch_params = np.array(batch_params)[:,1:,:] #np.expand_dims(np.array(batch_params), axis=2)#[:,1:,:]
 
+    print ("Obs: ", batch_observations.shape, " Actions: ", batch_actions.shape, " Params: ", batch_params.shape)
     # # batch_observations = batch_observations[:,1:, :] - batch_observations[:,:batch_observations.shape[1] - 1, :]
     # print (batch_observations[0][0])
     # print ("batch_params: ", batch_params.shape)
-    with open("bf_data_lin_seq.pkl", "wb") as f:
+    with open("bf_data_lin_30mar.pkl", "wb") as f:
         pickle.dump({"data": batch_observations, "output": batch_actions, "params": batch_params}, f)
 
     # with open("bf_data.pkl", "rb") as f:

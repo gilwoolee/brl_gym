@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 
-from brl_gym.estimators.learnable_bf.bf_dataset import BayesFilterDataset
+# from brl_gym.estimators.learnable_bf.bf_dataset import BayesFilterDataset
+from brl_gym.estimators.learnable_bf.bf_dataset_2 import BayesFilterDataset
 import brl_gym.estimators.learnable_bf.pt_util as pt_util
 import brl_gym.estimators.learnable_bf.util as estimator_util
 import torch
@@ -25,7 +26,7 @@ import gym
 from model import BayesFilterNet, BayesFilterNet2
 
 SEQUENCE_SIZE = 100
-with open("bf_data_car.pkl", "rb") as f:
+with open("bf_data_lin_new.pkl", "rb") as f:
     edata = pickle.load(f)
     data = np.array([d[:SEQUENCE_SIZE - 1,:] for d in edata["data"]])
     output = np.array([l[:SEQUENCE_SIZE - 1] for l in edata["params"]])
@@ -36,42 +37,42 @@ with open("bf_data_car.pkl", "rb") as f:
 np.random.seed(172)
 perm_id = np.arange(len(data))
 np.random.shuffle(perm_id)
-data = data[perm_id, :, :]
-output = output[perm_id, :]
+data = data[perm_id, :, :5]
+output = output[perm_id, 1:, :]
 
-print ("mean: ", np.mean(data), " dev: ", np.std(data))
+new_data = []
+for i in range(data.shape[0]):
+    features = []
+    for j in range(data.shape[1] - 1):
+        # features = []
+        diff = data[i,j+1,:] - data[i,j,:]
+        feat = np.concatenate((data[i,j+1], diff))
+        features.extend([feat])
+    new_data.extend([features])
+data = np.array(new_data)
+print ("Data: ", data.shape)
+# print ("mean: ", np.mean(data), " dev: ", np.std(data))
 # scaler = StandardScaler()
 # data_d = data.reshape((data.shape[0] * data.shape[1], data.shape[2]))
 # data_d = scaler.fit_transform(data_d)
 # data = data_d.reshape((data.shape[0], data.shape[1], data.shape[2]))
 # print ("mean: ", np.mean(data[:,:,0]))
-# for i in range(data.shape[2] - 1):
-#     data[:,:,i] = (data[:,:,i] - np.mean(data[:,:,i])) / np.std(data[:,:,i])
+for i in range(data.shape[2]):
+    data[:,:,i] = (data[:,:,i] - np.mean(data[:,:,i])) / np.std(data[:,:,i])
 
-data = (data - np.min(data)) / (np.max(data) - np.min(data))
-output = (output - np.min(output)) / (np.max(output) - np.min(output))
+for i in range(output.shape[-1]):
+    output[:, :, i] = (output[:, :, i] - np.min(output[:, :, i])) / (np.max(output[:, :, i])- np.min(output[:, :, i]))
 
-# # data = (data - np.mean(data)) / np.std(data)
-# scaler = StandardScaler()
-# data_d = data.reshape((data.shape[0] * data.shape[1], data.shape[2]))
-# data_d = scaler.fit_transform(data_d)
-# data = data_d.reshape((data.shape[0], data.shape[1], data.shape[2]))
-# print ("mean: ", np.mean(data[:,:,0]))
-# output = (output - np.mean(output)) / np.std(output)
-# output[:,:,0] = (output[:,:,0] - np.mean(output[:,:,0])) / np.std(output[:,:,0])
-# output[:,:,1] = (output[:,:,1] - np.mean(output[:,:,1])) / np.std(output[:,:,1])
+# data = (data - np.min(data)) / (np.max(data) - np.min(data))
+# output = (output - np.min(output)) / (np.max(output) - np.min(output))
 
-# output[:,:,0] = (output[:,:,0] - np.min(output[:,:,0])) / (np.max(output[:,:,0])- np.min(output[:,:,0]))
-# output[:,:,1] = (output[:,:,1] - np.min(output[:,:,1])) / (np.max(output[:,:,1])- np.min(output[:,:,1]))
-
-# data = (data - np.mean(data)) / np.std(data)
 train_data = data[:int(len(data)*0.8)]
 train_output = output[:int(len(output)*0.8)]
 test_data = data[int(len(data)*0.8):]
 test_output = output[int(len(output)*0.8):]
 
 belief_dim = 16
-sequence_length = 10
+sequence_length = 3
 batch_size = 256
 
 mse_mode = True
@@ -90,10 +91,10 @@ if torch.cuda.is_available():
 else:
     device = "cpu"
 
-model = BayesFilterNet(4, 1, belief_dim, hidden_dim=16, n_layers=1).to(device)
+model = BayesFilterNet(10, 2, 16, hidden_dim=256, n_layers=1).to(device)
 # model = BayesFilterNet2(5, 2, belief_dim).to(device)
 
-model.load_last_model("/home/rishabh/work/brl_gym/brl_gym/scripts/continuous_cartpole/data/2020-03-20_05-30-00/estimator_xx_checkpoints_mse")
+model.load_last_model("/home/rishabh/work/learnable_bf/data/2020-03-27_15-49-22/estimator_xx_checkpoints_mse")
 
 test_loader  = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=False, **kwargs)
 
@@ -105,16 +106,29 @@ total = 0
 outputs = []
 true_outputs = []
 
+total_samples = 0
+correct1 = 0
+correct2 = 0
 with torch.no_grad():
     hidden = None
     for batch_idx, (data, label) in enumerate(test_loader):
         data, label = data.to(device), label.to(device)
         output, hidden, belief = model.get_belief(data)
         # print ("Output dim: ", output)
-        belief_data.append(belief.cpu().data.numpy())
-        print ("Belief dim: ", belief.shape)
+        belief_data.append(hidden[0].cpu().data.numpy())
+        # print ("Hidden dim: ", hidden.size())
+        # print ("Belief dim: ", belief.shape)
         outputs.append(output.cpu().numpy())
         true_outputs.append(label.cpu().numpy())
+        total_samples += label.size(0)
+        temp = torch.abs(label - output)
+        x = temp < 0.1
+        correct1 += x[:,:,0].sum().item()
+        correct2 += x[:,:,1].sum().item()
+
+accuracy1 = (100 * correct1) / (total_samples * 3)
+accuracy2 = (100 * correct2) / (total_samples * 3)
+print ("Accuracy1: ", accuracy1, " Accuracy2: ", accuracy2)
 
 outputs = np.array(outputs)
 true_outputs = np.array(true_outputs)

@@ -1,3 +1,5 @@
+__metaclass__ = type
+
 class Estimator:
     def __init__(self, observation_space, action_space, belief_space):
         self._observation_space = observation_space

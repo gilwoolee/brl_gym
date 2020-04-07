@@ -113,8 +113,8 @@ class LightDark(gym.Env, utils.EzPickle):
 
 
     def render(self, mode='human'):
-        # print ("Last Obs: ", "LEFT" if self.last_obs == 0 else "RIGHT", \
-            # "\tHidden Tiger: ", "LEFT" if self.tiger == 0 else "RIGHT")
+        print ("Last Obs: ", "LEFT" if self.last_obs == 0 else "RIGHT", \
+            "\tHidden Tiger: ", "LEFT" if self.tiger == 0 else "RIGHT")
         pass
 
     def visualize(self, pos_history, belief_history=None,
@@ -184,10 +184,10 @@ if __name__ == "__main__":
     pos_history = []
     for i in range(5):
         pos_history += [env.x.copy()]
-        print (env.step([1.0,0.5]))
+        print (env.step(np.array([1.0,0.5])))
 
     for i in range(5):
         pos_history += [env.x.copy()]
-        print(env.step([-0.5,0.5]))
+        print(env.step(np.array([-0.5,0.5])))
 
     env.visualize(pos_history, show=True)

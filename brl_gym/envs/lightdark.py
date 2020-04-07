@@ -156,7 +156,7 @@ class LightDark(gym.Env, utils.EzPickle):
         if belief_history is not None:
             for belief in belief_history:
                 circle = plt.Circle(belief[:2], np.sqrt(belief[-1]), color='b', alpha=0.1)
-                plt.add_artist(circle)
+                plt.gca().add_artist(circle)
 
         plt.plot(self.goal[0], self.goal[1], marker='o', color='y', label='goal')
 

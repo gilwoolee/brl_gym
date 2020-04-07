@@ -20,18 +20,30 @@ class MLELightDark(MLEEnv):
         super(MLELightDark, self).__init__(env, estimator)
 
 if __name__ == "__main__":
+    import numpy as np
     print("=============== Bayes ===============")
 
     env = BayesLightDark()
     obs = env.reset()
-    print (obs)
+    belief_history = []
+    pos_history = []
+    belief_history += [env.estimator.belief.copy()]
+    pos_history += [env.env.x.copy()]
     for _ in range(10):
-        print(env.step(0))
+        o, _, _, _ = env.step(env.action_space.sample())
+        belief_history += [env.estimator.belief.copy()]
+        pos_history += [env.env.x.copy()]
 
-    print("=============== MLE   ===============")
+    belief_history = np.array(belief_history)
+    env.env.visualize(pos_history, belief_history, show=True)
 
-    env = MLELightDark()
-    obs = env.reset()
-    print (obs)
-    for _ in range(10):
-        print(env.step(0))
+
+
+    # print("=============== MLE   ===============")
+
+    # env = MLELightDark()
+    # obs = env.reset()
+    # print (obs)
+    # for _ in range(10):
+    #     print(env.step(0))
+

@@ -39,6 +39,8 @@ class EKFLightDarkEstimator(Estimator):
         if action is None:
             self.reset()
             action = np.array([0,0])
+            self.goal = observation[2:4]
+            return self.get_belief_for_dist_to_goal(self.belief, self.goal)
 
         assert(self.action_min == -0.5)
         action = np.clip(action * 0.5, self.action_min, self.action_max)

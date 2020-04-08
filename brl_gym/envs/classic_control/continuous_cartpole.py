@@ -101,6 +101,8 @@ class ContinuousCartPoleEnv(gym.Env):
         # Angle at which to fail the episode
         self.theta_threshold_radians = 1.2
         self.x_threshold = 4.0
+        self.max_steps = 500
+        self.time_steps = 0
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation is still within bounds
         high = np.array([
@@ -134,6 +136,7 @@ class ContinuousCartPoleEnv(gym.Env):
         return [seed]
 
     def step(self, action):
+        self.time_steps += 1
         if self.ctrl_noise_scale > 0:
             ctrl_noise = np.random.normal(scale=self.ctrl_noise_scale, size=1)
         else:
@@ -181,7 +184,8 @@ class ContinuousCartPoleEnv(gym.Env):
         done =  x < -self.x_threshold \
                 or x > self.x_threshold \
                 or theta < -self.theta_threshold_radians \
-                or theta > self.theta_threshold_radians
+                or theta > self.theta_threshold_radians \
+                or self.time_steps > self.max_steps
         done = bool(done)
         # done = False
 
@@ -213,6 +217,7 @@ class ContinuousCartPoleEnv(gym.Env):
         self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
         # self.state[2] = np.random.uniform(low=-2, high=2)
         self.steps_beyond_done = None
+        self.time_steps = 0
         if self.random_param:
             length_range = self.param_space['length']
             masscart_range = self.param_space['masscart']

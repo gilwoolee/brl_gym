@@ -195,6 +195,18 @@ register(
 )
 
 register(
+    id='bayes-ContinuousCartPoleLBF-v0',
+    entry_point='brl_gym.wrapper_envs:BayesContinuousCartPoleEnvLBF',
+    max_episode_steps=500,
+    reward_threshold=500.0,
+    kwargs={
+        'input_dim':5,
+        'belief_dim':10,
+        'model':None
+    },
+)
+
+register(
     id='bayes-WamFindObj-v0',
     entry_point='brl_gym.wrapper_envs.mujoco.wrapper_wam_find_obj:BayesWamFindObj',
     max_episode_steps=200,

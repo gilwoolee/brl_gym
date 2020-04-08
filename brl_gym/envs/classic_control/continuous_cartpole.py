@@ -211,7 +211,7 @@ class ContinuousCartPoleEnv(gym.Env):
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
-        self.state[2] = np.random.uniform(low=-2, high=2)
+        # self.state[2] = np.random.uniform(low=-2, high=2)
         self.steps_beyond_done = None
         if self.random_param:
             length_range = self.param_space['length']

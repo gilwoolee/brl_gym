@@ -8,7 +8,7 @@ from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
 # from brl_gym.wrapper_envs.wrapper_rocksample import BayesRockSample, MLERockSample, BayesRockSampleGrid7Rock8, ExplicitBayesRockSample, ExplicitBayesRockSampleRock8
 # from brl_gym.wrapper_envs.wrapper_herbtable import BayesHerbTable
 from brl_gym.wrapper_envs.classic_control.wrapper_cartpole import BayesCartPoleEnv, ExplicitBayesCartPoleEnv
-from brl_gym.wrapper_envs.classic_control.wrapper_continuous_cartpole import BayesContinuousCartPoleEnv, MLEContinuousCartPoleEnv
+from brl_gym.wrapper_envs.classic_control.wrapper_continuous_cartpole import BayesContinuousCartPoleEnv, MLEContinuousCartPoleEnv, BayesContinuousCartPoleEnvLBF
 # from brl_gym.wrapper_envs.wrapper_pusher import ExplicitPusherEnv
 
 #from brl_gym.wrapper_envs.wrapper_maze import (ExplicitBayesMazeEnv,

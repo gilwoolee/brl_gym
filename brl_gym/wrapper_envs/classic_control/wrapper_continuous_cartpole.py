@@ -4,7 +4,10 @@ from brl_gym.wrapper_envs import BayesEnv
 from brl_gym.envs.classic_control.continuous_cartpole import ContinuousCartPoleEnv
 from brl_gym.estimators.classic_control.bayes_continuous_cartpole_estimator import BayesContinuousCartpoleEstimator
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
+from brl_gym.estimators.estimator import Estimator
 from gym.spaces import Box, Dict
+
+import collections
 
 # from brl_gym.scripts.continuous_cartpole.model import BayesFilterNet2
 
@@ -12,14 +15,7 @@ class BayesContinuousCartPoleEnv(BayesEnv):
     # Wrapper envs for mujoco envs
     def __init__(self, learned_bf=False):
         self.env = ContinuousCartPoleEnv(random_param=True)
-        if learned_bf:
-            self.estimator = BayesFilterNet2(5, 2, 16)
-            self.estimator.eval()
-        else:
-            self.estimator = BayesContinuousCartpoleEstimator()
-        # self.model = BayesFilterNet2(5, 2, 16)
-        # self.model.eval()
-        # self.model.load_last_model("/home/rishabh/work/brl_gym/brl_gym/scripts/continuous_cartpole/data/2020-03-17_01-27-02/estimator_xx_checkpoints_mse")
+        self.estimator = BayesContinuousCartpoleEstimator()
 
         self.hidden = None
         super(BayesContinuousCartPoleEnv, self).__init__(self.env, self.estimator)
@@ -33,22 +29,105 @@ class BayesContinuousCartPoleEnv(BayesEnv):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-
-        # Estimate
-        # TODO : Create estimate function in learned bf
-        # input_data = np.expand_dims(np.hstack((obs, action)), axis=0)
-        # input_data = np.expand_dims(input_data, axis=0)
-        # input_data = torch.Tensor(input_data)
-        # with torch.no_grad():
-        #     out, self.hidden, bel = self.model.get_belief(input_data, self.hidden)
-        # bel = bel.cpu().data.numpy()
-        # bel = bel.reshape(bel.shape[-1])
         belief = self.estimator.estimate(action, obs, **info)
-        # print ("Belief: ", bel.shape)
         info['belief'] = belief
 
         obs = np.concatenate([obs, belief], axis=0)
         return obs, reward, done, info
+
+class BayesContinuousCartPoleEnvLBF(BayesEnv):
+    # Wrapper envs for mujoco envs
+    def __init__(self, **kwargs):
+        self.env = ContinuousCartPoleEnv(random_param=True)
+        self.estimator = LearnableBF(**kwargs)
+        self.bel_input = collections.deque(maxlen=int(self.estimator.input_dim // 10) + 1)
+        self.last_input = np.zeros(self.estimator.input_dim)
+
+        self.hidden = None
+        super(BayesContinuousCartPoleEnvLBF, self).__init__(self.env, self.estimator)
+
+    def reset(self):
+        obs = self.env.reset()
+        self.estimator.reset()
+        self.bel_input = collections.deque(maxlen=int(self.estimator.input_dim // 10) + 1)
+        self.bel_input.append(np.zeros(5)); self.bel_input.append(np.zeros(5))
+        self.last_input = np.zeros(self.estimator.input_dim)
+        bel = np.zeros(10)
+        bel.fill(0.2)
+        obs = np.concatenate([obs, bel], axis=0)
+        self.hidden = None
+        return obs
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        feat = np.append(obs, action)
+        self.bel_input.append(feat)
+
+        # Estimate
+        # TODO : Create estimate function in learned bf
+        belief = self.estimator.estimate(self.bel_input, self.last_input)
+        info['belief'] = belief
+        # print ("ob: ", obs.shape, " bel: ", belief.shape)
+        obs = np.concatenate([obs, belief], axis=0)
+        return obs, reward, done, info
+
+
+class LearnableBF(Estimator):
+    def __init__(self, model, input_dim, belief_dim, nonlinear='relu'):
+        self.input_dim = input_dim
+        # output_dim = belief_dim
+        self.hidden_state = None
+        self.belief_dim = belief_dim
+        if torch.cuda.is_available():
+            self.device = "cuda"
+        else:
+            self.device = "cpu"
+        self.model = model.eval()
+        self.model = self.model.to(self.device)
+        self.temperature = 1
+        self.belief_low = np.zeros(belief_dim)
+        self.belief_high = np.ones(belief_dim)
+        self.belief_space = belief_dim
+
+    def reset(self):
+        self.hidden_state = None
+        self.belief = np.ones(self.belief_dim) / self.belief_dim
+        return self.belief.copy()
+
+    def estimate(self, bel_input, last_input):
+        bel_input = np.array(bel_input)
+        bel_input = np.concatenate((bel_input[1:,:], bel_input[1:,:] - bel_input[:-1, :]), axis=1)
+        bel_input = np.concatenate((bel_input), axis=0)
+        idx = np.arange(len(bel_input))
+        np.put(last_input, idx, bel_input)
+        final_input = torch.from_numpy(np.reshape(last_input, (1, 1, -1))).float().to(self.device)
+        final_input = (final_input - self.model.means) / self.model.stds
+        _, self.hidden_state, belief = self.model.get_belief(final_input, self.hidden_state)
+        return belief[0][0].cpu().data.numpy()
+
+    def get_belief(self):
+        return self.belief.copy()
+
+    def forward(self, action, observation, **kwargs):
+        if action is None:
+            return self.reset()
+        inp = np.concatenate([action, observation, [int(kwargs['done'])]], axis=0).ravel()
+        inp = torch.Tensor(inp).float().to(self.device)
+
+        inp = inp.reshape(1, 1, -1)
+        output, self.hidden_state = self.model(inp, self.hidden_state)
+
+        x = output / max(self.temperature, 1e-20)
+        x = F.softmax(x, dim=2)
+
+        self.belief = x.detach().cpu().numpy().ravel()
+        return x, output, self.hidden_state
+
+    def set_bayes_filter(self, model_path):
+        self.model.load_last_model(model_path)
+
+    def __call__(self, *input, **kwargs):
+        return self.forward(*input, **kwargs)
 
 class MLEContinuousCartPoleEnv(BayesEnv):
     def __init__(self):

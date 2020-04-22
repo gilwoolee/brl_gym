@@ -35,7 +35,7 @@ class BayesContinuousCartPoleEnv(BayesEnv):
         obs = np.concatenate([obs, belief], axis=0)
         return obs, reward, done, info
 
-class BayesContinuousCartPoleEnvLBF(BayesEnv):
+class BayesContinuousCartPoleEnvLBF(ContinuousCartPoleEnv):
     # Wrapper envs for mujoco envs
     def __init__(self, **kwargs):
         self.env = ContinuousCartPoleEnv(random_param=True)
@@ -48,13 +48,15 @@ class BayesContinuousCartPoleEnvLBF(BayesEnv):
 
     def reset(self):
         obs = self.env.reset()
-        self.estimator.reset()
+        bel = self.estimator.reset()
         self.bel_input = collections.deque(maxlen=int(self.estimator.input_dim // 10) + 1)
         self.bel_input.append(np.zeros(5)); self.bel_input.append(np.zeros(5))
         self.last_input = np.zeros(self.estimator.input_dim)
         bel = np.zeros(10)
         bel.fill(0.2)
-        obs = np.concatenate([obs, bel], axis=0)
+        # TODO: Maybe get the belief here from inference
+        # obs = np.concatenate([obs, bel], axis=0)
+        # print ("b: ", obs.shape)
         self.hidden = None
         return obs
 
@@ -67,9 +69,51 @@ class BayesContinuousCartPoleEnvLBF(BayesEnv):
         # TODO : Create estimate function in learned bf
         belief = self.estimator.estimate(self.bel_input, self.last_input)
         info['belief'] = belief
+        info['params'] = np.array([self.env.masspole, self.env.length])
         # print ("ob: ", obs.shape, " bel: ", belief.shape)
-        obs = np.concatenate([obs, belief], axis=0)
+        # obs = torch.from_numpy(obs).float().to('cuda')
+        # obs = torch.cat([obs, belief])
+        # obs = np.concatenate([obs, belief], axis=0)
         return obs, reward, done, info
+
+
+class BayesContinuousCartPoleEnvLBF2(ContinuousCartPoleEnv):
+    # Wrapper envs for mujoco envs
+    def __init__(self, **kwargs):
+        self.env = ContinuousCartPoleEnv(random_param=True)
+        self.estimator = LearnableBF(**kwargs)
+        self.bel_input = collections.deque(maxlen=int(self.estimator.input_dim // 10))
+
+        self.prev_feat = None
+        self.hidden = None
+        super(BayesContinuousCartPoleEnvLBF2, self).__init__(self.env, self.estimator)
+
+    def reset(self):
+        obs = self.env.reset()
+        bel = self.estimator.reset()
+        self.prev_feat = np.concatenate((obs, [0.]))
+        # self.bel_input = collections.deque(maxlen=int(self.estimator.input_dim // 10))
+        self.bel_input.clear()
+        # self.bel_input.append(np.concatenate((self.prev_feat, np.zeros(5))))
+        # self.last_input = np.zeros(self.estimator.input_dim)
+
+        # TODO: Maybe get the belief here from inference
+        self.hidden = None
+        return obs
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        feat = np.append(obs, action)
+        input_feat = np.concatenate((feat, (feat - self.prev_feat)))
+        self.prev_feat = feat
+        self.bel_input.append(input_feat)
+
+        # Estimate
+        belief = self.estimator.estimate2(self.bel_input)
+        info['belief'] = belief
+        info['params'] = np.array([self.env.masspole, self.env.length])
+        return obs, reward, done, info
+
 
 
 class LearnableBF(Estimator):
@@ -82,7 +126,7 @@ class LearnableBF(Estimator):
             self.device = "cuda"
         else:
             self.device = "cpu"
-        self.model = model.eval()
+        self.model = model
         self.model = self.model.to(self.device)
         self.temperature = 1
         self.belief_low = np.zeros(belief_dim)
@@ -92,18 +136,35 @@ class LearnableBF(Estimator):
     def reset(self):
         self.hidden_state = None
         self.belief = np.ones(self.belief_dim) / self.belief_dim
-        return self.belief.copy()
+        self.belief = torch.from_numpy(self.belief)
+        return self.belief
 
     def estimate(self, bel_input, last_input):
+        # TODOL All of this should be tensors
         bel_input = np.array(bel_input)
         bel_input = np.concatenate((bel_input[1:,:], bel_input[1:,:] - bel_input[:-1, :]), axis=1)
         bel_input = np.concatenate((bel_input), axis=0)
         idx = np.arange(len(bel_input))
         np.put(last_input, idx, bel_input)
         final_input = torch.from_numpy(np.reshape(last_input, (1, 1, -1))).float().to(self.device)
+        # print ("Fi : ", final_input.size())
+        final_input = (final_input - self.model.means) / self.model.stds
+        # print ("Fi2 : ", final_input.size())
+        _, self.hidden_state, belief = self.model.get_belief(final_input, self.hidden_state)
+        return belief[0][0]
+
+    def estimate2(self, bel_input):
+        bel_input = np.array(bel_input)
+        feat_repeat = bel_input[0]
+        bel_input = np.concatenate((bel_input), axis=0)
+        rep_n = int(self.input_dim // 10 - len(bel_input) // 10)
+        rep_feat = np.repeat(feat_repeat, rep_n)
+        bel_input = np.concatenate((rep_feat, bel_input))
+        final_input = torch.from_numpy(np.reshape(bel_input, (1, 1, -1))).float().to(self.device)
         final_input = (final_input - self.model.means) / self.model.stds
         _, self.hidden_state, belief = self.model.get_belief(final_input, self.hidden_state)
-        return belief[0][0].cpu().data.numpy()
+        return belief[0][0]
+        # raise NotImplementedError
 
     def get_belief(self):
         return self.belief.copy()

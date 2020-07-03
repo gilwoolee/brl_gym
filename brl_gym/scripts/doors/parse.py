@@ -126,11 +126,34 @@ for type_name in ["entropy_reward", "ent_input", "baseline"]:
     #     plt.ylim([we[0]-we[1],100])
     # else:
     #     plt.ylim([we[0]-we[1], 100])
+    plt.xticks(ticks=[max_step], labels=[format(max_step*50, "10.1E")])
+    plt.yticks([0, 100], labels=[0, "+100"])
+    plt.ylim(0, 100)
     plt.tick_params(axis='both', which='both', bottom=False, top=False, left=False, right=False,
-        labelbottom=False, labeltop=False, labelleft=False, labelright=False)
+        labelbottom=True, labeltop=False, labelleft=True, labelright=False)
+
+    import matplotlib.transforms
+    # Create offset transform by 5 points in x direction
+    dx = -45/72.; dy = 0/72.
+    offset = matplotlib.transforms.ScaledTranslation(dx, dy, fig.dpi_scale_trans)
+    # apply offset transform to all x ticklabels.
+    for label in ax.xaxis.get_majorticklabels():
+        label.set_transform(label.get_transform() + offset)
+
+    dx = 0/72.; dy = -10/72.
+    yoffset = matplotlib.transforms.ScaledTranslation(dx, dy, fig.dpi_scale_trans)
+    for label in ax.yaxis.get_majorticklabels()[-1:]:
+        label.set_transform(label.get_transform() + yoffset)
+
+    dx = 0/72.; dy = +10/72.
+    yoffset = matplotlib.transforms.ScaledTranslation(dx, dy, fig.dpi_scale_trans)
+    for label in ax.yaxis.get_majorticklabels()[:1]:
+        label.set_transform(label.get_transform() + yoffset)
+
+    print('doors_{}.pdf'.format(type_name))
     plt.savefig('doors_{}.pdf'.format(type_name),
          bbox_inches='tight')
-    print('doors_{}.pdf'.format(type_name))
+
     # plt.show()
 # plt.savefig('eval_sensing_plot.png')
 # plt.savefig('eval_plot.png')

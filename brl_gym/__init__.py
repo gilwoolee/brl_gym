@@ -663,6 +663,14 @@ register(
     reward_threshold=200.0,
     nondeterministic=True)
 
+register(
+    id='bayes-crosswalkvel-v0',
+    entry_point='brl_gym.wrapper_envs:BayesCrossWalkEnv',
+    kwargs={'env_type':"velocity"},
+    max_episode_steps=200,
+    reward_threshold=200.0,
+    nondeterministic=True)
+
 
 # [GL] MLE
 # ---------

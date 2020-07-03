@@ -31,6 +31,10 @@ def get_expert(env_name, num_env, use_mle, **kwargs):
         from brl_gym.experts.mujoco.wam_find_obj_expert import WamFindObjExpert
         return WamFindObjExpert()
 
+    elif "crosswalkvel" in env_name.lower():
+        from brl_gym.experts.crosswalk_vel.expert import CrossWalkVelExpert
+        return CrossWalkVelExpert()
+
     elif "crosswalk".lower() in env_name.lower():
         from brl_gym.experts.crosswalk.expert import CrossWalkExpert
         return CrossWalkExpert()

@@ -54,6 +54,7 @@ def mocap_set_action(sim, action):
 
         reset_mocap2body_xpos(sim)
 
+        print("pos_delta", pos_delta.shape)
         sim.data.mocap_pos[:] = sim.data.mocap_pos + pos_delta
 
         # upright

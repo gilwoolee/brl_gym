@@ -5,6 +5,7 @@ from brl_gym.envs.classic_control.continuous_cartpole import ContinuousCartPoleE
 from brl_gym.estimators.classic_control.bayes_continuous_cartpole_estimator import BayesContinuousCartpoleEstimator
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
 from gym.spaces import Box, Dict
+from matplotlib import pyplot as plt
 
 class BayesContinuousCartPoleEnv(BayesEnv):
     # Wrapper envs for mujoco envs
@@ -17,6 +18,7 @@ class BayesContinuousCartPoleEnv(BayesEnv):
         obs = self.env.reset()
         bel = self.estimator.estimate(None, obs)
         obs = np.concatenate([obs, bel], axis=0)
+        self.t = 0
         return obs
 
     def step(self, action):
@@ -27,7 +29,15 @@ class BayesContinuousCartPoleEnv(BayesEnv):
         info['belief'] = belief
 
         obs = np.concatenate([obs, belief], axis=0)
+        self.t += 1
         return obs, reward, done, info
+
+    def _visualize(self, **kwargs):
+        img = self.env.render(mode='rgb_array')
+        plt.clf()
+        plt.imshow(img)
+        plt.savefig('imgs/trial3/bayes_cartpole_{}.png'.format(self.t), bbox_inches='tight')
+
 
 class MLEContinuousCartPoleEnv(BayesEnv):
     def __init__(self):

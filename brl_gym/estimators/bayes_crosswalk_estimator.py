@@ -1,14 +1,14 @@
 from brl_gym.envs.crosswalk import CrossWalkEnv
+from brl_gym.envs.crosswalk_vel import CrossWalkVelEnv
 from gym.spaces import Box
 from brl_gym.estimators.estimator import Estimator
 import numpy as np
 from scipy.stats import norm
 
-GOALS_RIGHT = np.tile(np.stack([[9.0, 0.5], [9.0, 1.5], [9.0, 2.5]]), [3,1]).reshape(3,3,-1)
-GOALS_LEFT  = np.tile(np.stack([[0.0, 0.5], [0.0, 1.5], [0.0, 2.5]]), [3,1]).reshape(3,3,-1)
+
 
 def get_angles(poses, goals):
-    poses = np.tile(poses, [1,3]).reshape(3,3,-1)
+    poses = np.tile(poses, [1, 3]).reshape(poses.shape[0],3,-1)
 
     # Angles are directed straight to the goals
     diff = goals - poses
@@ -16,8 +16,21 @@ def get_angles(poses, goals):
     return angles
 
 class BayesCrosswalkEstimator(Estimator):
-    def __init__(self):
-        env = CrossWalkEnv()
+    def __init__(self, env_type="velocity"):
+        if env_type == "velocity":
+            env = CrossWalkVelEnv()
+            self.num_pedestrians = env.num_pedestrians
+            goals = np.stack([env.goal_xs, np.concatenate(
+                [np.arange(self.num_pedestrians // 2)+0.5, np.arange(self.num_pedestrians // 2) + 0.5])]).transpose()
+            self.GOALS_RIGHT = np.tile(goals[:self.num_pedestrians // 2], [3,1]).reshape(self.num_pedestrians// 2, 3,-1)
+            self.GOALS_LEFT = np.tile(goals[self.num_pedestrians // 2:],  [3,1]).reshape(self.num_pedestrians// 2, 3,-1)
+        else:
+            env = CrossWalkEnv()
+            GOALS_RIGHT = np.tile(np.stack([[9.0, 0.5], [9.0, 1.5], [9.0, 2.5]]), [3,1]).reshape(3,3,-1)
+            GOALS_LEFT  = np.tile(np.stack([[0.0, 0.5], [0.0, 1.5], [0.0, 2.5]]), [3,1]).reshape(3,3,-1)
+            self.GOALS_RIGHT = GOALS_RIGHT
+            self.GOALS_LEFT = GOALS_LEFT
+        self.env_type = env_type
         self.num_pedestrians = env.num_pedestrians
 
         belief_space = Box(np.zeros((self.num_pedestrians, 3)),
@@ -30,6 +43,7 @@ class BayesCrosswalkEstimator(Estimator):
         # The goals of each pedestrian is indendent, so
         # each row tracks each pedestrian's goal belief
         self.belief = np.ones((self.num_pedestrians, 3)) / 3
+
         return self.get_belief()
 
     def estimate(self, action, observation, **kwargs):
@@ -37,8 +51,8 @@ class BayesCrosswalkEstimator(Estimator):
             return self.reset()
         peds, speeds, observed_angles = kwargs['pedestrians'], kwargs['pedestrian_speeds'], kwargs['pedestrian_angles']
         expected_angles = np.vstack([
-                    get_angles(peds[:self.num_pedestrians // 2], GOALS_RIGHT),
-                    get_angles(peds[self.num_pedestrians // 2:], GOALS_LEFT)
+                    get_angles(peds[:self.num_pedestrians // 2], self.GOALS_RIGHT),
+                    get_angles(peds[self.num_pedestrians // 2:], self.GOALS_LEFT)
                     ])
         observed_angles = np.tile(observed_angles, [3,1]).transpose()
         pdf = norm.pdf(observed_angles - expected_angles, scale=0.5) * self.belief

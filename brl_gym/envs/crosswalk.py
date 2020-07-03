@@ -67,6 +67,10 @@ class CrossWalkEnv(gym.Env):
                          self.car_length * np.array([-np.sin(self.angle), np.cos(self.angle)])
         self.pedestrian_directions = self._get_pedestrian_directions(self.pedestrian_angles)
 
+
+        # plt.ion()
+        # self.fig = plt.figure()
+
         self.fig = None
         self.car = None
         return self.get_obs()
@@ -144,10 +148,11 @@ class CrossWalkEnv(gym.Env):
         return obs
 
     def _visualize(self, show=False, filename=None, nparray=False, head_only=False, transparent=True):
-        if self.fig is None or filename is None:
-                plt.ion()
-        self.fig = plt.figure()
+        # if filename is None:
+        #     plt.ion()
+        #     self.fig = plt.figure()
         fig = self.fig
+        fig.clf()
 
         # Draw boundaries
         #plt.plot([0, 9], [0, 0], linewidth=1, color='k')

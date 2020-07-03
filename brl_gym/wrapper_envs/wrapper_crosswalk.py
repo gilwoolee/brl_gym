@@ -4,8 +4,9 @@ from matplotlib.patches import Rectangle, Circle, Arrow
 from matplotlib.patches import FancyArrowPatch, ArrowStyle
 
 from brl_gym.wrapper_envs import BayesEnv
+from brl_gym.envs.crosswalk_vel import CrossWalkVelEnv
 from brl_gym.envs.crosswalk import CrossWalkEnv, colors
-from brl_gym.estimators.bayes_crosswalk_estimator import BayesCrosswalkEstimator, GOALS_LEFT, GOALS_RIGHT, get_angles
+from brl_gym.estimators.bayes_crosswalk_estimator import BayesCrosswalkEstimator, get_angles
 
 def get_pedestrian_directions(speeds, angles):
     return speeds.reshape(-1,1) \
@@ -13,9 +14,12 @@ def get_pedestrian_directions(speeds, angles):
                     np.cos(angles)]).transpose()
 
 class BayesCrossWalkEnv(BayesEnv):
-    def __init__(self):
-        self.env = CrossWalkEnv()
-        self.estimator = BayesCrosswalkEstimator()
+    def __init__(self, env_type="velocity", timestep=0.1):
+        if env_type == "velocity":
+            self.env = CrossWalkVelEnv(timestep=timestep)
+        else:
+            self.env = CrossWalkEnv()
+        self.estimator = BayesCrosswalkEstimator(env_type=env_type)
         self.num_pedestrians = self.env.num_pedestrians
         super(BayesCrossWalkEnv, self).__init__(self.env, self.estimator)
 
@@ -29,8 +33,8 @@ class BayesCrossWalkEnv(BayesEnv):
         else:
             peds, speeds = kwargs['pedestrians'], kwargs['pedestrian_speeds']
         expected_angles = np.vstack([
-                    get_angles(peds[:self.num_pedestrians // 2], GOALS_RIGHT),
-                    get_angles(peds[self.num_pedestrians // 2:], GOALS_LEFT)
+                    get_angles(peds[:self.num_pedestrians // 2], self.estimator.GOALS_RIGHT),
+                    get_angles(peds[self.num_pedestrians // 2:], self.estimator.GOALS_LEFT)
                     ])
         weighted_angles = np.sum(expected_angles*belief, axis=1)
         weighted_directions = get_pedestrian_directions(speeds, weighted_angles)
@@ -49,6 +53,7 @@ class BayesCrossWalkEnv(BayesEnv):
     def reset(self):
         obs = self.env.reset()
         bel = self.estimator.estimate(None, obs)
+        # import IPython; IPython.embed(); import sys; sys.exit(0)
         obs = self._expand_belief(obs, bel)
         return obs
 

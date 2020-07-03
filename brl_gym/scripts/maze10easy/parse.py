@@ -67,12 +67,10 @@ for name in ["ent", "ent_input", "baseline"]:
     max_step = 1250
 
     we = [398.391, 1.96*12.22959419954]
-    maximum = 500
+    maximum = 0
+    minimum = 0
 
     plt.plot([0, max_step], [we[0],we[0]],  color=colors.expert_color, lw=lw)
-
-    plt.xlim(0, max_step)
-    #plt.ylim(0, maximum)
 
     for i, pr in enumerate(algnames):
         files = glob.glob("/home/gilwoo/output/{}/{}/*.txt".format(env, pr))
@@ -83,6 +81,7 @@ for name in ["ent", "ent_input", "baseline"]:
 
         rewards = []
         for f in files:
+
             try:
 
                 data = np.genfromtxt(f, delimiter='\t', skip_header=1)
@@ -109,14 +108,42 @@ for name in ["ent", "ent_input", "baseline"]:
             # extend the line
             plt.plot([rewards[-1,0], max_step], [rewards[-1,1], rewards[-1,1]],
                 '-', lw=lw, color=algo_to_alg[pr][1][colors.EMPHASIS])
-
+        maximum = max(maximum, max(rewards[:,1]))
+        # minimum = min(minimum, min(rewards[:,1]))
 
     # legend = plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.20),
     #           ncol=3, frameon=False)
 
+    plt.xticks(ticks=[max_step], labels=[format(max_step, "10.1E")])
+    maximum = (maximum +100)// 100 * 100
+    yticks = [0, "+"+str(int(maximum))]
 
+    plt.yticks(ticks=[0, maximum], labels=yticks)
+    print("max step", max_step)
+    plt.xlim(0, max_step)
+    plt.ylim(0, maximum )
     plt.tick_params(axis='both', which='both', bottom=False, top=False, left=False, right=False,
-        labelbottom=False, labeltop=False, labelleft=False, labelright=False)
+        labelbottom=True, labeltop=False, labelleft=True, labelright=False)
+
+    import matplotlib.transforms
+    # Create offset transform by 5 points in x direction
+    dx = -45/72.; dy = 0/72.
+    xoffset = matplotlib.transforms.ScaledTranslation(dx, dy, fig.dpi_scale_trans)
+
+    # apply offset transform to all x ticklabels.
+    for label in ax.xaxis.get_majorticklabels():
+        label.set_transform(label.get_transform() + xoffset)
+
+    dx = 0/72.; dy = -10/72.
+    yoffset = matplotlib.transforms.ScaledTranslation(dx, dy, fig.dpi_scale_trans)
+    for label in ax.yaxis.get_majorticklabels()[-1:]:
+        label.set_transform(label.get_transform() + yoffset)
+
+    dx = 0/72.; dy = +10/72.
+    yoffset = matplotlib.transforms.ScaledTranslation(dx, dy, fig.dpi_scale_trans)
+    for label in ax.yaxis.get_majorticklabels()[:1]:
+        label.set_transform(label.get_transform() + yoffset)
+
     plt.savefig('{}_{}.pdf'.format(env, name), bbox_inches='tight')
     print('{}_{}.pdf'.format(env, name))
     # plt.show()

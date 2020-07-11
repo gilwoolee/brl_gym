@@ -1,8 +1,6 @@
 # BRL Gym
 
-BRL Gym is an extension of OpenAI Gym for Bayesian RL problems. 
-
-BRL Gym contains a set of Bayesian Environments. Each BayesEnv is composed of two components: Env and Estimator. 
+BRL Gym is an extension of OpenAI Gym for Bayesian RL problems. It contains a set of Bayesian Environments. Each BayesEnv is composed of two components: Env and Estimator. 
 
 Env is the typical OpenAI Gym env with observation space and action space. Env typically has unobservable latent parameters which define the dynamics of the environment, e.g. mass and length of the pole for CartPole. 
 

@@ -20,3 +20,5 @@ import gym, brl_gym
 env = gym.make('bayes-CartPole-v0')
 obs = env.reset()
 ```
+
+Please note that this repository is under heavy development. Not all environment may work as expected. Please email [Gilwoo Lee](mailto:gilwoo301@gmail.com) for any questions regarding the environments.

@@ -20,9 +20,10 @@ class BayesCrosswalkEstimator(Estimator):
         if env_type == "velocity":
             env = CrossWalkVelEnv()
             self.num_pedestrians = env.num_pedestrians
-            self.GOALS_RIGHT = np.tile(np.stack([[4.0, 1.5], [4.0, 2.5], [4.0, 3.5]]), [3,1]).reshape(3,3,-1)
-            self.GOALS_LEFT  = np.tile(np.stack([[0.0, 1.5], [0.0, 2.5], [0.0, 3.5]]), [3,1]).reshape(3,3,-1)
-            import IPython; IPython.embed();
+            self.GOALS_RIGHT = np.tile(np.stack([[4.0, 1.5], [4.0, 2.5], [4.0, 3.5]]),
+                [self.num_pedestrians//2,1]).reshape(self.num_pedestrians//2,3,-1)
+            self.GOALS_LEFT  = np.tile(np.stack([[0.0, 1.5], [0.0, 2.5], [0.0, 3.5]]),
+                [self.num_pedestrians//2,1]).reshape(self.num_pedestrians//2,3,-1)
         else:
             env = CrossWalkEnv()
             GOALS_RIGHT = np.tile(np.stack([[9.0, 0.5], [9.0, 1.5], [9.0, 2.5]]), [3,1]).reshape(3,3,-1)

@@ -28,7 +28,7 @@ colors = np.vstack([tab10.colors[:3], tab10.colors[4:6], tab10.colors[7], tab10.
 # Crosswalk but with (velocity, steering angle) control
 class CrossWalkVelEnv(gym.Env):
     def __init__(self, timestep=0.1):
-        self.action_space = spaces.Box(np.array([0.0, -0.5]), np.array([0.6, 0.5]))
+        self.action_space = spaces.Box(np.array([0.0, -0.5]), np.array([1.2, 0.5]))
         self.car_length = 0.33 # Length of the MuSHR car
         self.num_pedestrians = 4
         self.timestep = timestep
@@ -85,7 +85,7 @@ class CrossWalkVelEnv(gym.Env):
 
     def step(self, action):
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        self.speed = action[0]
+        self.speed = action[0] if action[0] > 0.2 else 0.0
         self.pose[2] += action[1] * self.timestep
         done = False
 

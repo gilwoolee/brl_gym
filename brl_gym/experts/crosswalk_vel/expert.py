@@ -30,6 +30,7 @@ class CrossWalkVelExpert(Expert):
         self.increments = increments
         # self.time_weight = np.arange(horizon + 10, 10, -1).astype(np.float).reshape(1,-1,1,1)
         self.time_weight = 1
+        self.steering_angles = steering_angles
         """
         ca = car_angle = np.deg2rad(30.0)
         transform = np.array([[np.cos(ca), -np.sin(ca)],[np.sin(ca), np.cos(ca)]])
@@ -50,6 +51,7 @@ class CrossWalkVelExpert(Expert):
         obss, bels = inputs[:, :-self.belief_dim], inputs[:, -self.belief_dim:]
         pedestrians = obss[:, -self.num_pedestrians*4:-self.num_pedestrians*2].reshape(inputs.shape[0], -1, 2)
         directions = obss[:, -self.num_pedestrians*2:].reshape(inputs.shape[0], -1, 2) - pedestrians
+
         car, car_front = obss[:, :2], obss[:, 2:4]
         car_speed, car_angle = obss[:, 6], obss[:, 7]
 
@@ -76,13 +78,10 @@ class CrossWalkVelExpert(Expert):
         front_distance[front_distance > 0.5] = 1e8
         distance[distance > 0.5] = 1e8
         cost = np.sum(1.0/front_distance**2 + 1.0/distance**2, axis=1) * 200.0 / self.horizon
-        # print("Frosnt distance", np.around(cost, 1))
 
         # penalize distance to goal
         distance_to_goal = self.car_y_goal - car_poses[:, 1, :, : ,:]
         distance_to_goal[distance_to_goal < 0] = 0.0
-        # print("Distance to goal")
-        # print(np.around(distance_to_goal,1))
         cost += np.abs(distance_to_goal)
         cost += np.abs(car_angles)[:,:,:,None] * 5.0
 

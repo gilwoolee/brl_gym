@@ -41,7 +41,7 @@ class CrossWalkVelEnv(gym.Env):
         self.x_left = 0.0
         self.x_right = 4.0
         self.y_starts = np.arange(1.0, 5.0, 1.0) # discretized to avoid overlap
-        self.ped_speed_limits = np.array([0.2, 0.4], dtype=np.float32)
+        self.ped_speed_limits = np.array([0.1, 0.6], dtype=np.float32)
         self.car_start_y = 0.0
         self.car_speed_limits = np.array([0.2, 0.4], dtype=np.float32)
         self.car_steering_limits = np.array([-0.5,0.5], dtype=np.float32)
@@ -50,7 +50,7 @@ class CrossWalkVelEnv(gym.Env):
 
     def reset(self):
         # Hidden intention of pedestrians
-        self.goals = np.vstack([self.goal_xs, [np.random.choice(3, size=self.num_pedestrians) + 0.5]]).transpose()
+        self.goals = np.vstack([self.goal_xs, [np.random.choice(3, size=self.num_pedestrians) + 1.5]]).transpose()
         # Initial position of pedestrians (Each row is a pedestrian)
         ped_left = np.vstack([self.x_left * np.ones(2), np.random.choice(self.y_starts, size=2, replace=False)]).transpose()
         ped_right = np.vstack([self.x_right * np.ones(2), np.random.choice(self.y_starts, size=2, replace=False)]).transpose()

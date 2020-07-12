@@ -16,14 +16,13 @@ def get_angles(poses, goals):
     return angles
 
 class BayesCrosswalkEstimator(Estimator):
-    def __init__(self, env_type="velocity"):
+    def __init__(self, env_type="velocity", noise_scale=0.5):
         if env_type == "velocity":
             env = CrossWalkVelEnv()
             self.num_pedestrians = env.num_pedestrians
-            goals = np.stack([env.goal_xs, np.concatenate(
-                [np.arange(self.num_pedestrians // 2)+0.5, np.arange(self.num_pedestrians // 2) + 0.5])]).transpose()
-            self.GOALS_RIGHT = np.tile(goals[:self.num_pedestrians // 2], [3,1]).reshape(self.num_pedestrians// 2, 3,-1)
-            self.GOALS_LEFT = np.tile(goals[self.num_pedestrians // 2:],  [3,1]).reshape(self.num_pedestrians// 2, 3,-1)
+            self.GOALS_RIGHT = np.tile(np.stack([[4.0, 1.5], [4.0, 2.5], [4.0, 3.5]]), [3,1]).reshape(3,3,-1)
+            self.GOALS_LEFT  = np.tile(np.stack([[0.0, 1.5], [0.0, 2.5], [0.0, 3.5]]), [3,1]).reshape(3,3,-1)
+            import IPython; IPython.embed();
         else:
             env = CrossWalkEnv()
             GOALS_RIGHT = np.tile(np.stack([[9.0, 0.5], [9.0, 1.5], [9.0, 2.5]]), [3,1]).reshape(3,3,-1)
@@ -37,6 +36,7 @@ class BayesCrosswalkEstimator(Estimator):
                            np.ones((self.num_pedestrians, 3)), dtype=np.float32)
         self.belief_low = belief_space.low.ravel()
         self.belief_high = belief_space.high.ravel()
+        self.noise_scale = noise_scale
         super(BayesCrosswalkEstimator, self).__init__(env.observation_space, env.action_space, belief_space)
 
     def reset(self):
@@ -55,10 +55,13 @@ class BayesCrosswalkEstimator(Estimator):
                     get_angles(peds[self.num_pedestrians // 2:], self.GOALS_LEFT)
                     ])
         observed_angles = np.tile(observed_angles, [3,1]).transpose()
-        pdf = norm.pdf(observed_angles - expected_angles, scale=0.5) * self.belief
+        pdf = norm.pdf(observed_angles - expected_angles, scale=self.noise_scale) * self.belief
+        pdf = pdf / np.sum(pdf, axis=1).reshape(-1, 1)
 
         # posterior
-        self.belief  = pdf / np.sum(pdf, axis=1).reshape(-1, 1)
+        for i, speed in enumerate(speeds):
+            if speed > 5e-2:
+                self.belief[i] = pdf[i]
         return self.get_belief()
 
     def get_belief(self):

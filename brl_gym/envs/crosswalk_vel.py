@@ -29,19 +29,19 @@ colors = np.vstack([tab10.colors[:3], tab10.colors[4:6], tab10.colors[7], tab10.
 class CrossWalkVelEnv(gym.Env):
     def __init__(self, timestep=0.1):
         self.action_space = spaces.Box(np.array([0.0, -0.5]), np.array([1.2, 0.5]))
-        self.car_length = 0.33 # Length of the MuSHR car
+        self.car_length = 0.5 # Length of the MuSHR car
         self.num_pedestrians = 4
         self.timestep = timestep
         self.observation_space = spaces.Box(low=np.ones(24)*-10.0,
                                             high=np.ones(24)*10.0,
                                             dtype=np.float32)
-        self.x_limit = np.array([0, 4], dtype=np.float32)
+        self.x_limit = np.array([0, 3.5], dtype=np.float32)
         self.y_limit = np.array([0, 4], dtype=np.float32)
         self.car_y_goal = 4.5
         self.x_left = 0.0
-        self.x_right = 4.0
-        self.y_starts = np.arange(1.0, 5.0, 1.0) # discretized to avoid overlap
-        self.ped_speed_limits = np.array([0.1, 0.6], dtype=np.float32)
+        self.x_right = 3.5
+        self.y_starts = np.arange(1.0, 5.0, 0.5) # discretized to avoid overlap
+        self.ped_speed_limits = np.array([0.3, 0.8], dtype=np.float32)
         self.car_start_y = 0.0
         self.car_speed_limits = np.array([0.2, 0.4], dtype=np.float32)
         self.car_steering_limits = np.array([-0.5,0.5], dtype=np.float32)
@@ -72,7 +72,6 @@ class CrossWalkVelEnv(gym.Env):
 
         self.fig = None
         self.car = None
-        # import IPython; IPython.embed(); import sys; sys.exit(0)
         return self.get_obs()
 
     def _get_pedestrian_angles(self, add_noise=True):
@@ -113,8 +112,8 @@ class CrossWalkVelEnv(gym.Env):
         self.pedestrians += self.pedestrian_directions * self.timestep
 
         # Collision
-        if (np.any(np.linalg.norm(self.car_front - self.pedestrians, axis=1) < 0.3) or
-                np.any(np.linalg.norm(self.pose[:2] - self.pedestrians, axis=1) < 0.3)):
+        if (np.any(np.linalg.norm(self.car_front - self.pedestrians, axis=1) < 0.5) or
+                np.any(np.linalg.norm(self.pose[:2] - self.pedestrians, axis=1) < 0.5)):
             done = True
             # print("bad")
             reward -= 10*(1.0+self.speed)**2
@@ -165,11 +164,11 @@ class CrossWalkVelEnv(gym.Env):
 
         # Draw boundaries
         plt.plot([0, 0], [-1, 5], linewidth=2, color='k', linestyle='--')
-        plt.plot([4, 4], [-1, 5], linewidth=2, color='k', linestyle='--')
+        plt.plot([3.5, 3.5], [-1, 5], linewidth=2, color='k', linestyle='--')
 
         plt.axis('square')
         plt.axis('off')
-        plt.xlim((-0.1, 4.1))
+        plt.xlim((-0.1, 3.6))
         plt.ylim((-0.5, self.car_y_goal+0.1))
 
         # Car
@@ -181,15 +180,15 @@ class CrossWalkVelEnv(gym.Env):
 
         if not head_only:
             self.car = Rectangle((car[0], car[1]),
-                        0.1, self.car_length, angle=np.rad2deg(angle), color=colors[-1])
+                        0.33, self.car_length, angle=np.rad2deg(angle), color=colors[-1])
         else:
-            self.car = Circle([car[0], car[1]], radius=0.1, color=colors[-1], zorder=25)
+            self.car = Circle([car[0], car[1]], radius=0.5, color=colors[-1], zorder=25)
 
         plt.gca().add_patch(self.car)
 
         # pedestrians
         for i in range(len(self.pedestrians)):
-            ped = Circle(self.pedestrians[i], radius=0.2, color=colors[i], zorder=20)
+            ped = Circle(self.pedestrians[i], radius=0.33, color=colors[i], zorder=20)
             plt.gca().add_patch(ped)
 
             xy = self.pedestrians[i]

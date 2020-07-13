@@ -75,8 +75,8 @@ class CrossWalkVelExpert(Expert):
         peds = (peds[:,:,:,None] + ped_dirs[:,:,:,None] * self.increments)[:,:,:,:,None,None]
         distance = np.linalg.norm(peds - car_poses[:,None,:,:,:,:], axis=2)
         front_distance = np.linalg.norm(peds- car_fronts[:,None,:,:,:,:], axis=2)
-        front_distance[front_distance > 0.5] = 1e8
-        distance[distance > 0.5] = 1e8
+        front_distance[front_distance > 0.8] = 1e8
+        distance[distance > 0.8] = 1e8
         cost = np.sum(1.0/front_distance**2 + 1.0/distance**2, axis=1) * 200.0 / self.horizon
 
         # penalize distance to goal
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     # profile = cProfile.Profile()
     # profile.enable()
     rewards = []
-    for i in range(500):
+    for i in range(100):
         env = BayesCrossWalkEnv(env_type="velocity")
         obs = env.reset()
         expert = CrossWalkVelExpert()
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             #env.env._visualize(filename="test{}.png".format(t))
             reward += r
             # print(r)
-            # env.render()
+            #env.render()
             if done:
                 break
         print("reward", reward)

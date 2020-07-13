@@ -10,5 +10,5 @@ setup(name='brl_gym',
         package_data={'': ['resource/*.json']},
         include_package_data=True,
         packages=setuptools.find_packages(),
-        install_requires=['gym','numpy', 'matplotlib'],
+        install_requires=['gym==0.17.2','numpy', 'matplotlib'],
         )

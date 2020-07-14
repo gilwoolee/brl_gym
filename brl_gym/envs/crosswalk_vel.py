@@ -40,8 +40,8 @@ class CrossWalkVelEnv(gym.Env):
         self.car_y_goal = 4.5
         self.x_left = 0.0
         self.x_right = 3.5
-        self.y_starts = np.arange(1.0, 5.0, 0.5) # discretized to avoid overlap
-        self.ped_speed_limits = np.array([0.3, 0.8], dtype=np.float32)
+        self.y_starts = np.arange(1.0, 4.0, 0.5) # discretized to avoid overlap
+        self.ped_speed_limits = np.array([0.5, 0.8], dtype=np.float32)
         self.car_start_y = 0.0
         self.car_speed_limits = np.array([0.2, 0.4], dtype=np.float32)
         self.car_steering_limits = np.array([-0.5,0.5], dtype=np.float32)
@@ -54,6 +54,9 @@ class CrossWalkVelEnv(gym.Env):
         # Initial position of pedestrians (Each row is a pedestrian)
         ped_left = np.vstack([self.x_left * np.ones(2), np.random.choice(self.y_starts, size=2, replace=False)]).transpose()
         ped_right = np.vstack([self.x_right * np.ones(2), np.random.choice(self.y_starts, size=2, replace=False)]).transpose()
+        self.t = 0
+
+        self.random_delays = np.random.choice(60, size=self.num_pedestrians)
 
         self.pedestrians = np.vstack([ped_left, ped_right])
 
@@ -68,7 +71,16 @@ class CrossWalkVelEnv(gym.Env):
         self.steering_angle = np.random.uniform(self.car_steering_limits[0], self.car_steering_limits[1])
         self.car_front = self.pose[:2] + \
                          self.car_length * np.array([-np.sin(self.pose[2]), np.cos(self.pose[2])])
-        self.pedestrian_directions = self._get_pedestrian_directions(self.pedestrian_angles)
+
+        ped_speeds = self.pedestrian_speeds.copy()
+        for i in range(self.num_pedestrians//2):
+            if self.pedestrians[i,0] >= self.x_limit[1] or self.random_delays[i] < self.t:
+                ped_speeds[i] = 0.0
+        for i in range(self.num_pedestrians//2, self.num_pedestrians) or self.random_delays[i] < t:
+            if self.pedestrians[i,0] <= self.x_limit[0]:
+                ped_speeds[i] = 0.0
+
+        self.pedestrian_directions = self._get_pedestrian_directions(self.pedestrian_angles, ped_speeds)
 
         self.fig = None
         self.car = None
@@ -83,6 +95,7 @@ class CrossWalkVelEnv(gym.Env):
         return angles
 
     def step(self, action):
+        self.t += 1
         action = np.clip(action, self.action_space.low, self.action_space.high)
         self.speed = action[0] if action[0] > 0.2 else 0.0
         self.pose[2] += action[1] * self.timestep
@@ -100,20 +113,25 @@ class CrossWalkVelEnv(gym.Env):
         reward -= np.abs(self.pose[2]) * 0.1
 
         # move pedestrians
-        for i in range(self.num_pedestrians//2):
-            if self.pedestrians[i,0] >= self.x_limit[1]:
-                self.pedestrian_speeds[i] = 0.0
-        for i in range(self.num_pedestrians//2, self.num_pedestrians):
-            if self.pedestrians[i,0] <= self.x_limit[0]:
-                self.pedestrian_speeds[i] = 0.0
+        ped_speeds = self.pedestrian_speeds.copy()
 
+        for i in range(self.num_pedestrians//2):
+            if self.pedestrians[i,0] >= self.x_limit[1] or self.random_delays[i] > self.t:
+                ped_speeds[i] = 0.0
+                # print(i)
+        for i in range(self.num_pedestrians//2, self.num_pedestrians) or self.random_delays[i] > self.t:
+            if self.pedestrians[i,0] <= self.x_limit[0]:
+                ped_speeds[i] = 0.0
+                # print(i)
+        # print(self.random_delays, ped_speeds)
         self.pedestrian_angles = self._get_pedestrian_angles()
-        self.pedestrian_directions = self._get_pedestrian_directions(self.pedestrian_angles)
+        self.pedestrian_directions = self._get_pedestrian_directions(self.pedestrian_angles, ped_speeds)
         self.pedestrians += self.pedestrian_directions * self.timestep
 
         # Collision
-        if (np.any(np.linalg.norm(self.car_front - self.pedestrians, axis=1) < 0.5) or
-                np.any(np.linalg.norm(self.pose[:2] - self.pedestrians, axis=1) < 0.5)):
+        if ((np.any(np.linalg.norm(self.car_front - self.pedestrians, axis=1) < 0.8) or
+                np.any(np.linalg.norm(self.pose[:2] - self.pedestrians, axis=1) < 1.0)) and
+            action[1] > 0.1):
             done = True
             # print("bad")
             reward -= 10*(1.0+self.speed)**2
@@ -131,11 +149,11 @@ class CrossWalkVelEnv(gym.Env):
             done = True
         return self.get_obs(), reward, done, dict(
                 pedestrians=self.pedestrians,
-                pedestrian_speeds = self.pedestrian_speeds,
+                pedestrian_speeds = ped_speeds,
                 pedestrian_angles = self.pedestrian_angles)
 
-    def _get_pedestrian_directions(self, angles):
-        speeds = self.pedestrian_speeds.reshape(-1,1)
+    def _get_pedestrian_directions(self, angles, ped_speeds):
+        speeds = ped_speeds.reshape(-1,1)
         speeds += np.clip(np.random.normal(size=speeds.shape)*0.1, 0.0, 0.1)
         return speeds \
                 * np.array([-np.sin(angles),

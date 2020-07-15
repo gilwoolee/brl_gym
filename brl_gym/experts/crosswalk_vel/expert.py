@@ -75,8 +75,8 @@ class CrossWalkVelExpert(Expert):
         peds = (peds[:,:,:,None] + ped_dirs[:,:,:,None] * self.increments)[:,:,:,:,None,None]
         distance = np.linalg.norm(peds - car_poses[:,None,:,:,:,:], axis=2)
         front_distance = np.linalg.norm(peds- car_fronts[:,None,:,:,:,:], axis=2)
-        front_distance[front_distance > 1.5] = 1e8
-        distance[distance > 1.5] = 1e8
+        front_distance[front_distance > 1.0] = 1e8
+        distance[distance > 1.0] = 1e8
         cost = np.sum(1.0/front_distance**2 + 1.0/distance**2, axis=1) * 200.0 / self.horizon
 
         # penalize distance to goal
@@ -108,9 +108,9 @@ if __name__ == "__main__":
         for t in range(500):
             action = expert.action(np.array([obs]))
             obs, r, done, _ = env.step(action[0])
-            # env.env._visualize(filename="test{}.png".format(t))
+            #env.env._visualize(filename="test{}.png".format(t))
             reward += r
-            # print(r)
+            #print(r)
             #env.render()
             if done:
                 lengths += [t]

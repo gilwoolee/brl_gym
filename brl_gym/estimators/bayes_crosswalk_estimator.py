@@ -23,7 +23,9 @@ class BayesCrosswalkEstimator(Estimator):
             self.GOALS_RIGHT = np.tile(np.stack([[3.5, 1.5], [3.5, 2.5], [3.5, 3.5]]),
                 [self.num_pedestrians//2,1]).reshape(self.num_pedestrians//2,3,-1)
             self.GOALS_LEFT  = np.tile(np.stack([[0.0, 1.5], [0.0, 2.5], [0.0, 3.5]]),
-                [self.num_pedestrians//2,1]).reshape(self.num_pedestrians//2,3,-1)
+                [1,1]).reshape(1,3,-1)
+            self.num_peds_left = 2
+            self.num_peds_right = 1
         else:
             env = CrossWalkEnv()
             GOALS_RIGHT = np.tile(np.stack([[9.0, 0.5], [9.0, 1.5], [9.0, 2.5]]), [3,1]).reshape(3,3,-1)
@@ -52,8 +54,8 @@ class BayesCrosswalkEstimator(Estimator):
             return self.reset()
         peds, speeds, observed_angles = kwargs['pedestrians'], kwargs['pedestrian_speeds'], kwargs['pedestrian_angles']
         expected_angles = np.vstack([
-                    get_angles(peds[:self.num_pedestrians // 2], self.GOALS_RIGHT),
-                    get_angles(peds[self.num_pedestrians // 2:], self.GOALS_LEFT)
+                    get_angles(peds[:self.num_peds_left], self.GOALS_RIGHT),
+                    get_angles(peds[self.num_peds_left:], self.GOALS_LEFT)
                     ])
         observed_angles = np.tile(observed_angles, [3,1]).transpose()
         pdf = norm.pdf(observed_angles - expected_angles, scale=self.noise_scale) * self.belief

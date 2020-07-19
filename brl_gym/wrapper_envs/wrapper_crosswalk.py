@@ -21,6 +21,7 @@ class BayesCrossWalkEnv(BayesEnv):
             self.env = CrossWalkEnv()
         self.estimator = BayesCrosswalkEstimator(env_type=env_type)
         self.num_pedestrians = self.env.num_pedestrians
+        self.nbins = self.estimator.nbins
         super(BayesCrossWalkEnv, self).__init__(self.env, self.estimator)
 
     def _expand_belief(self, obs, belief, **kwargs):
@@ -32,19 +33,23 @@ class BayesCrossWalkEnv(BayesEnv):
             speeds = np.linalg.norm(directions, axis=1)
         else:
             peds, speeds = kwargs['pedestrians'], kwargs['pedestrian_speeds']
-        expected_angles = np.vstack([
-                    get_angles(peds[:self.num_pedestrians // 2], self.estimator.GOALS_RIGHT),
-                    get_angles(peds[self.num_pedestrians // 2:], self.estimator.GOALS_LEFT)
-                    ])
-        weighted_angles = np.sum(expected_angles*belief, axis=1)
-        weighted_directions = get_pedestrian_directions(speeds, weighted_angles)
+        # expected_angles = np.vstack([
+        #             get_angles(peds[:self.num_pedestrians // 2], self.estimator.GOALS_RIGHT),
+        #             get_angles(peds[self.num_pedestrians // 2:], self.estimator.GOALS_LEFT)
+        #             ])
+        # weighted_angles = np.sum(expected_angles*belief, axis=1)
 
-        # Stored for rendering
-        self.weighted_directions = weighted_directions
-        self.weighted_angles = weighted_angles
-        self.expected_angles = expected_angles
-        self.pedestrian_speeds = speeds
-        self.belief = belief
+        weighted_goals = belief[:, self.nbins:self.nbins+2]
+        diff = weighted_goals - peds
+        direction = diff / np.linalg.norm(diff,axis=1).reshape(-1,1)
+        weighted_directions = speeds.reshape(-1,1) * direction
+
+        # # Stored for rendering
+        # self.weighted_directions = weighted_directions
+        # self.weighted_angles = weighted_angles
+        # self.expected_angles = expected_angles
+        # self.pedestrian_speeds = speeds
+        # self.belief = belief
 
         obs[-self.num_pedestrians*2:] = (peds + weighted_directions).ravel()
         obs = np.concatenate([obs, belief.ravel()])
@@ -53,7 +58,7 @@ class BayesCrossWalkEnv(BayesEnv):
     def reset(self):
         obs = self.env.reset()
         bel = self.estimator.estimate(None, obs)
-        # import IPython; IPython.embed(); import sys; sys.exit(0)
+
         obs = self._expand_belief(obs, bel)
         return obs
 

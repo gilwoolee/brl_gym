@@ -99,7 +99,8 @@ if __name__ == "__main__":
     # profile.enable()
     rewards = []
     lengths = []
-    for i in range(100):
+    collision = 0
+    for i in range(1):
         env = BayesCrossWalkEnv(env_type="velocity")
         obs = env.reset()
         expert = CrossWalkVelExpert()
@@ -108,15 +109,18 @@ if __name__ == "__main__":
         for t in range(500):
             action = expert.action(np.array([obs]))
             obs, r, done, _ = env.step(action[0])
-            #env.env._visualize(filename="test{}.png".format(t))
+            env.env._visualize(filename="test{}.png".format(t))
             reward += r
             #print(r)
             #env.render()
             if done:
+                if r < 0:
+                    collision += 1
                 lengths += [t]
                 break
         print("reward", reward)
         rewards += [reward]
+    print("Collision", collision)
     print("reward-mean", np.mean(np.array(rewards)))
     print("reward-ste ", np.std(np.array(rewards))/np.sqrt(len(rewards)))
     print("length-mean", np.mean(np.array(lengths)))

@@ -58,7 +58,7 @@ class CrossWalkVelExpert(Expert):
         # try various angles
         action = self._forward_simulate(pedestrians, directions, car,
                                         car_front, car_speed, car_angle)
-        return action # * 10
+        return action
 
     def _transform(self, poses, angle, position):
         transform = np.array([[np.cos(angle), -np.sin(angle)],[np.sin(angle), np.cos(angle)]])
@@ -94,22 +94,24 @@ class CrossWalkVelExpert(Expert):
         return best_params
 
 if __name__ == "__main__":
-    import cProfile
+    import cProfile, os
     # profile = cProfile.Profile()
     # profile.enable()
     rewards = []
     lengths = []
     collision = 0
-    for i in range(1):
+    for i in range(300):
         env = BayesCrossWalkEnv(env_type="velocity")
         obs = env.reset()
         expert = CrossWalkVelExpert()
+
+        #os.makedirs("img/trial{}".format(i))
 
         reward = 0
         for t in range(500):
             action = expert.action(np.array([obs]))
             obs, r, done, _ = env.step(action[0])
-            env.env._visualize(filename="test{}.png".format(t))
+            #env.env._visualize(filename="img/trial{}/test{}.png".format(i, t))
             reward += r
             #print(r)
             #env.render()

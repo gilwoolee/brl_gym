@@ -19,7 +19,7 @@ class BayesCrossWalkEnv(BayesEnv):
             self.env = CrossWalkVelEnv(timestep=timestep)
         else:
             self.env = CrossWalkEnv()
-        self.estimator = BayesCrosswalkEstimator(env_type=env_type)
+        self.estimator = BayesCrosswalkEstimator()
         self.num_pedestrians = self.env.num_pedestrians
         self.nbins = self.estimator.nbins
         super(BayesCrossWalkEnv, self).__init__(self.env, self.estimator)
@@ -57,8 +57,8 @@ class BayesCrossWalkEnv(BayesEnv):
 
     def reset(self):
         obs = self.env.reset()
-        bel = self.estimator.estimate(None, obs)
-
+        peds = obs[8:14].reshape(-1, 2)
+        bel = self.estimator.estimate(None, obs, **{'pedestrians':peds})
         obs = self._expand_belief(obs, bel)
         return obs
 

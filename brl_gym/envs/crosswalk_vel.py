@@ -9,9 +9,10 @@ from matplotlib.patches import Rectangle, Circle
 from brl_gym.envs.util import fig2np
 
 # Crosswalk is 4 x 4 space, [0, 0] x [4, 4]
-# Driver is approaching the crosswalk from (2, -1)
+# Driver is approaching the crosswalk from y=0
 # Driver actions are (velocity, steering angle).
-# 6 pedestrians, 3 on left / 3 on right. 3 goals on each side.
+
+# 3 pedestrians, randomly picked to be on the right or left.
 # Pedestrians start anywhere vertically, y in [1, 6]. x is either 0 or 4.
 # And go straight to their goals, with fixed velocity,
 # uniformly sampled from [0.2 m/s, 0.8  m/s].
@@ -60,15 +61,55 @@ def check_intersect(seg1, seg2):
 
     return True
 
-def draw_and_check(seg1, seg2):
-    check_intersect(seg1, seg2)
+def min_dist_small(seg1, seg2, thresh=0.65):
+    p0, p1 = seg1
+    q0, q1 = seg2
+    x = p1 - p0
 
     seg1 = np.vstack(seg1)
     seg2 = np.vstack(seg2)
 
+
+    for t in np.linspace(0, 1.0, 11):
+        q = q0 + (q1 - q0) * t
+        d = p1 - q
+        xp = np.dot(d, x) / np.dot(x,x) * x
+        dist = np.linalg.norm(d - xp)
+
+        """
+        if t in [0.0, 0.5, 1.0]:
+            print("dist", dist)
+            plt.figure()
+            plt.plot(seg1[:,0], seg1[:,1], 'r')
+            plt.plot(seg2[:,0], seg2[:,1], 'b')
+            # debug
+            plt.plot([q[0],(p1-xp)[0]], [q[1], (p1-xp)[1]], 'r--')
+            plt.show()
+            plt.close()
+        """
+        if dist < thresh:
+            return True
+    return False
+
+
+def draw_all(seg1, seg2, seg3):
+
+    seg1 = np.vstack(seg1)
+    seg2 = np.vstack(seg2)
+    seg3 = np.vstack(seg3)
+
+    print(seg1)
+    print(seg2)
+    print(seg3)
     plt.figure()
-    plt.plot(seg1[:,0], seg1[:,1])
-    plt.plot(seg2[:,0], seg2[:,1])
+    plt.plot(seg1[:,0], seg1[:,1],'r')
+    plt.plot(seg2[:,0], seg2[:,1],'g')
+    plt.plot(seg3[:,0], seg3[:,1],'b')
+    plt.scatter(seg1[0,0], seg1[0,1], c='r', s=30)
+    plt.scatter(seg2[0,0], seg2[0,1], c='g', s=30)
+    plt.scatter(seg3[0,0], seg3[0,1], c='b', s=30)
+    plt.xlim(0.0,3.5)
+    plt.ylim(0.0,4.5)
 
     plt.show()
 
@@ -88,42 +129,45 @@ class CrossWalkVelEnv(gym.Env):
         self.car_y_goal = 4.5
         self.x_left = 0.0
         self.x_right = 3.5
-        self.y_starts = np.array([1.25, 3.7])
+        self.y_starts = np.array([1.0, 4.0])
         self.ped_speed_limits = np.array([0.5, 0.8], dtype=np.float32)
         self.car_start_y = 0.0
         self.car_speed_limits = np.array([0.2, 0.4], dtype=np.float32)
         self.car_steering_limits = np.array([-0.5,0.5], dtype=np.float32)
-        self.goal_xs = np.concatenate([np.ones(2)*self.x_right, np.ones(1)*self.x_left]).ravel()
 
     def _get_init_goal(self):
         while True:
-            # Hidden intention of pedestrians
-            goals = np.vstack([self.goal_xs, np.random.uniform(1.5, 3.5, size=3)]).transpose()
+            goal_xs = np.zeros(3, dtype=np.float32)
+
+            # Choose left or right for each pedestrian. # 0 for left, 1 for right
+            sides = np.random.choice(2, size=3)
+            peds = np.zeros((3, 2), dtype=np.float32)
+            peds[sides == 0, 0] = self.x_left
+            peds[sides == 1, 0] = self.x_right
+
+            # Choose init-y
+            peds[:, 1] = np.random.uniform(self.y_starts[0], self.y_starts[1], size=3)
+
+            # Goals
+            goals = np.zeros((3, 2), dtype=np.float32)
+            goals[sides == 0, 0] = self.x_right
+            goals[sides == 1, 0] = self.x_left
+            goals[:, 1] = np.random.uniform(self.y_starts[0], self.y_starts[1], size=3)
 
             # If too close, pass
-            goals_close = False
+            close = False
             for pair in [(0,1), (0,2), (1,2)]:
-                if np.abs(goals[pair[0],1] - goals[pair[1],1]) < 0.65:
-                    goals_close = True
-            if goals_close:
+                if np.abs(goals[pair[0],1] - goals[pair[1],1]) < 0.65 or np.abs(peds[pair[0],1] - peds[pair[1],1]) < 0.65:
+                    close = True
+            if close:
                 continue
-
-            # Initial position of pedestrians (Each row is a pedestrian)
-            ped_left = np.vstack([self.x_left * np.ones(2), np.random.uniform(self.y_starts, size=2)]).transpose()
-            ped_right = np.vstack([self.x_right * np.ones(1), np.random.uniform(self.y_starts[0], self.y_starts[1])]).transpose()
-
-            # Check initial position distance
-            if np.linalg.norm(ped_left[0] - ped_left[1]) < 0.5:
-                continue
-
-            pedestrians = np.vstack([ped_left, ped_right])
 
             # Check if paths cross
             intersect = False
             for pair in [(0,1), (0,2), (1,2)]:
-                ped1 = (pedestrians[pair[0]], goals[pair[0]])
-                ped2 = (pedestrians[pair[1]], goals[pair[1]])
-                if check_intersect(ped1, ped2):
+                ped1 = (peds[pair[0]], goals[pair[0]])
+                ped2 = (peds[pair[1]], goals[pair[1]])
+                if min_dist_small(ped1, ped2):
                     intersect = True
                     break
 
@@ -131,8 +175,8 @@ class CrossWalkVelEnv(gym.Env):
                 continue
             else:
                 break
-
-        return goals, pedestrians
+        #draw_all((peds[0], goals[0]),(peds[1], goals[1]), (peds[2], goals[2]))
+        return goals, peds
 
     def reset(self):
         self.goals, self.pedestrians = self._get_init_goal()
@@ -147,7 +191,7 @@ class CrossWalkVelEnv(gym.Env):
         self.pedestrian_angles = self._get_pedestrian_angles()
 
         # Agent's initial position, speed, angle
-        self.pose = np.array([np.random.uniform(1.2, 2.8), 0.0, np.random.uniform(-0.5, 0.5)])
+        self.pose = np.array([np.random.uniform(1.2, 2.8), -0.1, np.random.uniform(-0.5, 0.5)])
         self.speed = 0.0
         self.steering_angle = np.random.uniform(self.car_steering_limits[0], self.car_steering_limits[1])
         self.car_front = self.pose[:2] + \
@@ -234,7 +278,7 @@ class CrossWalkVelEnv(gym.Env):
         dist = np.linalg.norm(pose - pedestrians, axis=1)
         next_dist = np.linalg.norm(pose - next_pedestrians, axis=1)
 
-        reward *= 0.05
+        reward *= 0.3
 
         # Collision
         collision = False
@@ -347,11 +391,3 @@ if __name__ == "__main__":
     env = CrossWalkVelEnv()
 
     obs = env.reset()
-    t = 0
-    while True:
-        t += 1
-        o, r, d, _ = env.step([0.5, 0.1])
-        env._visualize(filename="test{}.png".format(t))
-        if d:
-            break
-        print(t)

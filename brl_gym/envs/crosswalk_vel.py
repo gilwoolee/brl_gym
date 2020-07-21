@@ -278,7 +278,7 @@ class CrossWalkVelEnv(gym.Env):
         dist = np.linalg.norm(pose - pedestrians, axis=1)
         next_dist = np.linalg.norm(pose - next_pedestrians, axis=1)
 
-        reward *= 0.3
+        reward *= 0.1
 
         # Collision
         collision = False

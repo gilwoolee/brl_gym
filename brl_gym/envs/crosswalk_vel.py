@@ -117,8 +117,8 @@ def draw_all(seg1, seg2, seg3):
 # Crosswalk but with (velocity, steering angle) control
 class CrossWalkVelEnv(gym.Env):
     def __init__(self, timestep=0.1):
-        self.action_space = spaces.Box(np.array([0.0, -0.5]), np.array([1.2, 0.5]))
-        self.car_length = 0.5 # Length of the MuSHR car
+        self.action_space = spaces.Box(np.array([0.0, -0.3]), np.array([1.5, 0.3]))
+        self.car_length = 0.33 # Length of the MuSHR car
         self.num_pedestrians = 3
         self.timestep = timestep
         self.observation_space = spaces.Box(low=np.ones(20)*-10.0,
@@ -130,10 +130,7 @@ class CrossWalkVelEnv(gym.Env):
         self.x_left = 0.0
         self.x_right = 3.5
         self.y_starts = np.array([1.0, 4.0])
-        self.ped_speed_limits = np.array([0.5, 0.8], dtype=np.float32)
-        self.car_start_y = 0.0
-        self.car_speed_limits = np.array([0.2, 0.4], dtype=np.float32)
-        self.car_steering_limits = np.array([-0.5,0.5], dtype=np.float32)
+        self.ped_speed_limits = np.array([0.5, 1.3], dtype=np.float32)
 
     def _get_init_goal(self):
         while True:
@@ -141,6 +138,8 @@ class CrossWalkVelEnv(gym.Env):
 
             # Choose left or right for each pedestrian. # 0 for left, 1 for right
             sides = np.random.choice(2, size=3)
+            if np.all(sides == 0) or np.all(sides == 1):
+                continue
             peds = np.zeros((3, 2), dtype=np.float32)
             peds[sides == 0, 0] = self.x_left
             peds[sides == 1, 0] = self.x_right
@@ -157,7 +156,7 @@ class CrossWalkVelEnv(gym.Env):
             # If too close, pass
             close = False
             for pair in [(0,1), (0,2), (1,2)]:
-                if np.abs(goals[pair[0],1] - goals[pair[1],1]) < 0.65 or np.abs(peds[pair[0],1] - peds[pair[1],1]) < 0.65:
+                if np.abs(goals[pair[0],1] - goals[pair[1],1]) < 0.3 or np.abs(peds[pair[0],1] - peds[pair[1],1]) < 0.3:
                     close = True
             if close:
                 continue
@@ -175,7 +174,7 @@ class CrossWalkVelEnv(gym.Env):
                 continue
             else:
                 break
-        #draw_all((peds[0], goals[0]),(peds[1], goals[1]), (peds[2], goals[2]))
+        # draw_all((peds[0], goals[0]),(peds[1], goals[1]), (peds[2], goals[2]))
         return goals, peds
 
     def reset(self):
@@ -183,7 +182,7 @@ class CrossWalkVelEnv(gym.Env):
 
         self.t = 0
 
-        self.random_delays = np.random.choice(10, size=self.num_pedestrians)
+        self.random_delays = np.random.choice(30, size=self.num_pedestrians)
 
         # Pedestrians have fixed speed, but can change directions
         self.pedestrian_speeds = np.random.uniform(
@@ -193,9 +192,9 @@ class CrossWalkVelEnv(gym.Env):
         # Agent's initial position, speed, angle
         self.pose = np.array([np.random.uniform(1.2, 2.8), -0.1, np.random.uniform(-0.5, 0.5)])
         self.speed = 0.0
-        self.steering_angle = np.random.uniform(self.car_steering_limits[0], self.car_steering_limits[1])
+        self.steering_angle = 0.0
         self.car_front = self.pose[:2] + \
-                         self.car_length * np.array([-np.sin(self.pose[2]), np.cos(self.pose[2])])
+                         2.0*self.car_length * np.array([-np.sin(self.pose[2]), np.cos(self.pose[2])])
 
         ped_speeds = self.pedestrian_speeds.copy()
         for i in range(2):
@@ -278,7 +277,7 @@ class CrossWalkVelEnv(gym.Env):
         dist = np.linalg.norm(pose - pedestrians, axis=1)
         next_dist = np.linalg.norm(pose - next_pedestrians, axis=1)
 
-        reward *= 0.1
+        #reward *= 0.5
 
         # Collision
         collision = False
@@ -289,14 +288,14 @@ class CrossWalkVelEnv(gym.Env):
 
         if collision:
             done = True
-            reward -= 100
-        elif car_front[0] <= self.x_limit[0] + 0.5\
-                or car_front[0] >= self.x_limit[1] - 0.5\
+            reward = -100
+        elif car_front[0] <= self.x_limit[0] + 0.5 \
+                or car_front[0] >= self.x_limit[1] - 0.5  \
                 or car_front[1] <= -0.5:
-            reward += -100.0
+            reward = -100.0
             done = True
         elif pose[1] >= self.car_y_goal:
-            reward += 100.0
+            reward = 100.0
             done = True
 
         return reward, done

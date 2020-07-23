@@ -42,7 +42,7 @@ class BayesCrosswalkEstimator(Estimator):
         lefts = peds[:,0] < 0.5
         goal_ys, nbins = self.goal_ys, self.nbins
 
-        self.GOALS = np.zeros((3,nbins,2), np.float32)
+        self.GOALS = np.zeros((self.num_pedestrians,nbins,2), np.float32)
         self.GOALS[lefts] = self.GOALS_RIGHT
         self.GOALS[np.logical_not(lefts)] = self.GOALS_LEFT
 
@@ -50,7 +50,7 @@ class BayesCrosswalkEstimator(Estimator):
         # each row tracks each pedestrian's goal belief
         self.belief = np.ones((self.num_pedestrians, self.nbins)) / self.nbins
 
-        angles = np.pi/2.0 * np.ones((3,1))
+        angles = np.pi/2.0 * np.ones((self.num_pedestrians,1))
         angles[peds[:,0] < 0.5] *= -1.0
         self.belief = np.hstack([self.belief,
                                  np.mean(self.GOALS, axis=1), angles])
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     env = CrossWalkVelEnv()
     obs = env.reset()
     estimator = BayesCrosswalkEstimator()
-    peds = obs[8:14].reshape(-1, 2)
+    peds = obs[8:8+env.num_pedestrians*2].reshape(-1, 2)
     bel = estimator.estimate(None, obs, pedestrians=peds)
     print("peds")
     print(peds)

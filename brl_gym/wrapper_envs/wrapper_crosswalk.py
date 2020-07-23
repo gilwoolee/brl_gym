@@ -57,7 +57,7 @@ class BayesCrossWalkEnv(BayesEnv):
 
     def reset(self):
         obs = self.env.reset()
-        peds = obs[8:14].reshape(-1, 2)
+        peds = obs[8:8+self.env.num_pedestrians*2].reshape(-1, 2)
         bel = self.estimator.estimate(None, obs, **{'pedestrians':peds})
         obs = self._expand_belief(obs, bel)
         return obs

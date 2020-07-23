@@ -6,7 +6,7 @@ import numpy as np
 
 # Fixes direction as well
 class CrossWalkVelExpert(Expert):
-    def __init__(self, timestep=0.1, horizon=35):
+    def __init__(self, timestep=0.1, horizon=50):
         env = BayesCrossWalkEnv(env_type="velocity")
         obs_dim = env.env.observation_space.low.shape[0]
         bel_dim = env.estimator.belief_space.low.size
@@ -28,8 +28,9 @@ class CrossWalkVelExpert(Expert):
         self.poses = np.cumsum(pose_increments, axis=1)
         self.angles = angles[None, :, :]
         self.increments = increments
-        # self.time_weight = np.arange(horizon + 10, 10, -1).astype(np.float).reshape(1,-1,1,1)
-        self.time_weight = 1
+        self.time_weight = np.arange(horizon + 10, 10, -1).astype(np.float).reshape(1,-1,1,1)
+        self.time_weight /= np.sum(self.time_weight)
+        # self.time_weight = 1
         self.steering_angles = steering_angles
         """
         ca = car_angle = np.deg2rad(30.0)
@@ -73,24 +74,28 @@ class CrossWalkVelExpert(Expert):
 
         # Pedestrian positions in N steps
         peds = (peds[:,:,:,None] + ped_dirs[:,:,:,None] * self.increments)[:,:,:,:,None,None]
-        distance = np.linalg.norm(peds - car_poses[:,None,:,:,:,:], axis=2)
-        front_distance = np.linalg.norm(peds- car_fronts[:,None,:,:,:,:], axis=2)
-        front_distance[front_distance > 1.0] = 1e8
-        distance[distance > 1.0] = 1e8
-        cost = np.sum(1.0/front_distance**2 + 1.0/distance**2, axis=1) * 200.0 / self.horizon
+        distance = (np.linalg.norm(peds - car_poses[:,None,:,:,:,:], axis=2))
+        front_distance = (1+np.linalg.norm(peds- car_fronts[:,None,:,:,:,:], axis=2))
+        front_distance[front_distance > 1.5] = 1e8
+        distance[distance > 1.5] = 1e8
+        cost = np.sum(1.0/front_distance + 1.0/distance, axis=1) * 200.0 / self.horizon
+        # cost = np.sum(1.0/distance**2, axis=1) * 50.0 / self.num_pedestrians
+
 
         # penalize distance to goal
         distance_to_goal = self.car_y_goal - car_poses[:, 1, :, : ,:]
         distance_to_goal[distance_to_goal < 0] = 0.0
-        cost += np.abs(distance_to_goal)
+
+        cost += np.abs(distance_to_goal) * 1.0
         cost += np.abs(car_angles)[:,:,:,None] * 5.0
 
         # time-weighted cost
-        cost = np.sum(cost*self.time_weight,axis=1)
+        # import IPython; IPython.embed(); import sys; sys.exit(0)
+        self.time_weight = 1
+        cost = np.sum(cost*self.time_weight,axis=1) #/ self.horizon
         # Choose one with smallest cost
         bests = [np.unravel_index(np.argmin(c), c.shape) for c in cost]
         best_params = self.params[tuple(np.array(bests).T)]
-        # import IPython ; IPython.embed() ; import sys; sys.exit(0)
         return best_params
 
 if __name__ == "__main__":
@@ -99,8 +104,9 @@ if __name__ == "__main__":
     # profile.enable()
     rewards = []
     lengths = []
+    all_rewards = []
     collision = 0
-    for i in range(500):
+    for i in range(200):
         env = BayesCrossWalkEnv(env_type="velocity")
         obs = env.reset()
         expert = CrossWalkVelExpert()
@@ -108,7 +114,7 @@ if __name__ == "__main__":
         # os.makedirs("img/trial{}".format(i))
 
         reward = 0
-        for t in range(500):
+        for t in range(200):
             action = expert.action(np.array([obs]))
             obs, r, done, _ = env.step(action[0])
             # env.env._visualize(filename="img/trial{}/test{}.png".format(i, t))
@@ -116,13 +122,16 @@ if __name__ == "__main__":
             #print(r)
             #env.render()
             if done:
-                if r < 0:
-                    collision += 1
-                lengths += [t]
                 break
+        if r <= 0:
+            collision += 1
+        lengths += [t]
+
+        print("   -  ", i)
         print("reward", reward)
+        print("length", t)
         rewards += [reward]
-    print("No-Collision", 1 - collision / 500.0)
+    print("No-Collision", 1 - collision / len(lengths))
     print("reward-mean", np.mean(np.array(rewards)))
     print("reward-ste ", np.std(np.array(rewards))/np.sqrt(len(rewards)))
     print("length-mean", np.mean(np.array(lengths)))

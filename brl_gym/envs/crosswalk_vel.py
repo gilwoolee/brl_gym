@@ -213,7 +213,7 @@ class CrossWalkVelEnv(gym.Env):
         self.pedestrian_angles = self._get_pedestrian_angles()
 
         # Agent's initial position, speed, angle
-        self.pose = np.array([np.random.uniform(1.2, 2.8), -0.1, np.random.uniform(-0.5, 0.5)])
+        self.pose = np.array([np.random.uniform(1.2, 2.8), 0.0, np.random.uniform(-0.5, 0.5)])
         self.speed = 0.0
         self.steering_angle = 0.0
         self.car_front = self.pose[:2] + \
@@ -306,7 +306,7 @@ class CrossWalkVelEnv(gym.Env):
         collision = False
         # print(np.around(dist,2), np.around(next_dist, 2))
         for i, (d, fd, nd) in enumerate(zip(dist, front_dist, next_dist)):
-            if (d < collision_dist or fd < 0.35) and nd < d:
+            if (d < collision_dist or fd < collision_dist) and nd < d:
                 collision = True
                 break
 

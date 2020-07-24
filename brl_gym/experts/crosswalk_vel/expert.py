@@ -28,6 +28,7 @@ class CrossWalkVelExpert(Expert):
         self.poses = np.cumsum(pose_increments, axis=1)
         self.angles = angles[None, :, :]
         self.increments = increments
+        self.x_limit = [0.0, 3.5]
         self.time_weight = np.arange(horizon + 10, 10, -1).astype(np.float).reshape(1,-1,1,1)
         self.time_weight /= np.sum(self.time_weight)
         # self.time_weight = 1
@@ -76,11 +77,10 @@ class CrossWalkVelExpert(Expert):
         peds = (peds[:,:,:,None] + ped_dirs[:,:,:,None] * self.increments)[:,:,:,:,None,None]
         distance = (np.linalg.norm(peds - car_poses[:,None,:,:,:,:], axis=2))
         front_distance = (1+np.linalg.norm(peds- car_fronts[:,None,:,:,:,:], axis=2))
-        front_distance[front_distance > 1.5] = 1e8
-        distance[distance > 1.5] = 1e8
+        # front_distance[front_distance > 1.5] = 1e8
+        # distance[distance > 1.5] = 1e8
         cost = np.sum(1.0/front_distance + 1.0/distance, axis=1) * 200.0 / self.horizon
         # cost = np.sum(1.0/distance**2, axis=1) * 50.0 / self.num_pedestrians
-
 
         # penalize distance to goal
         distance_to_goal = self.car_y_goal - car_poses[:, 1, :, : ,:]
@@ -89,8 +89,14 @@ class CrossWalkVelExpert(Expert):
         cost += np.abs(distance_to_goal) * 1.0
         cost += np.abs(car_angles)[:,:,:,None] * 5.0
 
+        # Distance to sides
+        distance_to_left = np.abs(self.x_limit[0] - car_poses[:, 0, :, :, :])
+        distance_to_right = np.abs(self.x_limit[1] - car_poses[:, 0, :, : ,:])
+
+        cost -= np.abs(distance_to_left) * 0.1
+        cost -= np.abs(distance_to_right) * 0.1
+
         # time-weighted cost
-        # import IPython; IPython.embed(); import sys; sys.exit(0)
         self.time_weight = 1
         cost = np.sum(cost*self.time_weight,axis=1) #/ self.horizon
         # Choose one with smallest cost
@@ -111,13 +117,13 @@ if __name__ == "__main__":
         obs = env.reset()
         expert = CrossWalkVelExpert()
 
-        # os.makedirs("img/trial{}".format(i))
+        os.makedirs("img/trial{}".format(i))
 
         reward = 0
         for t in range(200):
             action = expert.action(np.array([obs]))
             obs, r, done, _ = env.step(action[0])
-            # env.env._visualize(filename="img/trial{}/test{}.png".format(i, t))
+            env.env._visualize(filename="img/trial{}/test{}.png".format(i, t))
             reward += r
             #print(r)
             #env.render()

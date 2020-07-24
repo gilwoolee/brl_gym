@@ -130,7 +130,7 @@ def draw_all(seg1, seg2, seg3, seg4):
 # Crosswalk but with (velocity, steering angle) control
 class CrossWalkVelEnv(gym.Env):
     def __init__(self, timestep=0.1):
-        self.action_space = spaces.Box(np.array([0.0, -0.3]), np.array([1.0, 0.3]))
+        self.action_space = spaces.Box(np.array([0.0, -0.3]), np.array([0.8, 0.3]))
         self.car_length = 0.5 # Length of the MuSHR car
         self.num_pedestrians = 3
         self.timestep = timestep
@@ -143,7 +143,7 @@ class CrossWalkVelEnv(gym.Env):
         self.x_left = 0.0
         self.x_right = 3.5
         self.y_starts = np.array([1.0, 4.0])
-        self.ped_speed_limits = np.array([0.5, 0.7], dtype=np.float32)
+        self.ped_speed_limits = np.array([0.5, 0.6], dtype=np.float32)
 
     def _get_init_goal(self):
         while True:
@@ -206,7 +206,7 @@ class CrossWalkVelEnv(gym.Env):
 
         self.t = 0
 
-        self.random_delays = np.random.choice(40, size=self.num_pedestrians)
+        self.random_delays = np.random.choice(20, size=self.num_pedestrians)
 
         # Pedestrians have fixed speed, but can change directions
         self.pedestrian_speeds = np.random.uniform(
@@ -326,8 +326,11 @@ class CrossWalkVelEnv(gym.Env):
         return reward, done
 
     def _get_pedestrian_directions(self, angles, ped_speeds):
-        speeds = ped_speeds.reshape(-1,1)
+        speeds = ped_speeds.reshape(-1,1).copy()
+        speeds[speeds < 0.1] = 0.5
         speeds += np.clip(np.random.normal(size=speeds.shape)*0.1, 0.0, 0.1)
+
+
         return self.timestep*speeds \
                 * np.array([-np.sin(angles),
                             np.cos(angles)]).transpose()

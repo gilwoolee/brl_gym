@@ -6,7 +6,7 @@ import numpy as np
 
 # Fixes direction as well
 class CrossWalkVelExpert(Expert):
-    def __init__(self, timestep=0.1, horizon=50):
+    def __init__(self, timestep=0.1, horizon=35):
         env = BayesCrossWalkEnv(env_type="velocity")
         obs_dim = env.env.observation_space.low.shape[0]
         bel_dim = env.estimator.belief_space.low.size
@@ -17,8 +17,8 @@ class CrossWalkVelExpert(Expert):
 
         super(CrossWalkVelExpert, self).__init__(obs_dim, bel_dim)
 
-        velocities = np.linspace(action_space.low[0], action_space.high[0], 3, endpoint=True)
-        steering_angles = np.linspace(action_space.low[1], action_space.high[1], 7, endpoint=True)
+        velocities = np.linspace(action_space.low[0], action_space.high[0], 11, endpoint=True)
+        steering_angles = np.linspace(action_space.low[1], action_space.high[1], 11, endpoint=True)
 
         self.params = np.array(np.meshgrid(velocities.reshape(-1,1), steering_angles.reshape(-1, 1))).transpose(1,2,0)
         self.timestep = timestep
@@ -26,6 +26,7 @@ class CrossWalkVelExpert(Expert):
         angles = steering_angles.reshape(1,-1) * increments.reshape(-1,1)
         pose_increments = np.array([-np.sin(angles), np.cos(angles)])[:,:,:,None] * velocities * timestep
         self.poses = np.cumsum(pose_increments, axis=1)
+        self.poses += np.random.normal(size=self.poses.shape)*0.05
         self.angles = angles[None, :, :]
         self.increments = increments
         self.x_limit = [0.0, 3.5]
@@ -33,19 +34,23 @@ class CrossWalkVelExpert(Expert):
         self.time_weight /= np.sum(self.time_weight)
         # self.time_weight = 1
         self.steering_angles = steering_angles
-        """
-        ca = car_angle = np.deg2rad(30.0)
-        transform = np.array([[np.cos(ca), -np.sin(ca)],[np.sin(ca), np.cos(ca)]])
-        poses = np.tensordot(transform, poses, 1)
 
-        from matplotlib import pyplot as plt
-        plt.figure()
-        for i in range(poses.shape[2]):
-            for j in range(poses.shape[3]):
-                plt.plot(poses[0][:,i, j], poses[1][:, i, j])
-        plt.show()
-        import sys; sys.exit(0)
-        """
+        # ca = car_angle = np.deg2rad(30.0)
+        # transform = np.array([[np.cos(ca), -np.sin(ca)],[np.sin(ca), np.cos(ca)]])
+        # poses = np.tensordot(transform, self.poses, 1)
+
+        # from matplotlib import pyplot as plt
+        # import IPython; IPython.embed(); import sys; sys.exit(0)
+        # fig = plt.figure()
+        # for i in range(poses.shape[2]):
+
+        #     for j in range(poses.shape[3]):
+        #         plt.plot(poses[0][:,i, j], poses[1][:, i, j], label=str(j))
+        # plt.axis('equal')
+        # plt.legend()
+        # plt.show()
+        # import sys; sys.exit(0)
+
 
     def action(self, inputs, infos=None):
         if len(inputs.shape) == 1:
@@ -75,26 +80,26 @@ class CrossWalkVelExpert(Expert):
 
         # Pedestrian positions in N steps
         peds = (peds[:,:,:,None] + ped_dirs[:,:,:,None] * self.increments)[:,:,:,:,None,None]
-        distance = (np.linalg.norm(peds - car_poses[:,None,:,:,:,:], axis=2))
-        front_distance = (1+np.linalg.norm(peds- car_fronts[:,None,:,:,:,:], axis=2))
+        distance = np.linalg.norm(peds - car_poses[:,None,:,:,:,:], axis=2)
+        front_distance = np.linalg.norm(peds- car_fronts[:,None,:,:,:,:], axis=2)
         # front_distance[front_distance > 1.5] = 1e8
         # distance[distance > 1.5] = 1e8
-        cost = np.sum(1.0/front_distance + 1.0/distance, axis=1) * 200.0 / self.horizon
-        # cost = np.sum(1.0/distance**2, axis=1) * 50.0 / self.num_pedestrians
+        cost = np.sum(1.0/front_distance + 1.0/distance, axis=1) * 80.0 / self.horizon
 
-        # penalize distance to goal
+        # # penalize distance to goal
         distance_to_goal = self.car_y_goal - car_poses[:, 1, :, : ,:]
-        distance_to_goal[distance_to_goal < 0] = 0.0
 
-        cost += np.abs(distance_to_goal) * 1.0
-        cost += np.abs(car_angles)[:,:,:,None] * 5.0
+        cost += distance_to_goal*2.0
+        cost += np.abs(car_angles)[:,:,:,None]
 
-        # Distance to sides
-        distance_to_left = np.abs(self.x_limit[0] - car_poses[:, 0, :, :, :])
-        distance_to_right = np.abs(self.x_limit[1] - car_poses[:, 0, :, : ,:])
+        # # Distance to sides
+        distance_to_left = car_poses[:, 0, :, :, :] - self.x_limit[0]
+        distance_to_left[distance_to_left < 0] = 0.0
+        distance_to_right = self.x_limit[1] - car_poses[:, 0, :, : ,:]
+        distance_to_right[distance_to_right < 0] = 0.0
 
-        cost -= np.abs(distance_to_left) * 0.1
-        cost -= np.abs(distance_to_right) * 0.1
+        cost -= np.abs(distance_to_left)
+        cost -= np.abs(distance_to_right)
 
         # time-weighted cost
         self.time_weight = 1
@@ -102,6 +107,8 @@ class CrossWalkVelExpert(Expert):
         # Choose one with smallest cost
         bests = [np.unravel_index(np.argmin(c), c.shape) for c in cost]
         best_params = self.params[tuple(np.array(bests).T)]
+        # print(best_params.flatten())
+
         return best_params
 
 if __name__ == "__main__":
@@ -117,13 +124,13 @@ if __name__ == "__main__":
         obs = env.reset()
         expert = CrossWalkVelExpert()
 
-        os.makedirs("img/trial{}".format(i))
+        # os.makedirs("img/trial{}".format(i))
 
         reward = 0
         for t in range(200):
             action = expert.action(np.array([obs]))
             obs, r, done, _ = env.step(action[0])
-            env.env._visualize(filename="img/trial{}/test{}.png".format(i, t))
+            # env.env._visualize(filename="img/trial{}/test{}.png".format(i, t))
             reward += r
             #print(r)
             #env.render()

@@ -130,8 +130,8 @@ def draw_all(seg1, seg2, seg3, seg4):
 # Crosswalk but with (velocity, steering angle) control
 class CrossWalkVelEnv(gym.Env):
     def __init__(self, timestep=0.1):
-        self.action_space = spaces.Box(np.array([0.0, -0.3]), np.array([0.8, 0.3]))
-        self.car_length = 0.5 # Length of the MuSHR car
+        self.action_space = spaces.Box(np.array([0.0, -0.5]), np.array([0.8, 0.5]))
+        self.car_length = 0.4 # Length of the MuSHR car
         self.num_pedestrians = 3
         self.timestep = timestep
         self.observation_space = spaces.Box(low=np.ones(8+self.num_pedestrians*4)*-10.0,
@@ -142,7 +142,7 @@ class CrossWalkVelEnv(gym.Env):
         self.car_y_goal = 4.5
         self.x_left = 0.0
         self.x_right = 3.5
-        self.y_starts = np.array([1.0, 4.0])
+        self.y_starts = np.array([1.5, 3.8])
         self.ped_speed_limits = np.array([0.5, 0.6], dtype=np.float32)
 
     def _get_init_goal(self):
@@ -214,7 +214,7 @@ class CrossWalkVelEnv(gym.Env):
         self.pedestrian_angles = self._get_pedestrian_angles()
 
         # Agent's initial position, speed, angle
-        self.pose = np.array([np.random.uniform(1.2, 2.8), 0.0, np.random.uniform(-0.5, 0.5)])
+        self.pose = np.array([np.random.uniform(1.2, 2.8), 0.0, np.random.uniform(-0.1, 0.1)])
         self.speed = 0.0
         self.steering_angle = 0.0
         self.car_front = self.pose[:2] + \
@@ -251,7 +251,7 @@ class CrossWalkVelEnv(gym.Env):
         self.pose[1] += self.car_length / (1e-5+np.tan(action[1])) * (-np.cos(next_theta) + np.cos(theta))
         self.pose[2] = next_theta - np.pi / 2.0
         self.car_front = self.pose[:2] + \
-                         self.car_length/2.0 * np.array([-np.sin(self.pose[2]), np.cos(self.pose[2])])
+                         self.car_length * np.array([-np.sin(self.pose[2]), np.cos(self.pose[2])])
 
         # move pedestrians
         ped_speeds = self.pedestrian_speeds.copy()
@@ -296,7 +296,7 @@ class CrossWalkVelEnv(gym.Env):
         # angle penalty
         reward -= np.abs(angle) * 0.5
 
-        collision_dist = 0.65
+        collision_dist = 0.7
         dist = np.linalg.norm(pose - pedestrians, axis=1)
         front_dist = np.linalg.norm(car_front - pedestrians, axis=1)
         next_dist = np.linalg.norm(pose - next_pedestrians, axis=1)
@@ -307,7 +307,7 @@ class CrossWalkVelEnv(gym.Env):
         collision = False
         # print(np.around(dist,2), np.around(next_dist, 2))
         for i, (d, fd, nd) in enumerate(zip(dist, front_dist, next_dist)):
-            if (d < collision_dist or fd < collision_dist) and nd < d:
+            if d < collision_dist or fd < collision_dist:
                 collision = True
                 break
 
@@ -328,8 +328,8 @@ class CrossWalkVelEnv(gym.Env):
     def _get_pedestrian_directions(self, angles, ped_speeds):
         speeds = ped_speeds.reshape(-1,1).copy()
         speeds[speeds < 0.1] = 0.5
-        speeds += np.clip(np.random.normal(size=speeds.shape)*0.1, 0.0, 0.1)
-
+        speeds += np.clip(np.random.normal(size=speeds.shape)*0.1, -.1, 0.1)
+        speeds = np.clip(speeds, 0, 1.0)
 
         return self.timestep*speeds \
                 * np.array([-np.sin(angles),
@@ -344,7 +344,7 @@ class CrossWalkVelEnv(gym.Env):
             (self.car_front + car_direction).ravel(), # 6
             [self.speed, self.pose[2]], # 8
             self.pedestrians.ravel(), # +4*2 = 16
-            (self.pedestrians + 1.0*self.pedestrian_directions).ravel()]) # + 4*2 = 24
+            (self.pedestrians + 1.0/self.timestep*self.pedestrian_directions).ravel()]) # + 4*2 = 24
         return obs
 
     def _visualize(self, show=False, filename=None, nparray=False, head_only=False, transparent=True):
@@ -377,7 +377,7 @@ class CrossWalkVelEnv(gym.Env):
         # self.car = Rectangle((car[0]-0.33/2.0, car[1]-self.car_length/2.0),
         #             0.33, self.car_length, angle=np.rad2deg(angle), color=colors[-1])
         # else:
-        self.car = Circle([car[0], car[1]], radius=self.car_length/2.0, color=colors[-1], zorder=25)
+        self.car = Circle([car[0], car[1]], radius=self.car_length, color=colors[-1], zorder=25)
         plt.plot([car[0], car_front[0]], [car[1], car_front[1]], color="k", lw=3, zorder=30)
 
         plt.gca().add_patch(self.car)

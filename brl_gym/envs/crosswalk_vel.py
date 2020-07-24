@@ -150,11 +150,12 @@ class CrossWalkVelEnv(gym.Env):
             goal_xs = np.zeros(self.num_pedestrians, dtype=np.float32)
 
             # Choose left or right for each pedestrian. # 0 for left, 1 for right
-            sides = np.random.choice(2, size=self.num_pedestrians)
-            if np.all(sides == 0) or np.all(sides == 1):
-                continue
-            # if np.sum(sides == 0) != 2:
-            #     continue
+            #sides = np.random.choice(2, size=self.num_pedestrians)
+            #if np.all(sides == 0) or np.all(sides == 1):
+            #    continue
+            sides = np.array([0, 0, 1])
+            if np.random.random() > 0.5:
+                sides[1] = 1
 
             peds = np.zeros((self.num_pedestrians, 2), dtype=np.float32)
             peds[sides == 0, 0] = self.x_left
@@ -217,7 +218,7 @@ class CrossWalkVelEnv(gym.Env):
         self.speed = 0.0
         self.steering_angle = 0.0
         self.car_front = self.pose[:2] + \
-                         self.car_length/2.0 * np.array([-np.sin(self.pose[2]), np.cos(self.pose[2])])
+                         self.car_length * np.array([-np.sin(self.pose[2]), np.cos(self.pose[2])])
 
         ped_speeds = self.pedestrian_speeds.copy()
         for i in range(self.num_pedestrians):

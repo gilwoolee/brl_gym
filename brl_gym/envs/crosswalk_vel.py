@@ -314,8 +314,8 @@ class CrossWalkVelEnv(gym.Env):
         if collision:
             done = True
             reward = -10
-        elif car_front[0] <= self.x_limit[0] \
-                or car_front[0] >= self.x_limit[1] \
+        elif car_front[0] <= self.x_limit[0] + 0.5 \
+                or car_front[0] >= self.x_limit[1] -0.5 \
                 or car_front[1] <= -0.5:
             reward = -10.0
             done = True

@@ -20,5 +20,5 @@ for ps, goal in zip(ped_speeds, goals):
 		goal[0] = 3.0
 	if goal[0] == 0.0:
 		goal[0] = 0.3
-	print("roslaunch mushr_control runner_script.launch car_name:=$CAR_NAME wait_for_signal:=false desired_speed:={} desired_x:={} desired_y:={} local:=false".format(round(ps,2), round(goal[0],2), round(goal[1],2)))
+	print("roslaunch mushr_control runner_script.launch car_name:=$CAR_NAME wait_for_signal:=false desired_speed:={:.2f} desired_x:={:.2f} desired_y:={:.2f} local:=false".format(ps, goal[0], goal[1]))
 

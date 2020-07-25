@@ -130,7 +130,7 @@ def draw_all(seg1, seg2, seg3, seg4):
 # Crosswalk but with (velocity, steering angle) control
 class CrossWalkVelEnv(gym.Env):
     def __init__(self, timestep=0.1):
-        self.action_space = spaces.Box(np.array([0.0, -0.3]), np.array([0.8, 0.3]))
+        self.action_space = spaces.Box(np.array([0.4, -0.3]), np.array([0.6, 0.3]))
         self.car_length = 0.4 # Length of the MuSHR car
         self.num_pedestrians = 3
         self.timestep = timestep
@@ -214,7 +214,7 @@ class CrossWalkVelEnv(gym.Env):
         self.pedestrian_angles = self._get_pedestrian_angles()
 
         # Agent's initial position, speed, angle
-        self.pose = np.array([np.random.uniform(1.2, 2.8), 0.0, np.random.uniform(-0.1, 0.1)])
+        self.pose = np.array([np.random.uniform(1.2, 2.3), 0.0, np.random.uniform(-0.1, 0.1)])
         self.speed = 0.0
         self.steering_angle = 0.0
         self.car_front = self.pose[:2] + \
@@ -241,7 +241,11 @@ class CrossWalkVelEnv(gym.Env):
 
     def step(self, action):
         self.t += 1
+        action[0] += np.clip(np.random.normal(size=1)*0.1, -0.1, 0.1)
+        action[1] += np.clip(np.random.normal(size=1)*0.05, -0.05, 0.05)
         action = np.clip(action, self.action_space.low, self.action_space.high)
+        if action[0] < 0.3:
+            action[0] = 0.0
         self.speed = action[0]
         theta = self.pose[2] + np.pi / 2.0
 

@@ -129,8 +129,8 @@ def draw_all(seg1, seg2, seg3, seg4):
 
 # Crosswalk but with (velocity, steering angle) control
 class CrossWalkVelEnv(gym.Env):
-    def __init__(self, timestep=0.1):
-        self.action_space = spaces.Box(np.array([0.4, -0.3]), np.array([0.6, 0.3]))
+    def __init__(self, timestep=0.05):
+        self.action_space = spaces.Box(np.array([0.3, -0.3]), np.array([0.6, 0.3]))
         self.car_length = 0.4 # Length of the MuSHR car
         self.num_pedestrians = 3
         self.timestep = timestep
@@ -144,6 +144,7 @@ class CrossWalkVelEnv(gym.Env):
         self.x_right = 3.5
         self.y_starts = np.array([1.5, 3.8])
         self.ped_speed_limits = np.array([0.5, 0.6], dtype=np.float32)
+        self.time_penalty = 1./(10. / 0.05)
 
     def _get_init_goal(self):
         while True:
@@ -239,13 +240,23 @@ class CrossWalkVelEnv(gym.Env):
             angles += np.random.normal(size=self.pedestrians.shape[0], scale=0.5)
         return angles
 
+    def _get_actual_action(self, action):
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+        action *= 0.8
+        if action[0] < 0.3:
+            action[0] = 0.0
+        return action
+
     def step(self, action):
         self.t += 1
+        assert isinstance(action, np.ndarray)
         action[0] += np.clip(np.random.normal(size=1)*0.1, -0.1, 0.1)
         action[1] += np.clip(np.random.normal(size=1)*0.05, -0.05, 0.05)
         action = np.clip(action, self.action_space.low, self.action_space.high)
+        action *= 0.8
         if action[0] < 0.3:
             action[0] = 0.0
+
         self.speed = action[0]
         theta = self.pose[2] + np.pi / 2.0
 
@@ -295,23 +306,23 @@ class CrossWalkVelEnv(gym.Env):
         next_pedestrians = obs[8+self.num_pedestrians*2:8+self.num_pedestrians*4].reshape(-1,2)
 
         # Penalize time & distance to goal. y = 4.0
-        reward = -0.1 - np.abs(self.car_y_goal - pose[1]) * 0.1
+        reward = -self.time_penalty - np.abs(self.car_y_goal - pose[1]) * 0.05
 
         # angle penalty
-        reward -= np.abs(angle) * 0.5
+        reward -= np.abs(angle) * 0.05
 
-        collision_dist = 0.7
+        collision_dist = 0.65
         dist = np.linalg.norm(pose - pedestrians, axis=1)
         front_dist = np.linalg.norm(car_front - pedestrians, axis=1)
         next_dist = np.linalg.norm(pose - next_pedestrians, axis=1)
 
-        reward *= 0.05
+        reward *= 0.5
 
         # Collision
         collision = False
         # print(np.around(dist,2), np.around(next_dist, 2))
         for i, (d, fd, nd) in enumerate(zip(dist, front_dist, next_dist)):
-            if d < collision_dist or fd < collision_dist:
+            if (d < collision_dist or fd < collision_dist) and nd < d:
                 collision = True
                 break
 

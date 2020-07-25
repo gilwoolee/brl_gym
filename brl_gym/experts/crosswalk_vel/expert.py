@@ -70,7 +70,8 @@ class CrossWalkVelExpert(Expert):
 
     def _transform(self, poses, angle, position):
         transform = np.array([[np.cos(angle), -np.sin(angle)],[np.sin(angle), np.cos(angle)]])
-        poses = np.array([np.tensordot(transform[:,:,i], poses, 1) + position[i].reshape(-1,1,1,1)
+        ps = position[:, None, None, None, :].transpose(4,1,2,3,0)
+        poses = np.array([np.tensordot(transform[:,:,i], poses, 1) + ps[:,:,:,:,i] #+ position[i].reshape(-1,1,1,1)
                                       for i in range(angle.shape[0])])
         return poses
 
@@ -84,34 +85,31 @@ class CrossWalkVelExpert(Expert):
         distance = np.linalg.norm(peds - car_poses[:,None,:,:,:,:], axis=2)*3.5
 
         cost = np.mean(np.sum(1./distance, axis=2), axis=1)
-        # print("cost", cost.shape)
-        # print(np.around(cost,2).squeeze())
 
         # # penalize distance to goal
         distance_to_goal = self.car_y_goal - car_poses[:, 1, :, : ,:]
         distance_to_goal[distance_to_goal < 0] = 0.0
-        # print("dist", distance_to_goal.shape)
-        # print(np.around(np.mean(distance_to_goal, axis=1), 2).squeeze()*5.0)
         cost += np.mean(distance_to_goal, axis=1)*5.0
-        # print('angle')
-        # print(np.around(np.mean(np.abs(car_angles), axis=1).squeeze(), 1))
         cost += np.mean(np.abs(car_angles), axis=1)[:,:,None]*5.0
 
         # # Distance to sides
-        distance_to_left = car_poses[:, 0, :, :, :] - self.x_limit[0]
-        distance_to_right = self.x_limit[1] - car_poses[:, 0, :, : ,:]
+        #distance_to_left = car_poses[:, 0, :, :, :] - self.x_limit[0]
+        #distance_to_right = self.x_limit[1] - car_poses[:, 0, :, : ,:]
 
         # time-weighted cost
         self.time_weight = 1
-        # print("--------------")
 
-        # print(np.around(cost,1).squeeze())
+        #bests = [np.argmin(c) for c in cost]
 
-        bests = [np.argmin(c) for c in cost]
-        best_params = np.array([self.params[np.argmin(c)] for c in cost])
+        argmins = np.argmin(cost, axis=1)
+        # print("======")
+        # print(argmins.ravel())
+        # import IPython; IPython.embed(); import sys; sys.exit(0)
+        best_params = self.params[np.array(tuple(argmins.ravel().astype(int)))]
+        # best_params = np.array([self.params[np.argmin(c)] for c in cost])
+        # print(best_params)
 
         best_params = np.array([self.velocities[0]*np.ones(best_params.shape[0]), best_params]).transpose()
-
 
         return best_params
 
@@ -123,7 +121,7 @@ if __name__ == "__main__":
     lengths = []
     all_rewards = []
     collision = 0
-    for i in range(200):
+    for i in range(100):
         env = BayesCrossWalkEnv(env_type="velocity")
         obs = env.reset()
         expert = CrossWalkVelExpert()
@@ -131,17 +129,18 @@ if __name__ == "__main__":
         # os.makedirs("img/trial{}".format(i))
 
         reward = 0
-        for t in range(200):
-            action = expert.action(np.array([obs]))
+        for t in range(500):
+            action = expert.action(np.array([obs,obs, obs]))
             obs, r, done, _ = env.step(action[0])
             # env.env._visualize(filename="img/trial{}/test{}.png".format(i, t))
             reward += r
-            #print(r)
+            # print(r)
             #env.render()
             if done:
                 break
         if r <= 0:
             collision += 1
+            print("collision")
         lengths += [t]
 
         print("   -  ", i)

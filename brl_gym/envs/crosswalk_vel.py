@@ -130,7 +130,7 @@ def draw_all(seg1, seg2, seg3, seg4):
 # Crosswalk but with (velocity, steering angle) control
 class CrossWalkVelEnv(gym.Env):
     def __init__(self, timestep=0.1):
-        self.action_space = spaces.Box(np.array([0.0, -0.5]), np.array([0.8, 0.5]))
+        self.action_space = spaces.Box(np.array([0.0, -0.3]), np.array([0.8, 0.3]))
         self.car_length = 0.4 # Length of the MuSHR car
         self.num_pedestrians = 3
         self.timestep = timestep

@@ -121,7 +121,8 @@ if __name__ == "__main__":
     lengths = []
     all_rewards = []
     collision = 0
-    for i in range(100):
+    success_lengths = []
+    for i in range(500):
         env = BayesCrossWalkEnv(env_type="velocity")
         obs = env.reset()
         expert = CrossWalkVelExpert()
@@ -134,21 +135,25 @@ if __name__ == "__main__":
             obs, r, done, _ = env.step(action[0])
             # env.env._visualize(filename="img/trial{}/test{}.png".format(i, t))
             reward += r
-            # print(r)
             #env.render()
             if done:
                 break
         if r <= 0:
             collision += 1
-            print("collision")
+        else:
+            success_lengths += [t]
         lengths += [t]
 
         print("   -  ", i)
         print("reward", reward)
         print("length", t)
         rewards += [reward]
-    print("No-Collision", 1 - collision / len(lengths))
+    success_rate = 1.0 - collision / len(lengths)
+    success_ste = success_rate / np.sqrt(len(lengths))
+    print("No-Collision {}\t{}".format(success_rate, success_ste))
     print("reward-mean", np.mean(np.array(rewards)))
     print("reward-ste ", np.std(np.array(rewards))/np.sqrt(len(rewards)))
     print("length-mean", np.mean(np.array(lengths)))
     print("length-ste ", np.std(np.array(lengths))/ np.sqrt(len(lengths)))
+    print("success-length-mean", np.mean(np.array(success_lengths)))
+    print("success-length-ste ", np.std(np.array(success_lengths))/ np.sqrt(len(success_lengths)))

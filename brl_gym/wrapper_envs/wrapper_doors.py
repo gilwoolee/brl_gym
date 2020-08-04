@@ -1,17 +1,19 @@
 import numpy as np
 from brl_gym.estimators.bayes_doors_estimator import BayesDoorsEstimator #, LearnableDoorsBF
-from brl_gym.envs.mujoco.doors import DoorsEnv
+from brl_gym.envs.mujoco.doors import DoorsEnv, NoisyDoorEnv
 from brl_gym.envs.mujoco.doors_slow import DoorsSlowEnv
-from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
+from brl_gym.wrapper_envs import BayesEnv
 from brl_gym.wrapper_envs.env_sampler import DiscreteEnvSampler
 
 from gym.spaces import Box, Dict
 from gym import utils
 
-class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
+class ExplicitBayesDoorsEnv(BayesEnv, utils.EzPickle):
     def __init__(self, reset_params=True,
-        reward_entropy=True, entropy_weight=1.0,
-        doors_slow=False, learnable_bf=False):
+        reward_entropy=False, entropy_weight=0.0,
+        doors_slow=False, disturbance=False,
+        estimate_disturbance=False, learned_residual=None):
+        assert not (disturbance and learned_residual is not None)
 
         self.num_doors = 4
         self.num_cases = 2**self.num_doors
@@ -22,22 +24,29 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         envs = []
 
         env_class = DoorsEnv if not doors_slow else DoorsSlowEnv
+        if disturbance:
+            env_class = NoisyDoorEnv
+
         for case in self.cases_np:
-            env = env_class()
+            if not disturbance:
+                env = env_class(disturbance=learned_residual)
+            else:
+                env = env_class()
             env.open_doors = case.astype(np.bool)
             envs += [env]
 
-        if not learnable_bf:
-            self.estimator = BayesDoorsEstimator()
-        else:
-            self.estimator = LearnableDoorsBF()
-
         self.env_sampler = DiscreteEnvSampler(envs)
+        self.estimator = BayesDoorsEstimator(
+            estimate_disturbance=estimate_disturbance, residual=learned_residual)
+
         super(ExplicitBayesDoorsEnv, self).__init__(env, self.estimator)
         self.nominal_env = env
 
-        self.observation_space = Dict(
-            {"obs": env.observation_space, "zbel": self.estimator.belief_space})
+        obs_space = Box(low=np.concatenate([env.observation_space.low, self.estimator.param_space.low]),
+                        high=np.concatenate([env.observation_space.high, self.estimator.param_space.high]))
+        self.observation_space = obs_space
+        # Dict(
+        #     {"obs": env.observation_space, "zbel": self.estimator.belief_space})
         self.internal_observation_space = env.observation_space
         self.env = env
         self.reset_params = reset_params
@@ -79,8 +88,8 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         info['entropy'] = entropy
         # self.color_belief()
         info['label'] = self.nominal_env.open_doors.astype(np.int)
-
-        return {'obs':obs, 'zbel':bel}, reward, done, info
+        obs = np.concatenate([obs, bel])
+        return obs, reward, done, info
 
     def reset(self):
         if self.reset_params:
@@ -94,8 +103,10 @@ class ExplicitBayesDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
         bel, _ = self._update_belief(action=None, obs=obs)
         entropy = np.sum(-np.log(bel)/np.log(bel.shape[0]) * bel)
         self.prev_entropy = entropy
-        # self.color_belief()
-        return {'obs':obs, 'zbel':bel}
+        obs = np.concatenate([obs, bel])
+
+        return obs
+
 
     def color_belief(self):
         bel = self.estimator.belief
@@ -111,7 +122,7 @@ class ExplicitBayesDoorsEnvNoEntropyReward(ExplicitBayesDoorsEnv):
 
 
 # Instead of the belief, return best estimate
-class UPMLEDoorsEnv(ExplicitBayesEnv, utils.EzPickle):
+class UPMLEDoorsEnv(BayesEnv, utils.EzPickle):
     def __init__(self, reset_params=True, reward_entropy=True):
 
         self.num_doors = 4
@@ -227,57 +238,16 @@ class BayesDoorsEntropyEnv(ExplicitBayesDoorsEnv):
         else:
             return obs['obs']
 
-
-# class BayesDoorsHiddenEntropyEnv(BayesDoorsEntropyEnv):
-#     """
-#     Hides entropy. Info has everything experts need
-#     """
-#     def __init__(self):
-#         super(BayesDoorsHiddenEntropyEnv, self).__init__(True, True, observe_entropy=False)
-#         self.observation_space = env.observation_space
-
-#     def step(self, action):
-#         obs, reward, done, info = super().step(action)
-#         return obs['obs'], reward, done, info
-
-#     def reset(self):
-#         obs = super().reset()
-#         return obs['obs']
-
 if __name__ == "__main__":
-    # Test simple experts
-    # env = ExplicitBayesDoorsEnv()
-    # obs = env.reset()
-    # doors = env.env.open_doors
-    # simple_expert = SimpleExpert()
+    env = ExplicitBayesDoorsEnv(disturbance=True, estimate_disturbance=True, entropy_weight=0.0)
+    obs = env.reset()
+    doors = env.env.open_doors
 
-    # done = False
-    # while not done:
-    #     action = simple_expert.action(doors.reshape(1, -1), obs['obs'][:2].reshape(1, -1))
-    #     obs, _, done, _ = env.step(action[0])
-    #     env.render()
-
-    # # Test expert
-    # env = ExplicitBayesDoorsEnv()
-    # obs = env.reset()
-    # doors = env.env.open_doors
-    # expert = Expert()
-
-    # done = False
-    # rewards = []
-    # while not done:
-    #     action = expert.action((obs['obs'].reshape(1, -1), obs['zbel'].reshape(1, -1)))
-    #     print('obs', np.around(obs['obs'][:2], 2), 'act', action, 'zbel', obs['zbel'])
-    #     obs, r, done, _ = env.step(action.ravel())
-
-    #     env.render()
-
-    #     rewards += [r]
-    #     if done:
-    #         break
-
-    # print("Length", len(rewards))
-    # print(np.sum(rewards))
+    done = False
+    rewards = []
+    while not done:
+        env.step(env.action_space.sample())
+        env.render()
 
     # Test upmle env
     # env = UPMLEDoorsEnv()

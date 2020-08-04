@@ -30,9 +30,9 @@ def lqr(A,B,Q,R):
     #compute the LQR gain
     K = np.matrix(scipy.linalg.inv(R)*(B.T*X))
 
-    eigVals, eigVecs = scipy.linalg.eig(A-B*K)
+    # eigVals, eigVecs = scipy.linalg.eig(A-B*K)
 
-    return K, X, eigVals
+    return K, X
 
 
 class ContinuousCartPoleEnv(gym.Env):
@@ -42,19 +42,13 @@ class ContinuousCartPoleEnv(gym.Env):
         'video.frames_per_second' : 50
     }
 
-    def __init__(self, ctrl_noise_scale=3.0, random_param=True):
+    def __init__(self, ctrl_noise_scale=0.0, random_param=True, disturbance=None):
         """
         ctrl_noise_scale: Normal(0, scale) is added to action and multiplied by 10
         """
         self.ctrl_noise_scale = ctrl_noise_scale
 
         self.gravity = 9.8
-        self.masscart = 1.0
-        self.masspole = 0.1
-        self.total_mass = (self.masspole + self.masscart)
-        self.length = 0.5 # actually half the pole's length
-        # self.length = 0.625
-        self.polemass_length = (self.masspole * self.length)
         self.max_force_mag = 10.0
         self.tau = 0.02  # seconds between state updates
         self.kinematics_integrator = 'euler'
@@ -81,11 +75,19 @@ class ContinuousCartPoleEnv(gym.Env):
 
         self.random_param = random_param
         self.param_space = dict(
-            # length=spaces.Box(np.array([0.5]),np.array([1.0]), dtype=np.float32))
-            length=spaces.Box(np.array([0.5]),np.array([2.0]), dtype=np.float32),
-            masscart=spaces.Box(np.array([0.5]), np.array([2.0]), dtype=np.float32))
-        self.param_space_flat = Box(np.array([0.5, 0.5]), np.array([2.0, 2.0]), dtype=np.float32)
+            length=spaces.Box(np.array([0.5]),np.array([2.0]), dtype=np.float32))
+            # length=spaces.Box(np.array([0.5]),np.array([2.0]), dtype=np.float32),
+            # masscart=spaces.Box(np.array([0.5]), np.array([2.0]), dtype=np.float32))
+        # self.param_space_flat = Box(np.array([0.5, 0.5]), np.array([2.0, 2.0]), dtype=np.float32)
+        self.param_space_flat = Box(np.array([0.5]), np.array([2.0]), dtype=np.float32)
+        self.disturbance = disturbance
 
+        if not disturbance:
+            self.disturbance = lambda state, action: 0.0
+        self.masscart = 1.0
+        self.masspole = 0.1
+        self.length = 0.5 # actually half the pole's length
+        # self.length = 0.625
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
@@ -123,22 +125,15 @@ class ContinuousCartPoleEnv(gym.Env):
             x = x[0]
         if isinstance(theta, np.ndarray):
             theta = theta[0]
+            print("theta")
 
-        self.state = (x,x_dot,theta,theta_dot)
+        self.state = np.array([x,x_dot,theta,theta_dot])
+        self.state += self.disturbance(self.state, action)
         done =  x < -self.x_threshold \
                 or x > self.x_threshold \
                 or theta < -self.theta_threshold_radians \
                 or theta > self.theta_threshold_radians
         done = bool(done)
-        # done = False
-
-        q = np.matrix([x, theta, x_dot, theta_dot])
-        Q = np.matrix(np.diag([10,100,1, 1]))
-        R = np.matrix(np.array([[0.001]]))
-
-        action = np.matrix([action])
-        cost = (q * Q * q.T  + action.T * R * action)[0,0]
-        reward = -cost * 0.05
 
         if not done:
             reward = 1.0
@@ -154,29 +149,34 @@ class ContinuousCartPoleEnv(gym.Env):
             self.steps_beyond_done += 1
             reward = 0.
 
-        return np.array(self.state), reward, done, {}
+        return self.state, reward, done, {}
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
         self.steps_beyond_done = None
         if self.random_param:
             length_range = self.param_space['length']
-            masscart_range = self.param_space['masscart']
+            # masscart_range = self.param_space['masscart']
             self.length = np.random.uniform(low=length_range.low[0],
                     high=length_range.high[0])
-            self.masscart = np.random.uniform(low=masscart_range.low[0],
-                    high=masscart_range.high[0])
+            # self.masscart = np.random.uniform(low=masscart_range.low[0],
+            #         high=masscart_range.high[0])
             self.polemass_length = self.masspole * self.length
-        return np.array(self.state)
+            self.total_mass = (self.masspole + self.masscart)
+
+        self.state += self.disturbance(self.state, None)
+        return self.state
 
     def set_params(self, params):
         self.length = params['length']
-        self.masscart = params['masscart']
+        # self.masscart = params['masscart']
         if isinstance(self.length, np.ndarray):
             self.length = self.length[0]
-        if isinstance(self.masscart, np.ndarray):
-            self.masscart = self.masscart[0]
+        # if isinstance(self.masscart, np.ndarray):
+        #     self.masscart = self.masscart[0]
         self.polemass_length = self.masspole * self.length
+        self.total_mass = (self.masspole + self.masscart)
+
         self.random_param = False
 
     def get_params(self):
@@ -304,15 +304,12 @@ class LQRControlCartPole:
 
         b = np.vstack([np.zeros((2,1)), np.dot(invH, B)])
 
-        K, S, _ = lqr(A, b, Q, R)
+        K, S = lqr(A, b, Q, R)
         q = np.matrix([x, theta, x_dot, theta_dot]) - np.matrix([0, pi, 0, 0])
         q = q.T
         action = - np.dot(K, q) * 0.1
 
         value = -q.T * S * q
-        # value = - (q.T * Q * q  + action.T * R * action)
-        # value = -np.abs(action) # Assume one step convergence
-
         action = action[0,0] * 0.1
         value = value[0, 0]
         return action, value
@@ -333,8 +330,17 @@ class LQRControlCartPole:
         return np.array(rewards, dtype=np.float32)
 
 
+class NoisyContinuousCartPoleEnv(ContinuousCartPoleEnv):
+    def __init__(self, ctrl_noise_scale=0.0):
+        def noise(state, action):
+            return np.array([0, -0.1, 0, 0], dtype=np.float32)
+
+        ContinuousCartPoleEnv.__init__(self,
+            ctrl_noise_scale=ctrl_noise_scale, random_param=True, disturbance=noise)
+
+
 if __name__ == "__main__":
-    env = ContinuousCartPoleEnv(ctrl_noise_scale=0.0, random_param=True)
+    env = NoisyContinuousCartPoleEnv()
 
     env.reset()
     expert = LQRControlCartPole(env)

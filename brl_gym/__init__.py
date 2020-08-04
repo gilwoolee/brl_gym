@@ -192,6 +192,30 @@ register(
     entry_point='brl_gym.wrapper_envs:BayesContinuousCartPoleEnv',
     max_episode_steps=500,
     reward_threshold=500.0,
+    kwargs={
+    "noisy":False
+    },
+)
+
+register(
+    id='bayes-NoisyContinuousCartPole-v0',
+    entry_point='brl_gym.wrapper_envs:BayesContinuousCartPoleEnv',
+    max_episode_steps=500,
+    reward_threshold=500.0,
+    kwargs={
+    "noisy":True,
+    },
+)
+
+register(
+    id='bayes-NoisyContinuousCartPoleNoiseEstimator-v0',
+    entry_point='brl_gym.wrapper_envs:BayesContinuousCartPoleEnv',
+    max_episode_steps=500,
+    reward_threshold=500.0,
+    kwargs={
+    "noisy":True,
+    "noise_estimator":True
+    },
 )
 
 register(
@@ -565,6 +589,17 @@ register(
     entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
     max_episode_steps=300,
     reward_threshold=100,
+)
+
+register(
+    id='DoorNoisy-v0',
+    entry_point='brl_gym.wrapper_envs:ExplicitBayesDoorsEnv',
+    max_episode_steps=300,
+    reward_threshold=100,
+    kwargs={
+    "entropy_weight":0.0,
+    "disturbance": True
+    },
 )
 
 register(

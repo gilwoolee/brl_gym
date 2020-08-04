@@ -1,17 +1,19 @@
 from brl_gym.experts.expert import Expert
 from brl_gym.wrapper_envs.classic_control.wrapper_continuous_cartpole import BayesContinuousCartPoleEnv
 from brl_gym.envs.classic_control.continuous_cartpole import LQRControlCartPole
+from brl_gym.envs.classic_control.lqr_batch import LQRControlCartPoleBatch
 import numpy as np
 
 class ContinuousCartPoleExpert(Expert):
-    def __init__(self):
+    def __init__(self, nbatch=1):
         env = BayesContinuousCartPoleEnv()
         obs_dim = env.env.observation_space.low.shape[0]
         bel_dim = env.estimator.belief_space.low.shape[0]
         super(ContinuousCartPoleExpert, self).__init__(obs_dim, bel_dim)
 
         envs = env.estimator.envs
-        self.experts = [LQRControlCartPole(e) for e in envs]
+        self.nenvs = len(envs)
+        self.experts = LQRControlCartPoleBatch(envs, nbatch=nbatch)
         self.belief_threshold = 0.05 # Ignore belief lower than this
 
     def action(self, inputs, infos=None):
@@ -19,18 +21,10 @@ class ContinuousCartPoleExpert(Expert):
             inputs = inputs.reshape(1, -1)
         obss, bels = inputs[:, :4], inputs[:, 4:]
 
-        act = np.zeros((inputs.shape[0], 1), dtype=np.float32)
         bels[bels < self.belief_threshold] = 0
-        print(np.around(bels, 2))
         bels /= np.sum(bels, axis=1).reshape(-1, 1)
-        for i in np.arange(obss.shape[0]):
-            obs, bel = obss[i], bels[i]
-            for j, b in enumerate(bel):
-                if b == 0:
-                    continue
-                act[i] += self.experts[j].lqr_control(obs)[0] * b
-
-        return act
+        actions = np.sum(self.experts.lqr_control(obss, bels) * bels, axis=1).reshape(-1,1)
+        return actions
 
 
 if __name__ == "__main__":
@@ -38,15 +32,15 @@ if __name__ == "__main__":
     expert = ContinuousCartPoleExpert()
 
     rewards = np.zeros(100)
-    for i in range(100):
+    for i in range(1):
         print(i, )
         obs = env.reset()
-        print(env.env.total_mass)
         for t in range(500):
-            action = expert.action(obs)
+            action = expert.action(obs)[0]
             print(action)
-            obs, r, d, _ = env.step(action[0])
+            obs, r, d, _ = env.step(action)
             rewards[i] += r
+            env.render()
             if d:
                 break
         print(rewards[i])

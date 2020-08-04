@@ -24,8 +24,10 @@ def get_expert(env_name, num_env, use_mle, **kwargs):
         return LightDarkExpert()
 
     elif 'ContinuousCartPole'.lower() in env_name.lower():
-        from brl_gym.experts.classic_control.continuous_cartpole_expert import ContinuousCartPoleExpert
-        return ContinuousCartPoleExpert()
+        # from brl_gym.experts.classic_control.continuous_cartpole_expert import ContinuousCartPoleExpert
+        # return ContinuousCartPoleExpert()
+        from brl_gym.experts.classic_control.continuous_cartpole_expert_batch import ContinuousCartPoleExpert
+        return ContinuousCartPoleExpert(nbatch=num_env)
 
     elif "WamFindObj".lower() in env_name.lower():
         from brl_gym.experts.mujoco.wam_find_obj_expert import WamFindObjExpert

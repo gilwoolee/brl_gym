@@ -1,7 +1,7 @@
 import numpy as np
 
 from brl_gym.wrapper_envs import BayesEnv
-from brl_gym.envs.classic_control.continuous_cartpole import ContinuousCartPoleEnv
+from brl_gym.envs.classic_control.continuous_cartpole import ContinuousCartPoleEnv, NoisyContinuousCartPoleEnv
 from brl_gym.estimators.classic_control.bayes_continuous_cartpole_estimator import BayesContinuousCartpoleEstimator
 from brl_gym.wrapper_envs.explicit_bayes_env import ExplicitBayesEnv
 from gym.spaces import Box, Dict
@@ -9,9 +9,24 @@ from matplotlib import pyplot as plt
 
 class BayesContinuousCartPoleEnv(BayesEnv):
     # Wrapper envs for mujoco envs
-    def __init__(self):
-        self.env = ContinuousCartPoleEnv(random_param=True)
-        self.estimator = BayesContinuousCartpoleEstimator()
+    def __init__(self, noisy=False, noise_estimator=False, learned_residual=None):
+        # noisy is used only for testing. both can't be true simultaneously
+        assert not (noisy and learned_residual is not None)
+        if not noisy:
+            if learned_residual is None:
+                self.env = ContinuousCartPoleEnv(random_param=True, ctrl_noise_scale=0.0)
+                self.estimator = BayesContinuousCartpoleEstimator(noise=noise_estimator)
+            else:
+                self.env = ContinuousCartPoleEnv(
+                    random_param=True, ctrl_noise_scale=0.0, disturbance=learned_residual)
+                self.estimator = BayesContinuousCartpoleEstimator(
+                                        noise=noise_estimator,
+                                        residual=learned_residual)
+
+        else:
+            self.env = NoisyContinuousCartPoleEnv(ctrl_noise_scale=0.0)
+            self.estimator = BayesContinuousCartpoleEstimator(noise=noise_estimator)
+
         super(BayesContinuousCartPoleEnv, self).__init__(self.env, self.estimator)
 
     def reset(self):

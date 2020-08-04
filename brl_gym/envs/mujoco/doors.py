@@ -6,7 +6,8 @@ from gym.envs.mujoco import mujoco_env
 from mujoco_py import MjViewer
 import mujoco_py
 import os
-asset_dir = "/home/gilwoo/Workspace/brl_gym/brl_gym/envs/mujoco/"
+
+asset_dir = os.path.dirname(os.path.realpath(__file__))
 
 class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     """
@@ -16,12 +17,12 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     The sensing returns noisy observation with error probability proportional
     to the distance to the doors.
     """
-    def __init__(self):
+    def __init__(self, disturbance=None):
         self.agent_bid = 0
         self.target_sid = 0
         utils.EzPickle.__init__(self)
         self.open_doors = np.array([0, 1, 0, 0]).astype(np.bool)
-
+        self.disturbance = disturbance
 
         self.fullpath = os.path.join(asset_dir, "assets", 'doors.xml')
         mujoco_env.MujocoEnv.__init__(self, self.fullpath, 5)
@@ -33,6 +34,7 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.target_pos = self.data.site_xpos[self.target_sid].ravel()[:2]
         self.action_space = Box(np.concatenate([self.action_space.low, [-1]]), np.concatenate([self.action_space.high, [1]]))
 
+
     def step(self, a):
         if len(a) == 3:
             a = np.clip(a, np.array([-1.0, -1.0, -1]), np.array([1.0, 1.0, 1]))
@@ -40,6 +42,10 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             # This is used only during initial setup.
             a = np.clip(a, np.array([-1.0, -1.0]), np.array([1.0, 1.0]))
         # self.data.qvel[:2] = 0
+
+        if self.disturbance is not None:
+            agent_pos = self.data.body_xpos[self.agent_bid].ravel()[:2]
+            a[:2] += self.disturbance(agent_pos, a[:2])
 
         self.do_simulation(a[:2], self.frame_skip)
 
@@ -49,20 +55,20 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
         obs = self._get_obs()
 
-        reward = 0 #-dist * 0.01 # reward if closer
+        reward = -dist * 0.01 # reward if closer
         if len(a) == 3 and a[2] > 0:
             doors, accuracy =  self._sense()
             info = {'doors': doors, 'accuracy': accuracy}
             obs[-8:-4] = doors
             obs[-4:] = accuracy
-            # reward -= 0.1
+            reward -= 0.1
         else:
             info = {}
 
 
         if np.any(obs[-8:-4] == 1.0):
             info['collision'] = np.argmax(obs[-8:-4] == 1)
-            # reward = -10 # Collision
+            reward = -1 # Collision
         if np.any(obs[-4:] == 1.0):
             info['pass_through'] = np.argmax(obs[-4:] == 1)
 
@@ -174,11 +180,20 @@ class DoorsEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.sim.set_state(state)
         self.sim.forward()
 
+class NoisyDoorEnv(DoorsEnv):
+    def __init__(self):
+        def noise(state, action):
+            return np.array([0.2, 0.0], dtype=np.float32)
+
+        DoorsEnv.__init__(self, disturbance=noise)
+
 if __name__ == "__main__":
-    env = DoorsEnv()
+    env = NoisyDoorEnv()
+
     env.reset()
     print (env.model.geom_conaffinity[10:14])
 
     while True:
         env.step(env.action_space.sample())
         env.render()
+

@@ -17,7 +17,8 @@ from brl_gym.wrapper_envs.classic_control.wrapper_continuous_cartpole import Bay
 											   # BayesMazeHiddenEntropyEnv,
 #											   UPMLEMazeEnv,
 #											   UPMLEMazeEnvNoEntropyReward)
-#from brl_gym.wrapper_envs.wrapper_doors import (ExplicitBayesDoorsEnv,												ExplicitBayesDoorsEnvNoEntropyReward)
+from brl_gym.wrapper_envs.wrapper_doors import ExplicitBayesDoorsEnv
+# ,												ExplicitBayesDoorsEnvNoEntropyReward)
 #												UPMLEDoorsEnvNoEntropyReward,
 #												UPMLEDoorsEnv,
 #												BayesDoorsEntropyEnv)

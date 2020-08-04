@@ -180,3 +180,24 @@ class DoorsExpert:
 
     def __call__(self, inputs, infos=[]):
         return self.action(inputs)
+
+if __name__ == "__main__":
+    from brl_gym.wrapper_envs.wrapper_doors import ExplicitBayesDoorsEnv
+    env = ExplicitBayesDoorsEnv()
+    expert = DoorsExpert()
+
+    rewards = np.zeros(100)
+    for i in range(100):
+        obs = env.reset()
+        t = 0
+        done = False
+        while not done:
+            action = expert(obs.reshape(1,-1))
+            obs, reward, done, info = env.step(action.ravel())
+            rewards[i] += reward
+            t += 1
+            if t >= 300:
+                break
+        print(rewards[i])
+
+    print(np.mean(rewards))

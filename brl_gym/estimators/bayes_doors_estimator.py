@@ -2,7 +2,7 @@ import numpy as np
 from brl_gym.estimators.estimator import Estimator
 from gym.spaces import Box
 from brl_gym.envs.mujoco.doors import DoorsEnv
-from brl_gym.estimators.learnable_bf import LearnableBF
+# from brl_gym.estimators.learnable_bf import LearnableBF
 
 def flatten_to_belief(belief_per_door, cases_np):
     belief = []
@@ -19,7 +19,7 @@ def flatten_to_belief(belief_per_door, cases_np):
     return belief
 
 class BayesDoorsEstimator(Estimator):
-    def __init__(self):
+    def __init__(self, estimate_disturbance=False, residual=None):
         env = DoorsEnv()
 
         self.num_doors = 4
@@ -100,24 +100,24 @@ class BayesDoorsEstimator(Estimator):
         return self.flatten_to_belief(self.belief)
 
 
-class LearnableDoorsBF(LearnableBF, BayesDoorsEstimator):
-    def __init__(self):
+# class LearnableDoorsBF(LearnableBF, BayesDoorsEstimator):
+#     def __init__(self):
 
-        self.belief_dim = 4
-        BayesDoorsEstimator.__init__(self)
+#         self.belief_dim = 4
+#         BayesDoorsEstimator.__init__(self)
 
-        self.belief_low = np.zeros(self.num_doors)
-        self.belief_high = np.ones(self.num_doors)
-        self.belief_space = Box(self.belief_low, self.belief_high, dtype=np.float32)
+#         self.belief_low = np.zeros(self.num_doors)
+#         self.belief_high = np.ones(self.num_doors)
+#         self.belief_space = Box(self.belief_low, self.belief_high, dtype=np.float32)
 
-        LearnableBF.__init__(self, self._action_space,
-            self._observaiton_space, self.belief_space, nonlinear='relu', normalize=False)
+#         LearnableBF.__init__(self, self._action_space,
+#             self._observaiton_space, self.belief_space, nonlinear='relu', normalize=False)
 
-    def reset(self):
-        return LearnableBF.reset(self)
+#     def reset(self):
+#         return LearnableBF.reset(self)
 
-    def estimate(self, action, observation, **kwargs):
-        return LearnableBF.estimate(self, action, observation, **kwargs)
+#     def estimate(self, action, observation, **kwargs):
+#         return LearnableBF.estimate(self, action, observation, **kwargs)
 
 
 

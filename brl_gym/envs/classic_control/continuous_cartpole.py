@@ -125,7 +125,6 @@ class ContinuousCartPoleEnv(gym.Env):
             x = x[0]
         if isinstance(theta, np.ndarray):
             theta = theta[0]
-            print("theta")
 
         self.state = np.array([x,x_dot,theta,theta_dot])
         self.state += self.disturbance(self.state, action)
@@ -152,7 +151,7 @@ class ContinuousCartPoleEnv(gym.Env):
         return self.state, reward, done, {}
 
     def reset(self):
-        self.state = self.np_random.uniform(low=-0.5, high=0.5, size=(4,))
+        self.state = self.np_random.uniform(low=-0.3, high=0.3, size=(4,))
         self.steps_beyond_done = None
         if self.random_param:
             length_range = self.param_space['length']
@@ -333,14 +332,15 @@ class LQRControlCartPole:
 class NoisyContinuousCartPoleEnv(ContinuousCartPoleEnv):
     def __init__(self, ctrl_noise_scale=0.0):
         def noise(state, action):
-            return np.array([0, -0.1, 0, 0], dtype=np.float32)
+            return np.array([0, 0, 0, -0.04], dtype=np.float32)
 
         ContinuousCartPoleEnv.__init__(self,
             ctrl_noise_scale=ctrl_noise_scale, random_param=True, disturbance=noise)
 
 
 if __name__ == "__main__":
-    env = NoisyContinuousCartPoleEnv()
+    # env = NoisyContinuousCartPoleEnv()
+    env = ContinuousCartPoleEnv()
 
     env.reset()
     expert = LQRControlCartPole(env)

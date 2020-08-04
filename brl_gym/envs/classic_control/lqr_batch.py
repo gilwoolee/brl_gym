@@ -97,7 +97,6 @@ class LQRControlCartPoleBatch:
         q = np.tile(q, (self.nenvs, 1, 1))
         action = - np.array(np.matmul(K[:,:,None,:], q[:,:,:,None])).squeeze() * 0.01
 
-
         return action.transpose()
 
 if __name__ == "__main__":
